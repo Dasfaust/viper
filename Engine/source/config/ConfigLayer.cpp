@@ -1,10 +1,11 @@
 #include "ConfigLayer.h"
 #include <fstream>
 
-ConfigLayer::ConfigLayer(std::string workingDir)
+ConfigLayer::ConfigLayer(std::string workingDir, std::shared_ptr<EventLayer> events)
 {
 	infof("ConfigLayer: %s", workingDir.c_str());
 	this->workingDir = workingDir;
+	this->events = events;
 	stringValues = std::make_shared<StringMap>();
 	intValues = std::make_shared<IntMap>();
 	floatValues = std::make_shared<FloatMap>();
@@ -242,6 +243,28 @@ tbb::concurrent_vector<int> ConfigLayer::getInts(std::string section, std::strin
 	}
 
 	throw std::runtime_error("Config definition doesn't exist: " + section + "." + segment);
+}
+
+void ConfigLayer::setInts(std::string section, std::string segment, int val)
+{
+	std::vector<int> ints;
+	ints.push_back(val);
+	setInts(section, segment, ints);
+}
+
+void ConfigLayer::setInts(std::string section, std::string segment, std::vector<int> ints)
+{
+	std::shared_ptr<Event::OnConfigChangedData> data = std::make_shared<Event::OnConfigChangedData>();
+	data->section = section;
+	data->segment = segment;
+	std::vector<Variant> vars;
+	for (int i : ints)
+	{
+		Variant var = i;
+		vars.push_back(var);
+	}
+	data->values = vars;
+	events.lock()->getOnConfigChanged()->triggerEvent(data);
 }
 
 tbb::concurrent_vector<float> ConfigLayer::getFloats(std::string section, std::string segment)
