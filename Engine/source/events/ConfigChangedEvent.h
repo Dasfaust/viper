@@ -28,17 +28,13 @@ namespace Event
 
 		void addListener(std::shared_ptr<EventListener<OnConfigChangedData>> listener)
 		{
-			debug("Listener added");
 			listeners.emplace_back(listener);
-			debug(listeners.size());
 		}
 
 		void triggerEvent(std::weak_ptr<OnConfigChangedData> data)
 		{
-			debug(listeners.size());
 			for (auto& listener : listeners)
 			{
-				debug("Event fired");
 				listener->callback(data.lock());
 			}
 		}

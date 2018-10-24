@@ -1,16 +1,11 @@
 #include "V3.hpp"
 #include "events/EventLayer.h"
+#include <thread>
 
-class Derp : public EventListener<Event::OnConfigChangedData>
+void doTask(V3 &v3)
 {
-public:
-	Derp() { }
-
-	void callback(std::shared_ptr<Event::OnConfigChangedData> data) override
-	{
-		debugf("Config changed: %s, %s", data->section.c_str(), data->segment.c_str());
-	}
-};
+	v3.getConfig()->setInts("engine", "testVal2", 75);
+}
 
 int main()
 {
@@ -18,15 +13,19 @@ int main()
 
 	V3 v3("C:/Vulkan/V3/Client/resources");
 
-	std::shared_ptr<EventListener<Event::OnConfigChangedData>> derp = std::make_shared<Derp>();
-	v3.getEvents()->getOnConfigChanged()->addListener(derp);
-
-	std::shared_ptr<Event::OnConfigChangedData> data = std::make_shared<Event::OnConfigChangedData>();
-	data->section = "derp";
-	data->segment = "derp";
-	v3.getEvents()->getOnConfigChanged()->triggerEvent(data);
+	std::shared_ptr<EventListener<Event::OnConfigChangedData>> listener = std::make_shared<EventListener<Event::OnConfigChangedData>>(
+		[](Event::OnConfigChangedData e) { debugf("OnConfigChanged: %s, %s", e.section.c_str(), e.segment.c_str()); }
+	);
+	v3.getEvents()->getOnConfigChanged()->addListener(listener);
 
 	v3.getConfig()->setInts("engine", "testVal", 100);
+
+	std::thread thread(doTask, std::ref(v3));
+	
+	while (true)
+	{
+		listener->poll();
+	}
 
 	return EXIT_SUCCESS;
 }
