@@ -1,6 +1,7 @@
 #include "V3.hpp"
 #include "events/EventLayer.h"
 #include <thread>
+#include "Logger.h"
 
 void doTask(V3 &v3)
 {
@@ -14,7 +15,7 @@ int main()
 	V3 v3("C:/Vulkan/V3/Client/resources");
 
 	std::shared_ptr<EventListener<Event::OnConfigChangedData>> listener = std::make_shared<EventListener<Event::OnConfigChangedData>>(
-		[](Event::OnConfigChangedData e) { debugf("OnConfigChanged: %s, %s", e.section.c_str(), e.segment.c_str()); }
+		[](Event::OnConfigChangedData e) { debug("OnConfigChanged: %s, %s", e.section.c_str(), e.segment.c_str()); }
 	);
 	v3.getEvents()->getOnConfigChanged()->addListener(listener);
 

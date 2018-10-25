@@ -23,6 +23,7 @@
     <ClInclude Include="source\events\ConfigChangedEvent.h" />
     <ClInclude Include="source\events\EventLayer.h" />
     <ClInclude Include="source\events\EventListener.h" />
+    <ClInclude Include="source\Logger.h" />
     <ClInclude Include="source\V3.hpp" />
     <ClInclude Include="source\V3Macros.h" />
     <ClInclude Include="source\view\ViewLayer.h" />
@@ -30,6 +31,7 @@
   <ItemGroup>
     <ClCompile Include="source\config\ConfigLayer.cpp" />
     <ClCompile Include="source\events\EventLayer.cpp" />
+    <ClCompile Include="source\Logger.cpp" />
     <ClCompile Include="source\V3.cpp" />
     <ClCompile Include="source\view\ViewLayer.cpp" />
   </ItemGroup>

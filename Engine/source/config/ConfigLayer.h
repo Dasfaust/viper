@@ -1,5 +1,4 @@
 #pragma once
-#include "../V3Macros.h"
 #include "../events/EventLayer.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>

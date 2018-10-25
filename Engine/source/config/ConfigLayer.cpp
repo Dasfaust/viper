@@ -1,9 +1,11 @@
 #include "ConfigLayer.h"
+#include "../Logger.h"
+#include <iostream>
 #include <fstream>
 
 ConfigLayer::ConfigLayer(std::string workingDir, std::shared_ptr<EventLayer> events)
 {
-	infof("ConfigLayer: %s", workingDir.c_str());
+	info("ConfigLayer: %s", workingDir.c_str());
 	this->workingDir = workingDir;
 	this->events = events;
 	stringValues = std::make_shared<StringMap>();
@@ -76,7 +78,7 @@ ConfigLayer::Variant ConfigLayer::parse(std::string string)
 	}
 	catch (std::exception &ex)
 	{
-		criticalf("Configuration parse error: %s", ex.what())
+		crit("Configuration parse error: %s", ex.what())
 	}
 
 	return var;
@@ -94,7 +96,7 @@ void ConfigLayer::load(std::string file, Type type)
 		path = file + ".save.conf";
 	}
 
-	infof("Loading .conf file: %s", path.c_str());
+	info("Loading .conf file: %s", path.c_str());
 	std::ifstream doc(path);
 
 	if (!doc.good()) throw std::runtime_error("Configuration file doesn't exist: " + path);
@@ -228,7 +230,7 @@ void ConfigLayer::load(std::string file, Type type)
 	}
 	catch (const std::exception &ex)
 	{
-		criticalf("Configuration format error: %s", ex.what())
+		crit("Configuration format error: %s", ex.what())
 	}
 }
 
@@ -254,16 +256,13 @@ void ConfigLayer::setInts(std::string section, std::string segment, int val)
 
 void ConfigLayer::setInts(std::string section, std::string segment, std::vector<int> ints)
 {
-	std::shared_ptr<Event::OnConfigChangedData> data = std::make_shared<Event::OnConfigChangedData>();
-	data->section = section;
-	data->segment = segment;
 	std::vector<Variant> vars;
 	for (int i : ints)
 	{
 		Variant var = i;
 		vars.push_back(var);
 	}
-	data->values = vars;
+	std::shared_ptr<Event::OnConfigChangedData> data = std::make_shared<Event::OnConfigChangedData>(section, segment, vars);
 	events.lock()->getOnConfigChanged()->triggerEvent(data);
 }
 

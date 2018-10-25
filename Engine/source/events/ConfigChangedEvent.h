@@ -1,4 +1,5 @@
 #pragma once
+#include "../Logger.h"
 #include "EventListener.h"
 #include <string>
 #include <memory>
@@ -17,6 +18,13 @@ namespace Event
 		std::string section;
 		std::string segment;
 		std::vector<boost::variant<int, float, bool, std::string>> values;
+
+		OnConfigChangedData() { info("OnConfigChangedData init") }
+		OnConfigChangedData(std::string section, std::string segment, std::vector<boost::variant<int, float, bool, std::string>> values)
+			: section(section), segment(segment), values(values)
+		{
+			info("OnConfigChangedData deinit")
+		}
 	};
 
 	class OnConfigChanged

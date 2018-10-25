@@ -1,4 +1,5 @@
 #include "ViewLayer.h"
+#include "../Logger.h"
 
 ViewLayer::ViewLayer(ConfigLayer* config)
 {
