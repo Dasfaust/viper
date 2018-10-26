@@ -5,7 +5,6 @@
 
 ConfigLayer::ConfigLayer(std::string workingDir, std::shared_ptr<EventLayer> events)
 {
-	info("ConfigLayer: %s", workingDir.c_str());
 	this->workingDir = workingDir;
 	this->events = events;
 	stringValues = std::make_shared<StringMap>();
@@ -18,7 +17,6 @@ ConfigLayer::ConfigLayer(std::string workingDir, std::shared_ptr<EventLayer> eve
 
 ConfigLayer::~ConfigLayer()
 {
-	info("ConfigLayer destroyed");
 }
 
 std::vector<std::string> ConfigLayer::splitString(std::string string, char delimiter)
@@ -263,7 +261,7 @@ void ConfigLayer::setInts(std::string section, std::string segment, std::vector<
 		vars.push_back(var);
 	}
 	std::shared_ptr<Event::OnConfigChangedData> data = std::make_shared<Event::OnConfigChangedData>(section, segment, vars);
-	events.lock()->getOnConfigChanged()->triggerEvent(data);
+	events->getOnConfigChanged()->triggerEvent(data);
 }
 
 tbb::concurrent_vector<float> ConfigLayer::getFloats(std::string section, std::string segment)

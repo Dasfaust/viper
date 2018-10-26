@@ -19,12 +19,10 @@ namespace Event
 		std::string segment;
 		std::vector<boost::variant<int, float, bool, std::string>> values;
 
-		OnConfigChangedData() { info("OnConfigChangedData init") }
+		OnConfigChangedData() { }
 		OnConfigChangedData(std::string section, std::string segment, std::vector<boost::variant<int, float, bool, std::string>> values)
 			: section(section), segment(segment), values(values)
-		{
-			info("OnConfigChangedData deinit")
-		}
+		{ }
 	};
 
 	class OnConfigChanged

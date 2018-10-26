@@ -29,7 +29,7 @@ public:
 	tbb::concurrent_vector<std::string> getStrings(std::string section, std::string segment);
 private:
 	std::string workingDir;
-	std::weak_ptr<EventLayer> events;
+	std::shared_ptr<EventLayer> events;
 
 	// filename, (config address: value)[]
 	typedef tbb::concurrent_unordered_map<std::string, tbb::concurrent_vector<std::string>> StringSegment;

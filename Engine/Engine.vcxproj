@@ -25,7 +25,7 @@
     <ClInclude Include="source\events\EventListener.h" />
     <ClInclude Include="source\Logger.h" />
     <ClInclude Include="source\V3.hpp" />
-    <ClInclude Include="source\V3Macros.h" />
+    <ClInclude Include="source\Tickable.h" />
     <ClInclude Include="source\view\ViewLayer.h" />
   </ItemGroup>
   <ItemGroup>
