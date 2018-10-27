@@ -24,6 +24,7 @@
     <ClInclude Include="source\events\EventLayer.h" />
     <ClInclude Include="source\events\EventListener.h" />
     <ClInclude Include="source\Logger.h" />
+    <ClInclude Include="source\Threadable.h" />
     <ClInclude Include="source\V3.hpp" />
     <ClInclude Include="source\Tickable.h" />
     <ClInclude Include="source\view\ViewLayer.h" />
