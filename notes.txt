@@ -1,0 +1,37 @@
+<no name> at its core, is aiming to capture multiple concepts into one cohesive experience. Think  Dark Souls-esque combat, the infinite replayability and pseudo-sandbox adventurism of RuneScape's skills and quests, all merged together under streamlined systems inspired by World of Warcraft.
+
+
+
+
+[CLIENT]
+    Program<-------------------<
+                               ^
+    [Render Pipeline]          ^
+                >--------------^
+        [Update uniforms]      ^
+                >--------------^
+        [Load/unload assets]   ^
+                >--------------^
+    [World Minimal]            ^
+                >--------------^
+        [Simulate]             ^
+                >--------------^
+        # ticks in sync with server
+        [State updater]        ^
+                >--------------^
+    [Service maintenance]      ^
+                >--------------^
+
+[SERVER]
+    # 1 tick every 1/30th of a second
+    Program<
+    
+    [State manager*N instances]
+    
+        [State updater*N threads]
+        
+    [IO thread*N threads]
+    
+    
+    
+    
