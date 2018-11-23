@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/Engine/source/**",
+                "/home/cody/v3/vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/include",
+                "/home/cody/v3/vendor/linux/glfw-3.2.1/include",
+                "/home/cody/v3/vendor/linux/vulkan_1.1.85.0/x86_64/include",
+                "/home/cody/v3/vendor/linux/boost_1_68_0"
+            ],
+            "defines": [],
+            "compilerPath": "/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}

@@ -4,7 +4,7 @@
 #include "../Tickable.h"
 
 #ifndef V3_GLFW_INCLUDE
-#define GLFW_INCLUDE_VULKAN
+//#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #endif
 

@@ -49,10 +49,10 @@ void V3::start()
 
 void V3::addToLogicTicks(std::shared_ptr<Tickable> object)
 {
-	logicTicks.emplace_back(object);
+	logicTicks.push_back(object);
 }
 
 void V3::addToRenderTicks(std::shared_ptr<Tickable> object)
 {
-	renderTicks.emplace_back(object);
+	renderTicks.push_back(object);
 }

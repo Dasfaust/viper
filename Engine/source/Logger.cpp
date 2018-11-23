@@ -15,7 +15,7 @@ void Log::queue(Level level, std::string message)
 {
 	std::string input = "V3::" + message;
 	std::shared_ptr<std::string> ptr = std::make_shared<std::string>(input);
-	messages->emplace(ptr);
+	messages->push(ptr);
 }
 
 void Log::poll()

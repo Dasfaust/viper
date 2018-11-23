@@ -18,7 +18,7 @@ public:
 	Thread(V3 &v3)
 	{
 		listener = std::make_shared<EventListener<Event::OnConfigChangedData>>(
-			[](Event::OnConfigChangedData e) { debug("OnConfigChanged (thread 2): %s, %s, %d", e.section.c_str(), e.segment.c_str(), boost::get<int>(e.values[0])); }
+			[](Event::OnConfigChangedData e) { debugf("OnConfigChanged (thread 2): %s, %s, %d", e.section.c_str(), e.segment.c_str(), boost::get<int>(e.values[0])); }
 		);
 		v3.getEvents()->getOnConfigChanged()->addListener(listener);
 	}
@@ -37,7 +37,7 @@ public:
 	Test(V3 &v3)
 	{
 		listener = std::make_shared<EventListener<Event::OnConfigChangedData>>(
-			[](Event::OnConfigChangedData e) { debug("OnConfigChanged: %s, %s, %d", e.section.c_str(), e.segment.c_str(), boost::get<int>(e.values[0])); }
+			[](Event::OnConfigChangedData e) { debugf("OnConfigChanged: %s, %s, %d", e.section.c_str(), e.segment.c_str(), boost::get<int>(e.values[0])); }
 		);
 		v3.getEvents()->getOnConfigChanged()->addListener(listener);
 	}
@@ -52,9 +52,9 @@ int main()
 {
 	info("Hello, world!");
 
-	V3 v3("C:/Vulkan/V3/Client/resources");
+	V3 v3("/home/cody/v3/Client/resources");
 
-	v3.getView()->setTitle("TestGame");
+	v3.getView()->setTitle("AoA");
 
 	std::shared_ptr<Test> test = std::make_shared<Test>(v3);
 	v3.addToRenderTicks(test);

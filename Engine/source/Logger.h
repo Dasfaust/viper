@@ -2,10 +2,14 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 
-#define debug(x, ...) Log::log(Log::DEBUG, x, __VA_ARGS__);
-#define info(x, ...) Log::log(Log::INFO, x, __VA_ARGS__);
-#define warn(x, ...) Log::log(Log::WARNING, x, __VA_ARGS__);
-#define crit(x, ...) Log::log(Log::CRITICAL, x, __VA_ARGS__);;
+#define debug(x) Log::log(Log::DEBUG, x);
+#define debugf(x, ...) Log::log(Log::DEBUG, x, __VA_ARGS__);
+#define info(x) Log::log(Log::INFO, x);
+#define infof(x, ...) Log::log(Log::INFO, x, __VA_ARGS__);
+#define warn(x) Log::log(Log::WARNING, x);
+#define warnf(x, ...) Log::log(Log::WARNING, x, __VA_ARGS__);
+#define crit(x) Log::log(Log::CRITICAL, x);
+#define critf(x, ...) Log::log(Log::CRITICAL, x, __VA_ARGS__);
 
 namespace Log
 {

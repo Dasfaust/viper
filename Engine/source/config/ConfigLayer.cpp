@@ -76,7 +76,7 @@ ConfigLayer::Variant ConfigLayer::parse(std::string string)
 	}
 	catch (std::exception &ex)
 	{
-		crit("Configuration parse error: %s", ex.what())
+		critf("Configuration parse error: %s", ex.what())
 	}
 
 	return var;
@@ -94,7 +94,7 @@ void ConfigLayer::load(std::string file, Type type)
 		path = file + ".save.conf";
 	}
 
-	info("Loading .conf file: %s", path.c_str());
+	infof("Loading .conf file: %s", path.c_str());
 	std::ifstream doc(path);
 
 	if (!doc.good()) throw std::runtime_error("Configuration file doesn't exist: " + path);
@@ -228,7 +228,7 @@ void ConfigLayer::load(std::string file, Type type)
 	}
 	catch (const std::exception &ex)
 	{
-		crit("Configuration format error: %s", ex.what())
+		critf("Configuration format error: %s", ex.what())
 	}
 }
 

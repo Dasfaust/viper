@@ -1,0 +1,50 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "premake",
+            "type": "shell",
+            "command": "./vendor/premake/premake5",
+            "args": [
+                "gmake"
+            ]
+        },
+        {
+            "label": "build (debug)",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "debug=1"
+            ],
+            "dependsOn": [
+                "premake"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build (release)",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "release=1"
+            ],
+            "dependsOn": [
+                "premake"
+            ]
+        },
+        {
+            "label": "build (dist)",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "dist=1"
+            ],
+            "dependsOn": [
+                "premake"
+            ]
+        }
+    ]
+}
