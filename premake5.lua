@@ -12,7 +12,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 project "Engine"
     location "Engine"
-    kind "StaticLib"
+    kind "SharedLib"
     language "C++"
 
     targetdir("bin/" .. outputdir .. "/%{prj.name}")
@@ -77,27 +77,21 @@ project "Client"
 
         links
         {
-            "dl",
-            "GLU",
-            "GL",
-            "rt",
-            "Xrandr",
-            "Xxf86vm",
-            "Xi",
-            "Xinerama",
-            "X11",
-            "Xcursor",
             "vulkan",
             "glfw",
             "tbb",
-            "tbb_debug",
             "pthread"
         }
 
     filter "configurations:debug"
         defines "V3_DEBUG"
         symbols "On"
-        optimize "Off"
+    
+    filter { "configurations:debug", "system:linux" }
+        links
+        {
+            "tbb_debug"
+        }
 
     filter "configurations:release"
         defines "V3_RELEASE"
@@ -106,3 +100,6 @@ project "Client"
     filter "configurations:dist"
         defines "V3_DIST"
         optimize "On"
+    
+    --filter { "configurations:dist", "system:linux" }
+        --buildoptions "LD_RUN_PATH='$ORIGIN/lib'"
