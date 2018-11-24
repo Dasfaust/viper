@@ -14,17 +14,17 @@ ifeq ($(config),debug)
   RESCOMP = windres
   TARGETDIR = ../bin/debug-linux-x86_64/Client
   TARGET = $(TARGETDIR)/Client
-  OBJDIR = ../bin-int/debug-linux-x86_64/Client
+  OBJDIR = ../build/debug-linux-x86_64/Client
   DEFINES += -DV3_DEBUG
-  INCLUDES += -I../vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/include -I../vendor/linux/vulkan_1.1.85.0/include -I../vendor/linux/boost_1_68_0 -I../vendor/linux/glfw-3.2.1/include -I../Engine/source
+  INCLUDES += -I../Engine/source
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O0 -g
   ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O0 -g -std=c++17
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../bin/debug-linux-x86_64/Engine/libEngine.a -ldl -lGLU -lGL -lrt -lXrandr -lXxf86vm -lXi -lXinerama -lX11 -lXcursor -lvulkan -lglfw3 -ltbb -ltbb_debug -lpthread
+  LIBS += ../bin/debug-linux-x86_64/Engine/libEngine.a -ldl -lGLU -lGL -lrt -lXrandr -lXxf86vm -lXi -lXinerama -lX11 -lXcursor -lvulkan -lglfw -ltbb -ltbb_debug -lpthread
   LDDEPS += ../bin/debug-linux-x86_64/Engine/libEngine.a
-  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/linux/glfw-3.2.1/src -L../vendor/linux/vulkan_1.1.85.0/source/lib -L../vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/lib/intel64/gcc4.7 -L/usr/lib64 -m64
+  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -41,17 +41,17 @@ ifeq ($(config),release)
   RESCOMP = windres
   TARGETDIR = ../bin/release-linux-x86_64/Client
   TARGET = $(TARGETDIR)/Client
-  OBJDIR = ../bin-int/release-linux-x86_64/Client
+  OBJDIR = ../build/release-linux-x86_64/Client
   DEFINES += -DV3_RELEASE
-  INCLUDES += -I../vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/include -I../vendor/linux/vulkan_1.1.85.0/include -I../vendor/linux/boost_1_68_0 -I../vendor/linux/glfw-3.2.1/include -I../Engine/source
+  INCLUDES += -I../Engine/source
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
   ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++17
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../bin/release-linux-x86_64/Engine/libEngine.a -ldl -lGLU -lGL -lrt -lXrandr -lXxf86vm -lXi -lXinerama -lX11 -lXcursor -lvulkan -lglfw3 -ltbb -ltbb_debug -lpthread
+  LIBS += ../bin/release-linux-x86_64/Engine/libEngine.a -ldl -lGLU -lGL -lrt -lXrandr -lXxf86vm -lXi -lXinerama -lX11 -lXcursor -lvulkan -lglfw -ltbb -ltbb_debug -lpthread
   LDDEPS += ../bin/release-linux-x86_64/Engine/libEngine.a
-  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/linux/glfw-3.2.1/src -L../vendor/linux/vulkan_1.1.85.0/source/lib -L../vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/lib/intel64/gcc4.7 -L/usr/lib64 -m64 -s
+  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -68,17 +68,17 @@ ifeq ($(config),dist)
   RESCOMP = windres
   TARGETDIR = ../bin/dist-linux-x86_64/Client
   TARGET = $(TARGETDIR)/Client
-  OBJDIR = ../bin-int/dist-linux-x86_64/Client
+  OBJDIR = ../build/dist-linux-x86_64/Client
   DEFINES += -DV3_DIST
-  INCLUDES += -I../vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/include -I../vendor/linux/vulkan_1.1.85.0/include -I../vendor/linux/boost_1_68_0 -I../vendor/linux/glfw-3.2.1/include -I../Engine/source
+  INCLUDES += -I../Engine/source
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
   ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++17
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../bin/dist-linux-x86_64/Engine/libEngine.a -ldl -lGLU -lGL -lrt -lXrandr -lXxf86vm -lXi -lXinerama -lX11 -lXcursor -lvulkan -lglfw3 -ltbb -ltbb_debug -lpthread
+  LIBS += ../bin/dist-linux-x86_64/Engine/libEngine.a -ldl -lGLU -lGL -lrt -lXrandr -lXxf86vm -lXi -lXinerama -lX11 -lXcursor -lvulkan -lglfw -ltbb -ltbb_debug -lpthread
   LDDEPS += ../bin/dist-linux-x86_64/Engine/libEngine.a
-  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/linux/glfw-3.2.1/src -L../vendor/linux/vulkan_1.1.85.0/source/lib -L../vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/lib/intel64/gcc4.7 -L/usr/lib64 -m64 -s
+  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef

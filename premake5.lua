@@ -9,7 +9,6 @@ workspace "V3"
     }
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-tbb_dir = "/home/cody/v3/vendor/tbb2019_20181010oss_lin/tbb2019_20181010oss/lib/intel64/gcc4.7"
 
 project "Engine"
     location "Engine"
@@ -32,14 +31,6 @@ project "Engine"
         staticruntime "On"
         systemversion "latest"
 
-        includedirs
-        {
-            "/home/cody/v3/vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/include",
-            "/home/cody/v3/vendor/linux/vulkan_1.1.85.0/include",
-            "/home/cody/v3/vendor/linux/boost_1_68_0",
-            "/home/cody/v3/vendor/linux/glfw-3.2.1/include"
-        }
-
     filter "configurations:debug"
         defines "V3_DEBUG"
         symbols "On"
@@ -59,7 +50,12 @@ project "Client"
     language "C++"
 
     targetdir("bin/" .. outputdir .. "/%{prj.name}")
-    objdir("bin-int/" .. outputdir .. "/%{prj.name}")
+    objdir("build/" .. outputdir .. "/%{prj.name}")
+
+    includedirs
+    {
+        "Engine/source"
+    }
 
     links
     {
@@ -79,22 +75,6 @@ project "Client"
         staticruntime "On"
         systemversion "latest"
 
-        includedirs
-        {
-            "/home/cody/v3/vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/include",
-            "/home/cody/v3/vendor/linux/vulkan_1.1.85.0/include",
-            "/home/cody/v3/vendor/linux/boost_1_68_0",
-            "/home/cody/v3/vendor/linux/glfw-3.2.1/include",
-            "Engine/source"
-        }
-
-        libdirs
-        {
-            "/home/cody/v3/vendor/linux/glfw-3.2.1/src",
-            "/home/cody/v3/vendor/linux/vulkan_1.1.85.0/source/lib",
-            "/home/cody/v3/vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/lib/intel64/gcc4.7"
-        }
-
         links
         {
             "dl",
@@ -108,16 +88,10 @@ project "Client"
             "X11",
             "Xcursor",
             "vulkan",
-            "glfw3",
+            "glfw",
             "tbb",
             "tbb_debug",
             "pthread"
-        }
-
-        postbuildcommands
-        {
-            --("{COPY} /home/cody/v3/vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/lib/intel64/gcc4.7/libtbb.so.2 ../bin/" .. outputdir .. "/%{prj.name}"),
-            --("{COPY} /home/cody/v3/vendor/linux/glfw-3.2.1/src/libglfw.so.3 ../bin/" .. outputdir .. "/%{prj.name}")
         }
 
     filter "configurations:debug"

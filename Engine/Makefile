@@ -14,9 +14,9 @@ ifeq ($(config),debug)
   RESCOMP = windres
   TARGETDIR = ../bin/debug-linux-x86_64/Engine
   TARGET = $(TARGETDIR)/libEngine.a
-  OBJDIR = ../bin-int/debug-linux-x86_64/Engine
+  OBJDIR = ../build/debug-linux-x86_64/Engine
   DEFINES += -DV3_DEBUG
-  INCLUDES += -I../vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/include -I../vendor/linux/vulkan_1.1.85.0/include -I../vendor/linux/boost_1_68_0 -I../vendor/linux/glfw-3.2.1/include
+  INCLUDES +=
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O0 -g
@@ -41,9 +41,9 @@ ifeq ($(config),release)
   RESCOMP = windres
   TARGETDIR = ../bin/release-linux-x86_64/Engine
   TARGET = $(TARGETDIR)/libEngine.a
-  OBJDIR = ../bin-int/release-linux-x86_64/Engine
+  OBJDIR = ../build/release-linux-x86_64/Engine
   DEFINES += -DV3_RELEASE
-  INCLUDES += -I../vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/include -I../vendor/linux/vulkan_1.1.85.0/include -I../vendor/linux/boost_1_68_0 -I../vendor/linux/glfw-3.2.1/include
+  INCLUDES +=
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
@@ -68,9 +68,9 @@ ifeq ($(config),dist)
   RESCOMP = windres
   TARGETDIR = ../bin/dist-linux-x86_64/Engine
   TARGET = $(TARGETDIR)/libEngine.a
-  OBJDIR = ../bin-int/dist-linux-x86_64/Engine
+  OBJDIR = ../build/dist-linux-x86_64/Engine
   DEFINES += -DV3_DIST
-  INCLUDES += -I../vendor/linux/tbb2019_20181010oss_lin/tbb2019_20181010oss/include -I../vendor/linux/vulkan_1.1.85.0/include -I../vendor/linux/boost_1_68_0 -I../vendor/linux/glfw-3.2.1/include
+  INCLUDES +=
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
