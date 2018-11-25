@@ -16,7 +16,7 @@ ifeq ($(config),debug)
   TARGET = $(TARGETDIR)/libEngine.so
   OBJDIR = ../build/debug-linux-x86_64/Engine
   DEFINES += -DV3_DEBUG
-  INCLUDES +=
+  INCLUDES += -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O0 -fPIC -g
@@ -31,6 +31,8 @@ ifeq ($(config),debug)
   define PRELINKCMDS
   endef
   define POSTBUILDCMDS
+	@echo Running postbuild commands
+	cp -rf ../bin/debug-linux-x86_64/Engine/libEngine.so ../vendor/lib/lin64
   endef
 all: prebuild prelink $(TARGET)
 	@:
@@ -43,7 +45,7 @@ ifeq ($(config),release)
   TARGET = $(TARGETDIR)/libEngine.so
   OBJDIR = ../build/release-linux-x86_64/Engine
   DEFINES += -DV3_RELEASE
-  INCLUDES +=
+  INCLUDES += -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -fPIC
@@ -58,6 +60,8 @@ ifeq ($(config),release)
   define PRELINKCMDS
   endef
   define POSTBUILDCMDS
+	@echo Running postbuild commands
+	cp -rf ../bin/release-linux-x86_64/Engine/libEngine.so ../vendor/lib/lin64
   endef
 all: prebuild prelink $(TARGET)
 	@:
@@ -70,7 +74,7 @@ ifeq ($(config),dist)
   TARGET = $(TARGETDIR)/libEngine.so
   OBJDIR = ../build/dist-linux-x86_64/Engine
   DEFINES += -DV3_DIST
-  INCLUDES +=
+  INCLUDES += -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -fPIC
@@ -85,6 +89,8 @@ ifeq ($(config),dist)
   define PRELINKCMDS
   endef
   define POSTBUILDCMDS
+	@echo Running postbuild commands
+	cp -rf ../bin/dist-linux-x86_64/Engine/libEngine.so ../vendor/lib/lin64
   endef
 all: prebuild prelink $(TARGET)
 	@:

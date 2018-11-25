@@ -16,7 +16,7 @@ ifeq ($(config),debug)
   TARGET = $(TARGETDIR)/Client
   OBJDIR = ../build/debug-linux-x86_64/Client
   DEFINES += -DV3_DEBUG
-  INCLUDES += -I../Engine/source
+  INCLUDES += -I../Engine/source -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
@@ -24,13 +24,15 @@ ifeq ($(config),debug)
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS += ../bin/debug-linux-x86_64/Engine/libEngine.so -lvulkan -lglfw -ltbb -lpthread -ltbb_debug
   LDDEPS += ../bin/debug-linux-x86_64/Engine/libEngine.so
-  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64
+  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/lin64 -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -Wl,-rpath=\$$ORIGIN/lin64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
   define PRELINKCMDS
   endef
   define POSTBUILDCMDS
+	@echo Running postbuild commands
+	cp -rf ../vendor/lib/lin64 ../bin/debug-linux-x86_64/Client
   endef
 all: prebuild prelink $(TARGET)
 	@:
@@ -43,7 +45,7 @@ ifeq ($(config),release)
   TARGET = $(TARGETDIR)/Client
   OBJDIR = ../build/release-linux-x86_64/Client
   DEFINES += -DV3_RELEASE
-  INCLUDES += -I../Engine/source
+  INCLUDES += -I../Engine/source -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
@@ -51,13 +53,15 @@ ifeq ($(config),release)
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS += ../bin/release-linux-x86_64/Engine/libEngine.so -lvulkan -lglfw -ltbb -lpthread
   LDDEPS += ../bin/release-linux-x86_64/Engine/libEngine.so
-  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -s
+  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/lin64 -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -s -Wl,-rpath=\$$ORIGIN/lin64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
   define PRELINKCMDS
   endef
   define POSTBUILDCMDS
+	@echo Running postbuild commands
+	cp -rf ../vendor/lib/lin64 ../bin/release-linux-x86_64/Client
   endef
 all: prebuild prelink $(TARGET)
 	@:
@@ -70,7 +74,7 @@ ifeq ($(config),dist)
   TARGET = $(TARGETDIR)/Client
   OBJDIR = ../build/dist-linux-x86_64/Client
   DEFINES += -DV3_DIST
-  INCLUDES += -I../Engine/source
+  INCLUDES += -I../Engine/source -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
@@ -78,13 +82,15 @@ ifeq ($(config),dist)
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS += ../bin/dist-linux-x86_64/Engine/libEngine.so -lvulkan -lglfw -ltbb -lpthread
   LDDEPS += ../bin/dist-linux-x86_64/Engine/libEngine.so
-  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -s
+  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/lin64 -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -s -Wl,-rpath=\$$ORIGIN/lin64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
   define PRELINKCMDS
   endef
   define POSTBUILDCMDS
+	@echo Running postbuild commands
+	cp -rf ../vendor/lib/lin64 ../bin/dist-linux-x86_64/Client
   endef
 all: prebuild prelink $(TARGET)
 	@:

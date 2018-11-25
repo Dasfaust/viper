@@ -26,10 +26,20 @@ project "Engine"
         "%{prj.name}/source/**.cpp"
     }
 
+    includedirs
+    {
+        "vendor/include"
+    }
+
     filter "system:linux"
         cppdialect "C++17"
         staticruntime "On"
         systemversion "latest"
+
+        postbuildcommands
+        {
+            ("{COPY} %{cfg.buildtarget.relpath} ../vendor/lib/lin64/")
+        }
 
     filter "configurations:debug"
         defines "V3_DEBUG"
@@ -52,16 +62,6 @@ project "Client"
     targetdir("bin/" .. outputdir .. "/%{prj.name}")
     objdir("build/" .. outputdir .. "/%{prj.name}")
 
-    includedirs
-    {
-        "Engine/source"
-    }
-
-    links
-    {
-        "Engine"
-    }
-
     files
     {
         "%{prj.name}/source/**.h",
@@ -70,28 +70,43 @@ project "Client"
         "%{prj.name}/source/**.cpp"
     }
 
+    includedirs
+    {
+        "Engine/source",
+        "vendor/include"
+    }
+
+    links
+    {
+        "Engine",
+        "vulkan",
+        "glfw",
+        "tbb"
+    }
+
     filter "system:linux"
         cppdialect "C++17"
         staticruntime "On"
         systemversion "latest"
 
+        libdirs { "vendor/lib/lin64" }
+
         links
         {
-            "vulkan",
-            "glfw",
-            "tbb",
             "pthread"
+        }
+
+        linkoptions { "-Wl,-rpath=\\$$ORIGIN/lin64" }
+
+        postbuildcommands
+        {
+            ("{COPY} ../vendor/lib/lin64 ../bin/" .. outputdir .. "/Client/")
         }
 
     filter "configurations:debug"
         defines "V3_DEBUG"
         symbols "On"
-    
-    filter { "configurations:debug", "system:linux" }
-        links
-        {
-            "tbb_debug"
-        }
+        links { "tbb_debug" }
 
     filter "configurations:release"
         defines "V3_RELEASE"
@@ -100,6 +115,3 @@ project "Client"
     filter "configurations:dist"
         defines "V3_DIST"
         optimize "On"
-    
-    --filter { "configurations:dist", "system:linux" }
-        --buildoptions "LD_RUN_PATH='$ORIGIN/lib'"

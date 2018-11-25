@@ -7,7 +7,8 @@
             "command": "./vendor/premake/premake5",
             "args": [
                 "gmake"
-            ]
+            ],
+            "problemMatcher": []
         },
         {
             "label": "build (debug)",
