@@ -15,7 +15,7 @@ ifeq ($(config),debug)
   TARGETDIR = ../bin/debug-linux-x86_64/Engine
   TARGET = $(TARGETDIR)/libEngine.so
   OBJDIR = ../build/debug-linux-x86_64/Engine
-  DEFINES += -DV3_DEBUG
+  DEFINES += -DV3_LIN64 -DV3_DEBUG
   INCLUDES += -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
@@ -44,7 +44,7 @@ ifeq ($(config),release)
   TARGETDIR = ../bin/release-linux-x86_64/Engine
   TARGET = $(TARGETDIR)/libEngine.so
   OBJDIR = ../build/release-linux-x86_64/Engine
-  DEFINES += -DV3_RELEASE
+  DEFINES += -DV3_LIN64 -DV3_RELEASE
   INCLUDES += -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
@@ -73,7 +73,7 @@ ifeq ($(config),dist)
   TARGETDIR = ../bin/dist-linux-x86_64/Engine
   TARGET = $(TARGETDIR)/libEngine.so
   OBJDIR = ../build/dist-linux-x86_64/Engine
-  DEFINES += -DV3_DIST
+  DEFINES += -DV3_LIN64 -DV3_DIST
   INCLUDES += -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)

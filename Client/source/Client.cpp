@@ -2,6 +2,7 @@
 #include "events/EventLayer.h"
 #include "Threadable.h"
 #include "Logger.h"
+#include <boost/algorithm/string.hpp>
 
 void doTask(V3 &v3)
 {
@@ -52,7 +53,7 @@ int main()
 {
 	info("Hello, world!");
 
-	V3 v3("resources");
+	V3 v3(V3::getWorkingDirectory() + "/resources");
 
 	v3.getView()->setTitle("AoA");
 

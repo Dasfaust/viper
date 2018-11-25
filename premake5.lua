@@ -41,6 +41,8 @@ project "Engine"
             ("{COPY} %{cfg.buildtarget.relpath} ../vendor/lib/lin64/")
         }
 
+        defines "V3_LIN64"
+
 	filter "system:windows"
         cppdialect "C++17"
         staticruntime "On"
@@ -124,6 +126,8 @@ project "Client"
         {
             ("{COPY} ../vendor/lib/lin64 ../bin/" .. outputdir .. "/Client/")
         }
+
+        defines "V3_LIN64"
 
 	filter "system:windows"
         cppdialect "C++17"
