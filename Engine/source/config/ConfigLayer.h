@@ -1,4 +1,5 @@
 #pragma once
+#include "../Macros.h"
 #include "../events/EventLayer.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -17,16 +18,16 @@ public:
 
 	typedef boost::variant<int, float, bool, std::string> Variant;
 
-	ConfigLayer(std::string workingDir, std::shared_ptr<EventLayer> events);
-	virtual ~ConfigLayer();
+	V3API ConfigLayer(std::string workingDir, std::shared_ptr<EventLayer> events);
+	virtual V3API ~ConfigLayer();
 
-	void load(std::string file, Type type);
-	tbb::concurrent_vector<int> getInts(std::string section, std::string segment);
-	void setInts(std::string section, std::string segment, int val);
-	void setInts(std::string section, std::string segment, std::vector<int> ints);
-	tbb::concurrent_vector<float> getFloats(std::string section, std::string segment);
-	tbb::concurrent_vector<bool> getBools(std::string section, std::string segment);
-	tbb::concurrent_vector<std::string> getStrings(std::string section, std::string segment);
+	void V3API load(std::string file, Type type);
+	tbb::concurrent_vector<int> V3API getInts(std::string section, std::string segment);
+	void V3API setInts(std::string section, std::string segment, int val);
+	void V3API setInts(std::string section, std::string segment, std::vector<int> ints);
+	tbb::concurrent_vector<float> V3API getFloats(std::string section, std::string segment);
+	tbb::concurrent_vector<bool> V3API getBools(std::string section, std::string segment);
+	tbb::concurrent_vector<std::string> V3API getStrings(std::string section, std::string segment);
 private:
 	std::string workingDir;
 	std::shared_ptr<EventLayer> events;

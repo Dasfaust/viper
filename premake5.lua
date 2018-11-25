@@ -41,6 +41,23 @@ project "Engine"
             ("{COPY} %{cfg.buildtarget.relpath} ../vendor/lib/lin64/")
         }
 
+	filter "system:windows"
+        cppdialect "C++17"
+        staticruntime "On"
+        systemversion "latest"
+
+		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.85.0/Source/lib" }
+
+		links { "vulkan-1", "glfw3dll" }
+
+        postbuildcommands
+        {
+            ("{COPY} %{cfg.buildtarget.relpath} ../vendor/lib/win64/")
+        }
+		
+		defines "V3_WIN64"
+		defines "V3_WIN64_DLL"
+
     filter "configurations:debug"
         defines "V3_DEBUG"
         symbols "On"
@@ -79,10 +96,13 @@ project "Client"
     links
     {
         "Engine",
-        "vulkan",
-        "glfw",
         "tbb"
     }
+
+	postbuildcommands
+	{
+		("{COPY} resources ../bin/" .. outputdir .. "/Client/resources")
+	}
 
     filter "system:linux"
         cppdialect "C++17"
@@ -93,6 +113,8 @@ project "Client"
 
         links
         {
+			"vulkan",
+			"glfw",
             "pthread"
         }
 
@@ -102,6 +124,26 @@ project "Client"
         {
             ("{COPY} ../vendor/lib/lin64 ../bin/" .. outputdir .. "/Client/")
         }
+
+	filter "system:windows"
+        cppdialect "C++17"
+        staticruntime "On"
+        systemversion "10.0.17763.0"
+		
+		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.85.0/Source/lib" }
+
+        links
+        {
+			"vulkan-1",
+			"glfw3dll"
+        }
+
+        postbuildcommands
+        {
+            ("{COPY} ../vendor/lib/win64/*.dll ../bin/" .. outputdir .. "/Client/")
+        }
+		
+		defines "V3_WIN64"
 
     filter "configurations:debug"
         defines "V3_DEBUG"

@@ -52,7 +52,7 @@ int main()
 {
 	info("Hello, world!");
 
-	V3 v3("/home/cody/v3/Client/resources");
+	V3 v3("resources");
 
 	v3.getView()->setTitle("AoA");
 

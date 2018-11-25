@@ -1,5 +1,6 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
+#include "Macros.h"
 #include <iostream>
 
 #define debug(x) Log::log(Log::DEBUG, x);
@@ -21,7 +22,7 @@ namespace Log
 		CRITICAL = 3
 	};
 
-	void queue(Level level, std::string message);
+	void V3API queue(Level level, std::string message);
 
 	template<typename ... Args>
 	inline void log(Level level, std::string message, Args ... args)
@@ -48,9 +49,9 @@ namespace Log
 		queue(level, buffer);
 	}
 
-	void poll();
+	void V3API poll();
 
-	void start();
+	void V3API start();
 
-	void stop();
+	void V3API stop();
 }

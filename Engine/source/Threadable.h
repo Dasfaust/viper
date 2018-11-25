@@ -1,4 +1,5 @@
 #pragma once
+#include "Macros.h"
 #include "Tickable.h"
 #include <atomic>
 #include <functional>

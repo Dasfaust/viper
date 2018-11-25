@@ -1,4 +1,5 @@
 #pragma once
+#include "../Macros.h"
 #include "../config/ConfigLayer.h"
 #include "../events/EventLayer.h"
 #include "../Tickable.h"
@@ -11,13 +12,13 @@
 class ViewLayer : public Tickable
 {
 public:
-	ViewLayer(std::shared_ptr<EventLayer> events, std::shared_ptr<ConfigLayer> config);
-	~ViewLayer();
+	V3API ViewLayer(std::shared_ptr<EventLayer> events, std::shared_ptr<ConfigLayer> config);
+	V3API ~ViewLayer();
 
-	bool closeRequested();
-	void setTitle(std::string title);
-	GLFWwindow* getWindow();
-	void tick() override;
+	bool V3API closeRequested();
+	void V3API setTitle(std::string title);
+	V3API GLFWwindow* getWindow();
+	void V3API tick() override;
 private:
 	std::shared_ptr<ConfigLayer> config;
 	std::shared_ptr<EventLayer> events;
