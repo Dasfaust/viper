@@ -11,8 +11,6 @@ public:
 	V3API V3(std::string workingDir);
 	V3API ~V3();
 
-	static std::string V3API getWorkingDirectory();
-
 	std::shared_ptr<EventLayer> V3API getEvents();
 	std::shared_ptr<ConfigLayer> V3API getConfig();
 	std::shared_ptr<ViewLayer> V3API getView();

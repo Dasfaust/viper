@@ -87,7 +87,7 @@ void ConfigLayer::load(std::string file, Type type)
 	std::string path;
 	if (type == TYPE_CONFIG)
 	{
-		path = workingDir + "/config/" + file + ".conf";
+		path = workingDir + FileUtils::getPathSeperator() + "config" + FileUtils::getPathSeperator() + file + ".conf";
 	}
 	else
 	{

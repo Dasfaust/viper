@@ -47,8 +47,10 @@ project "Engine"
         cppdialect "C++17"
         staticruntime "On"
         systemversion "latest"
+		
+		flags { "StaticRuntime", "MultiProcessorCompile" }
 
-		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.85.0/Source/lib" }
+		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.97.0/Source/lib" }
 
 		links { "vulkan-1", "glfw3dll" }
 
@@ -59,6 +61,9 @@ project "Engine"
 		
 		defines "V3_WIN64"
 		defines "V3_WIN64_DLL"
+		
+		filter "configurations:debug"
+			buildoptions "/MDd"
 
     filter "configurations:debug"
         defines "V3_DEBUG"
@@ -134,7 +139,9 @@ project "Client"
         staticruntime "On"
         systemversion "10.0.17763.0"
 		
-		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.85.0/Source/lib" }
+		flags { "StaticRuntime", "MultiProcessorCompile" }
+		
+		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.97.0/Source/lib" }
 
         links
         {
@@ -148,6 +155,9 @@ project "Client"
         }
 		
 		defines "V3_WIN64"
+		
+		filter "configurations:debug"
+			buildoptions "/MDd"
 
     filter "configurations:debug"
         defines "V3_DEBUG"

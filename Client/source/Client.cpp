@@ -53,7 +53,7 @@ int main()
 {
 	info("Hello, world!");
 
-	V3 v3(V3::getWorkingDirectory() + "/resources");
+	V3 v3(FileUtils::getWorkingDirectory() + FileUtils::getPathSeperator() + "resources");
 
 	v3.getView()->setTitle("AoA");
 

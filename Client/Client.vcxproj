@@ -82,14 +82,17 @@
       <AdditionalIncludeDirectories>..\Engine\source;..\vendor\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
+      <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/MDd %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>tbb.lib;vulkan-1.lib;glfw3dll.lib;tbb_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.85.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.97.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>IF EXIST resources\ (xcopy /Q /E /Y /I resources ..\bin\debug-windows-x86_64\Client\resources &gt; nul) ELSE (xcopy /Q /Y /I resources ..\bin\debug-windows-x86_64\Client\resources &gt; nul)
@@ -108,6 +111,7 @@ IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -115,7 +119,7 @@ IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>tbb.lib;vulkan-1.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.85.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.97.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>IF EXIST resources\ (xcopy /Q /E /Y /I resources ..\bin\release-windows-x86_64\Client\resources &gt; nul) ELSE (xcopy /Q /Y /I resources ..\bin\release-windows-x86_64\Client\resources &gt; nul)
@@ -134,6 +138,7 @@ IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -141,7 +146,7 @@ IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>tbb.lib;vulkan-1.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.85.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.97.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>IF EXIST resources\ (xcopy /Q /E /Y /I resources ..\bin\dist-windows-x86_64\Client\resources &gt; nul) ELSE (xcopy /Q /Y /I resources ..\bin\dist-windows-x86_64\Client\resources &gt; nul)

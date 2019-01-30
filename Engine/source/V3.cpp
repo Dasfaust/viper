@@ -1,29 +1,6 @@
 #include "V3.h"
 #include <memory>
 #include "Logger.h"
-#include <boost/algorithm/string.hpp>
-
-#ifdef V3_WIN64
-#include <windows.h>
-	std::string V3::getWorkingDirectory()
-	{
-		char result[MAX_PATH];
-  		std::string res(result, GetModuleFileName(NULL, result, MAX_PATH));
-		boost::replace_all(res, "Client\\", "");
-		return res;
-	}
-#elif defined V3_LIN64
-#include <unistd.h>
-#include <limits.h>
-	std::string V3::getWorkingDirectory()
-	{
-		char result[PATH_MAX];
-		ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-		std::string res(result, (count > 0) ? count : 0);
-		boost::replace_all(res, "Client/", "");
-		return res;
-	}
-#endif
 
 V3::V3(std::string workingDir)
 {

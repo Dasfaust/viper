@@ -32,6 +32,7 @@
     <ClInclude Include="source\view\ViewLayer.h">
       <Filter>view</Filter>
     </ClInclude>
+    <ClInclude Include="source\util\FileUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Logger.cpp" />

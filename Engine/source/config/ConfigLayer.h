@@ -1,7 +1,7 @@
 #pragma once
 #include "../Macros.h"
 #include "../events/EventLayer.h"
-#include <boost/algorithm/string.hpp>
+#include "../util/FileUtils.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>
 #include "tbb/concurrent_unordered_map.h"

@@ -46,7 +46,7 @@ namespace Log
 		std::string string = prefix + message;
 		char buffer[256];
 		std::sprintf(buffer, string.c_str(), args...);
-		queue(level, buffer);
+		queue(level, std::string(buffer));
 	}
 
 	void V3API poll();
