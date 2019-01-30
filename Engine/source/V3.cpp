@@ -18,7 +18,7 @@ V3::V3(std::string workingDir)
 	{
 		std::string message = "No valid rendering API selected.";
 		crit(message);
-		throw std::exception(message.c_str());
+		throw std::exception();
 	}
 
 	addToRenderTicks(view);

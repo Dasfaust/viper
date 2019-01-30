@@ -61,14 +61,13 @@ project "Engine"
 		
 		defines "V3_WIN64"
 		defines "V3_WIN64_DLL"
-		
-		filter "configurations:debug"
-			buildoptions "/MDd"
 
     filter "configurations:debug"
         defines "V3_DEBUG"
         symbols "On"
         optimize "Off"
+    filter { "system:windows", "configurations:debug" }
+        buildoptions "/MDd"
 
     filter "configurations:release"
         defines "V3_RELEASE"
@@ -122,7 +121,11 @@ project "Client"
         {
 			"vulkan",
 			"glfw",
-            "pthread"
+            "pthread",
+            "X11",
+            "GL",
+            "png",
+            "GLEW"
         }
 
         linkoptions { "-Wl,-rpath=\\$$ORIGIN/lin64" }
@@ -153,14 +156,13 @@ project "Client"
         }
 		
 		defines "V3_WIN64"
-		
-		filter "configurations:debug"
-			buildoptions "/MDd"
 
     filter "configurations:debug"
         defines "V3_DEBUG"
         symbols "On"
         links { "tbb_debug" }
+    filter { "system:windows", "configurations:debug" }
+        buildoptions "/MDd"
 
     filter "configurations:release"
         defines "V3_RELEASE"

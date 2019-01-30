@@ -22,7 +22,7 @@ ifeq ($(config),debug)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
   ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++17
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../bin/debug-linux-x86_64/Engine/libEngine.so -ltbb -lvulkan -lglfw -lpthread -ltbb_debug
+  LIBS += ../bin/debug-linux-x86_64/Engine/libEngine.so -ltbb -lvulkan -lglfw -lpthread -lX11 -lGL -lpng -lGLEW -ltbb_debug
   LDDEPS += ../bin/debug-linux-x86_64/Engine/libEngine.so
   ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/lin64 -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -Wl,-rpath=\$$ORIGIN/lin64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
@@ -52,7 +52,7 @@ ifeq ($(config),release)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
   ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++17
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../bin/release-linux-x86_64/Engine/libEngine.so -ltbb -lvulkan -lglfw -lpthread
+  LIBS += ../bin/release-linux-x86_64/Engine/libEngine.so -ltbb -lvulkan -lglfw -lpthread -lX11 -lGL -lpng -lGLEW
   LDDEPS += ../bin/release-linux-x86_64/Engine/libEngine.so
   ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/lin64 -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -s -Wl,-rpath=\$$ORIGIN/lin64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
@@ -82,7 +82,7 @@ ifeq ($(config),dist)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
   ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++17
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../bin/dist-linux-x86_64/Engine/libEngine.so -ltbb -lvulkan -lglfw -lpthread
+  LIBS += ../bin/dist-linux-x86_64/Engine/libEngine.so -ltbb -lvulkan -lglfw -lpthread -lX11 -lGL -lpng -lGLEW
   LDDEPS += ../bin/dist-linux-x86_64/Engine/libEngine.so
   ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/lin64 -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -s -Wl,-rpath=\$$ORIGIN/lin64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)

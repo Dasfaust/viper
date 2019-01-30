@@ -102,6 +102,7 @@ OBJECTS := \
 	$(OBJDIR)/V3.o \
 	$(OBJDIR)/ConfigLayer.o \
 	$(OBJDIR)/EventLayer.o \
+	$(OBJDIR)/PipelineOpenGL.o \
 	$(OBJDIR)/ViewLayer.o \
 
 RESOURCES := \
@@ -171,6 +172,9 @@ $(OBJDIR)/ConfigLayer.o: source/config/ConfigLayer.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/EventLayer.o: source/events/EventLayer.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/PipelineOpenGL.o: source/pipeline/PipelineOpenGL.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/ViewLayer.o: source/view/ViewLayer.cpp
