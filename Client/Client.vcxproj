@@ -91,12 +91,13 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>tbb.lib;vulkan-1.lib;glfw3dll.lib;tbb_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tbb.lib;vulkan-1.lib;glfw3dll.lib;glew32d.lib;opengl32.lib;tbb_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.97.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>IF EXIST resources\ (xcopy /Q /E /Y /I resources ..\bin\debug-windows-x86_64\Client\resources &gt; nul) ELSE (xcopy /Q /Y /I resources ..\bin\debug-windows-x86_64\Client\resources &gt; nul)
-IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll ..\bin\debug-windows-x86_64\Client &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.dll ..\bin\debug-windows-x86_64\Client &gt; nul)</Command>
+IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll ..\bin\debug-windows-x86_64\Client &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.dll ..\bin\debug-windows-x86_64\Client &gt; nul)
+IF EXIST ..\vendor\lib\win64\*.lib\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.lib ..\bin\debug-windows-x86_64\Client &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.lib ..\bin\debug-windows-x86_64\Client &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release|x64'">
@@ -118,12 +119,13 @@ IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>tbb.lib;vulkan-1.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tbb.lib;vulkan-1.lib;glfw3dll.lib;glew32d.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.97.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>IF EXIST resources\ (xcopy /Q /E /Y /I resources ..\bin\release-windows-x86_64\Client\resources &gt; nul) ELSE (xcopy /Q /Y /I resources ..\bin\release-windows-x86_64\Client\resources &gt; nul)
-IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll ..\bin\release-windows-x86_64\Client &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.dll ..\bin\release-windows-x86_64\Client &gt; nul)</Command>
+IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll ..\bin\release-windows-x86_64\Client &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.dll ..\bin\release-windows-x86_64\Client &gt; nul)
+IF EXIST ..\vendor\lib\win64\*.lib\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.lib ..\bin\release-windows-x86_64\Client &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.lib ..\bin\release-windows-x86_64\Client &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='dist|x64'">
@@ -145,12 +147,13 @@ IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>tbb.lib;vulkan-1.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tbb.lib;vulkan-1.lib;glfw3dll.lib;glew32d.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.97.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>IF EXIST resources\ (xcopy /Q /E /Y /I resources ..\bin\dist-windows-x86_64\Client\resources &gt; nul) ELSE (xcopy /Q /Y /I resources ..\bin\dist-windows-x86_64\Client\resources &gt; nul)
-IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll ..\bin\dist-windows-x86_64\Client &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.dll ..\bin\dist-windows-x86_64\Client &gt; nul)</Command>
+IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll ..\bin\dist-windows-x86_64\Client &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.dll ..\bin\dist-windows-x86_64\Client &gt; nul)
+IF EXIST ..\vendor\lib\win64\*.lib\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.lib ..\bin\dist-windows-x86_64\Client &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.lib ..\bin\dist-windows-x86_64\Client &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

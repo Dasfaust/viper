@@ -52,7 +52,7 @@ project "Engine"
 
 		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.97.0/Source/lib" }
 
-		links { "vulkan-1", "glfw3dll" }
+		links { "vulkan-1", "glfw3dll", "glew32d", "opengl32" }
 
         postbuildcommands
         {
@@ -144,14 +144,12 @@ project "Client"
 		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.97.0/Source/lib" }
 
         links
-        {
-			"vulkan-1",
-			"glfw3dll"
-        }
+        { "vulkan-1", "glfw3dll", "glew32d", "opengl32" }
 
         postbuildcommands
         {
-            ("{COPY} ../vendor/lib/win64/*.dll ../bin/" .. outputdir .. "/Client/")
+            ("{COPY} ../vendor/lib/win64/*.dll ../bin/" .. outputdir .. "/Client/"),
+			("{COPY} ../vendor/lib/win64/*.lib ../bin/" .. outputdir .. "/Client/")
         }
 		
 		defines "V3_WIN64"

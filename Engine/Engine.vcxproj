@@ -91,7 +91,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>vulkan-1.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3dll.lib;glew32d.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.97.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>..\bin\debug-windows-x86_64\Engine\Engine.lib</ImportLibrary>
     </Link>
@@ -118,7 +118,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>vulkan-1.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3dll.lib;glew32d.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.97.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>..\bin\release-windows-x86_64\Engine\Engine.lib</ImportLibrary>
     </Link>
@@ -145,7 +145,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>vulkan-1.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3dll.lib;glew32d.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\vendor\lib\win64;C:\VulkanSDK\1.1.97.0\Source\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>..\bin\dist-windows-x86_64\Engine\Engine.lib</ImportLibrary>
     </Link>
@@ -156,18 +156,21 @@
   <ItemGroup>
     <ClInclude Include="source\Logger.h" />
     <ClInclude Include="source\Macros.h" />
+    <ClInclude Include="source\pipeline\PipelineOpenGL.h" />
     <ClInclude Include="source\Threadable.h" />
     <ClInclude Include="source\Tickable.h" />
-    <ClInclude Include="source\util\FileUtils.h" />
     <ClInclude Include="source\V3.h" />
     <ClInclude Include="source\config\ConfigLayer.h" />
     <ClInclude Include="source\events\ConfigChangedEvent.h" />
     <ClInclude Include="source\events\EventLayer.h" />
     <ClInclude Include="source\events\EventListener.h" />
+    <ClInclude Include="source\pipeline\Pipeline.h" />
+    <ClInclude Include="source\util\FileUtils.h" />
     <ClInclude Include="source\view\ViewLayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Logger.cpp" />
+    <ClCompile Include="source\pipeline\PipelineOpenGL.cpp" />
     <ClCompile Include="source\V3.cpp" />
     <ClCompile Include="source\config\ConfigLayer.cpp" />
     <ClCompile Include="source\events\EventLayer.cpp" />

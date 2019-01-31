@@ -7,11 +7,14 @@ ViewLayer::ViewLayer(std::shared_ptr<EventLayer> events, std::shared_ptr<ConfigL
 	this->events = events;
 
 	glfwInit();
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	//glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	
 	auto size = config->getInts("engine", "clientSize");
 	window = glfwCreateWindow(size[0], size[1], "Window", nullptr, nullptr);
+	glfwMakeContextCurrent(window);
+
+	glewInit();
 }
 
 ViewLayer::~ViewLayer()

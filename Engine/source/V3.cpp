@@ -1,6 +1,7 @@
 #include "V3.h"
 #include <memory>
 #include "Logger.h"
+#include "pipeline/PipelineOpenGL.h"
 
 V3::V3(std::string workingDir)
 {
@@ -8,6 +9,17 @@ V3::V3(std::string workingDir)
 	events = std::make_shared<EventLayer>();
 	config = std::make_shared<ConfigLayer>(workingDir, events);
 	view = std::make_shared<ViewLayer>(events, config);
+
+	if (config->getStrings("engine", "renderer")[0] == "opengl")
+	{
+		pipeline = std::make_shared<PipelineOpenGL>(events, config, view);
+	}
+	else
+	{
+		std::string message = "No valid rendering API selected.";
+		crit(message);
+		throw std::exception(message.c_str());
+	}
 
 	addToRenderTicks(view);
 }
@@ -32,14 +44,23 @@ std::shared_ptr<ViewLayer> V3::getView()
 	return view;
 }
 
+std::shared_ptr<Pipeline> V3::getPipeline()
+{
+	return pipeline;
+}
+
 void V3::start()
 {
 	while (!view->closeRequested())
 	{
+		view->tick();
+
 		for (auto tickable : renderTicks)
 		{
 			tickable->tick();
 		}
+
+		pipeline->tick();
 	}
 
 	info("Shutting down, goodbye.");

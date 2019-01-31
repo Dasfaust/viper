@@ -6,6 +6,7 @@
 
 #ifndef V3_GLFW_INCLUDE
 //#define GLFW_INCLUDE_VULKAN
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #endif
 
