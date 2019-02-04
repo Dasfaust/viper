@@ -12,19 +12,19 @@ endif
 
 ifeq ($(config),debug)
   RESCOMP = windres
-  TARGETDIR = ../bin/debug-windows-x86_64/Client
-  TARGET = $(TARGETDIR)/Client.exe
-  OBJDIR = ../build/debug-windows-x86_64/Client
-  DEFINES += -DV3_WIN64 -DV3_DEBUG
+  TARGETDIR = ../bin/debug-linux-x86_64/Client
+  TARGET = $(TARGETDIR)/Client
+  OBJDIR = ../build/debug-linux-x86_64/Client
+  DEFINES += -DV3_LIN64 -DV3_DEBUG
   INCLUDES += -I../Engine/source -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
-  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g /MDd
-  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++17 /MDd
+  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
+  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++17
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../bin/debug-windows-x86_64/Engine/Engine.lib -ltbb -lvulkan-1 -lglfw3dll -lglew32d -lopengl32 -ltbb_debug
-  LDDEPS += ../bin/debug-windows-x86_64/Engine/Engine.lib
-  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/win64 -LC:/VulkanSDK/1.1.97.0/Source/lib -L/usr/lib64 -m64
+  LIBS += ../bin/debug-linux-x86_64/Engine/libEngine.so -ltbb -lvulkan -lglfw -lpthread -lX11 -lGL -lpng -lGLEW -ltbb_debug
+  LDDEPS += ../bin/debug-linux-x86_64/Engine/libEngine.so
+  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/lin64 -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -Wl,-rpath=\$$ORIGIN/lin64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -32,9 +32,8 @@ ifeq ($(config),debug)
   endef
   define POSTBUILDCMDS
 	@echo Running postbuild commands
-	IF EXIST resources\ (xcopy /Q /E /Y /I resources ..\bin\debug-windows-x86_64\Client\resources > nul) ELSE (xcopy /Q /Y /I resources ..\bin\debug-windows-x86_64\Client\resources > nul)
-	IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll ..\bin\debug-windows-x86_64\Client > nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.dll ..\bin\debug-windows-x86_64\Client > nul)
-	IF EXIST ..\vendor\lib\win64\*.lib\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.lib ..\bin\debug-windows-x86_64\Client > nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.lib ..\bin\debug-windows-x86_64\Client > nul)
+	cp -rf resources ../bin/debug-linux-x86_64/Client/resources
+	cp -rf ../vendor/lib/lin64 ../bin/debug-linux-x86_64/Client
   endef
 all: prebuild prelink $(TARGET)
 	@:
@@ -43,19 +42,19 @@ endif
 
 ifeq ($(config),release)
   RESCOMP = windres
-  TARGETDIR = ../bin/release-windows-x86_64/Client
-  TARGET = $(TARGETDIR)/Client.exe
-  OBJDIR = ../build/release-windows-x86_64/Client
-  DEFINES += -DV3_WIN64 -DV3_RELEASE
+  TARGETDIR = ../bin/release-linux-x86_64/Client
+  TARGET = $(TARGETDIR)/Client
+  OBJDIR = ../build/release-linux-x86_64/Client
+  DEFINES += -DV3_LIN64 -DV3_RELEASE
   INCLUDES += -I../Engine/source -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
   ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++17
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../bin/release-windows-x86_64/Engine/Engine.lib -ltbb -lvulkan-1 -lglfw3dll -lglew32d -lopengl32
-  LDDEPS += ../bin/release-windows-x86_64/Engine/Engine.lib
-  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/win64 -LC:/VulkanSDK/1.1.97.0/Source/lib -L/usr/lib64 -m64 -s
+  LIBS += ../bin/release-linux-x86_64/Engine/libEngine.so -ltbb -lvulkan -lglfw -lpthread -lX11 -lGL -lpng -lGLEW
+  LDDEPS += ../bin/release-linux-x86_64/Engine/libEngine.so
+  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/lin64 -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -s -Wl,-rpath=\$$ORIGIN/lin64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -63,9 +62,8 @@ ifeq ($(config),release)
   endef
   define POSTBUILDCMDS
 	@echo Running postbuild commands
-	IF EXIST resources\ (xcopy /Q /E /Y /I resources ..\bin\release-windows-x86_64\Client\resources > nul) ELSE (xcopy /Q /Y /I resources ..\bin\release-windows-x86_64\Client\resources > nul)
-	IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll ..\bin\release-windows-x86_64\Client > nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.dll ..\bin\release-windows-x86_64\Client > nul)
-	IF EXIST ..\vendor\lib\win64\*.lib\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.lib ..\bin\release-windows-x86_64\Client > nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.lib ..\bin\release-windows-x86_64\Client > nul)
+	cp -rf resources ../bin/release-linux-x86_64/Client/resources
+	cp -rf ../vendor/lib/lin64 ../bin/release-linux-x86_64/Client
   endef
 all: prebuild prelink $(TARGET)
 	@:
@@ -74,19 +72,19 @@ endif
 
 ifeq ($(config),dist)
   RESCOMP = windres
-  TARGETDIR = ../bin/dist-windows-x86_64/Client
-  TARGET = $(TARGETDIR)/Client.exe
-  OBJDIR = ../build/dist-windows-x86_64/Client
-  DEFINES += -DV3_WIN64 -DV3_DIST
+  TARGETDIR = ../bin/dist-linux-x86_64/Client
+  TARGET = $(TARGETDIR)/Client
+  OBJDIR = ../build/dist-linux-x86_64/Client
+  DEFINES += -DV3_LIN64 -DV3_DIST
   INCLUDES += -I../Engine/source -I../vendor/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
   ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++17
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../bin/dist-windows-x86_64/Engine/Engine.lib -ltbb -lvulkan-1 -lglfw3dll -lglew32d -lopengl32
-  LDDEPS += ../bin/dist-windows-x86_64/Engine/Engine.lib
-  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/win64 -LC:/VulkanSDK/1.1.97.0/Source/lib -L/usr/lib64 -m64 -s
+  LIBS += ../bin/dist-linux-x86_64/Engine/libEngine.so -ltbb -lvulkan -lglfw -lpthread -lX11 -lGL -lpng -lGLEW
+  LDDEPS += ../bin/dist-linux-x86_64/Engine/libEngine.so
+  ALL_LDFLAGS += $(LDFLAGS) -L../vendor/lib/lin64 -L/usr/lib64 -Wl,-rpath,'$$ORIGIN/../Engine' -m64 -s -Wl,-rpath=\$$ORIGIN/lin64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -94,9 +92,8 @@ ifeq ($(config),dist)
   endef
   define POSTBUILDCMDS
 	@echo Running postbuild commands
-	IF EXIST resources\ (xcopy /Q /E /Y /I resources ..\bin\dist-windows-x86_64\Client\resources > nul) ELSE (xcopy /Q /Y /I resources ..\bin\dist-windows-x86_64\Client\resources > nul)
-	IF EXIST ..\vendor\lib\win64\*.dll\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.dll ..\bin\dist-windows-x86_64\Client > nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.dll ..\bin\dist-windows-x86_64\Client > nul)
-	IF EXIST ..\vendor\lib\win64\*.lib\ (xcopy /Q /E /Y /I ..\vendor\lib\win64\*.lib ..\bin\dist-windows-x86_64\Client > nul) ELSE (xcopy /Q /Y /I ..\vendor\lib\win64\*.lib ..\bin\dist-windows-x86_64\Client > nul)
+	cp -rf resources ../bin/dist-linux-x86_64/Client/resources
+	cp -rf ../vendor/lib/lin64 ../bin/dist-linux-x86_64/Client
   endef
 all: prebuild prelink $(TARGET)
 	@:

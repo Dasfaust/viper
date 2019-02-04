@@ -146,7 +146,6 @@ public:
 		}
 		
 		accumulator += pollTime;
-        V3::getInstance()->getPipeline()->alpha = accumulator / deltaTime;
 		while(accumulator >= deltaTime)
 		{
 			for (int i = 0; i < 10; i++)
@@ -176,7 +175,7 @@ int main()
     EXT_DELTA_TIME_LOAD();
 
 	Simulation simulation;
-    //simulation.start();
+    simulation.start();
 
     V3::getInstance()->start();
 
