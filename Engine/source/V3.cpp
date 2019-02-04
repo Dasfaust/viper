@@ -2,17 +2,28 @@
 #include <memory>
 #include "Logger.h"
 #include "pipeline/PipelineOpenGL.h"
+#include "util/Time.h"
+#include "util/FileUtils.h"
 
-V3::V3(std::string workingDir)
+V3::V3()
 {
 	Log::start();
 	events = std::make_shared<EventLayer>();
-	config = std::make_shared<ConfigLayer>(workingDir, events);
-	view = std::make_shared<ViewLayer>(events, config);
+	config = std::make_shared<ConfigLayer>(FileUtils::getWorkingDirectory() + FileUtils::getPathSeperator() + "resources", events);
+	tickables = std::make_shared<TickMap>();
+	extensions = std::make_shared<ExtensionMap>();
 
 	if (config->getStrings("engine", "renderer")[0] == "opengl")
 	{
-		pipeline = std::make_shared<PipelineOpenGL>(events, config, view);
+		view = std::make_shared<ViewLayer>(events, config);
+		pipeline = std::make_shared<PipelineOpenGL>(config, view, events);
+		addTickable(view);
+		debugWindowTitle = "V3: OpenGL";
+		view->setTitle(debugWindowTitle);
+	}
+	else if (config->getStrings("engine", "renderer")[0] == "software")
+	{
+		// init olc
 	}
 	else
 	{
@@ -20,8 +31,6 @@ V3::V3(std::string workingDir)
 		crit(message);
 		throw std::exception();
 	}
-
-	addToRenderTicks(view);
 }
 
 V3::~V3()
@@ -53,27 +62,64 @@ void V3::start()
 {
 	while (!view->closeRequested())
 	{
-		view->tick();
-
-		for (auto tickable : renderTicks)
+		for (std::pair<unsigned int, std::shared_ptr<EngineExtension>> element : (*extensions))
 		{
-			tickable->tick();
+			element.second->onTickBegin();
 		}
 
+		for (std::pair<unsigned int, std::shared_ptr<Tickable>> element : (*tickables))
+		{
+			element.second->tick();
+		}
+
+		for (std::pair<unsigned int, std::shared_ptr<EngineExtension>> element : (*extensions))
+		{
+			element.second->onPreRender();
+		}
+
+		view->tick();
+
+		pipeline->deltaTime = deltaTime;
 		pipeline->tick();
+
+		for (std::pair<unsigned int, std::shared_ptr<EngineExtension>> element : (*extensions))
+		{
+			element.second->onPostRender();
+			
+			if (element.second->intervalAccumulator >= element.second->interval)
+			{
+				element.second->intervalAccumulator = 0.0;
+				element.second->tick();
+			}
+			else
+			{
+				element.second->intervalAccumulator += deltaTime;
+				element.second->tickWait();
+			}
+		}
+
+		for (std::pair<unsigned int, std::shared_ptr<EngineExtension>> element : (*extensions))
+		{
+			element.second->onTickEnd();
+		}
 	}
 
 	info("Shutting down, goodbye.");
-	renderTicks.empty();
-	logicTicks.empty();
+	tickables->empty();
+	extensions->empty();
 }
 
-void V3::addToLogicTicks(std::shared_ptr<Tickable> object)
+unsigned int V3::addTickable(std::shared_ptr<Tickable> object)
 {
-	logicTicks.push_back(object);
+	unsigned int id = tickables->size();
+	(*tickables)[id] = object;
+	return id;
 }
 
-void V3::addToRenderTicks(std::shared_ptr<Tickable> object)
+unsigned int V3::addExtension(std::shared_ptr<EngineExtension> object, double interval)
 {
-	renderTicks.push_back(object);
+	object->interval = interval;
+	unsigned int id = extensions->size();
+	(*extensions)[id] = object;
+	return id;
 }

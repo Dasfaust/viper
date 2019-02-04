@@ -11,6 +11,15 @@
             "problemMatcher": []
         },
         {
+            "label": "clean",
+            "type": "shell",
+            "command": "",
+            "args": [
+                "rm -r build && rm -r bin"
+            ],
+            "problemMatcher": []
+        },
+        {
             "label": "build (debug)",
             "type": "shell",
             "command": "make",

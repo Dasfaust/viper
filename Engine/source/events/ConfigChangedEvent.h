@@ -28,13 +28,13 @@ namespace Event
 	class OnConfigChanged
 	{
 	public:
-		std::vector<std::shared_ptr<EventListener<OnConfigChangedData>>> listeners;
+		tbb::concurrent_vector<std::shared_ptr<EventListener<OnConfigChangedData>>> listeners;
 
 		OnConfigChanged() { }
 
 		void addListener(std::shared_ptr<EventListener<OnConfigChangedData>> listener)
 		{
-			listeners.emplace_back(listener);
+			listeners.push_back(listener);
 		}
 
 		void triggerEvent(std::weak_ptr<OnConfigChangedData> data)

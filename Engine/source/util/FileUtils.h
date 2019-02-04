@@ -5,6 +5,9 @@
 
 namespace FileUtils
 {
+	inline std::string getPathSeperator();
+	inline std::string getWorkingDirectory();
+
 #ifdef V3_WIN64
 #include <windows.h>
 	inline std::string getPathSeperator()

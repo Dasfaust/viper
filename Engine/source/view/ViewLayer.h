@@ -13,6 +13,9 @@
 class ViewLayer : public Tickable
 {
 public:
+	float viewWidth = 0.0f;
+	float viewHeight = 0.0f;
+
 	V3API ViewLayer(std::shared_ptr<EventLayer> events, std::shared_ptr<ConfigLayer> config);
 	V3API ~ViewLayer();
 

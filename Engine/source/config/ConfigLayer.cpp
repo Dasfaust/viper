@@ -40,9 +40,9 @@ ConfigLayer::Variant ConfigLayer::parse(std::string string)
 {
 	Variant var;
 
-	boost::replace_all(string, "\t", "");
-	boost::replace_all(string, "\n", "");
-	boost::replace_all(string, " ", "");
+	//boost::replace_all(string, "\t", "");
+	//boost::replace_all(string, "\n", "");
+	boost::trim(string);
 
 	//debugf("Config: parsing serialized value: [%s]", string.c_str());
 
@@ -141,10 +141,21 @@ void ConfigLayer::load(std::string file, Type type)
 							value += "=";
 						}
 					}
+
 					boost::replace_all(value, "]", "");
+					boost::trim(value);
+
+					if (boost::starts_with(value, "<"))
+					{
+						if (!boost::ends_with(value, ">"))
+						{
+							multi += line;
+							continue;
+						}
+					}
 
 					std::vector<std::string> vals;
-					if (!boost::starts_with(value, "\"") && value.find(",") != std::string::npos)
+					if (!boost::starts_with(value, "<") && value.find(",") != std::string::npos)
 					{
 						std::vector<std::string> vsplit = splitString(value, ',');
 						for (std::string str : vsplit)
@@ -162,9 +173,10 @@ void ConfigLayer::load(std::string file, Type type)
 						std::vector<Variant> vars;
 						for (std::string val : vals)
 						{
-							boost::trim(val);
-							boost::replace_all(val, "\t", "");
-							boost::replace_all(val, "\n", "");
+							boost::replace_first(val, "<", "");
+							boost::replace_last(val, ">", "");
+							//boost::replace_all(val, "\t", "");
+							//boost::replace_all(val, "\n", "");
 							if (val.size() > 0)
 							{
 								vars.push_back(parse(val));
@@ -221,7 +233,7 @@ void ConfigLayer::load(std::string file, Type type)
 				}
 				else
 				{
-					multi += line;
+					multi += line + "\n";
 				}
 			}
 		}

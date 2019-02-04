@@ -9,8 +9,14 @@ ViewLayer::ViewLayer(std::shared_ptr<EventLayer> events, std::shared_ptr<ConfigL
 	glfwInit();
 	//glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
 	auto size = config->getInts("engine", "clientSize");
+	viewWidth = size[0];
+	viewHeight = size[1];
 	window = glfwCreateWindow(size[0], size[1], "Window", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
