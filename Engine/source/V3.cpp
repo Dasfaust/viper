@@ -5,9 +5,23 @@
 #include "util/Time.h"
 #include "util/FileUtils.h"
 
+std::shared_ptr<V3> V3::instance = 0;
+
+std::shared_ptr<V3> V3::getInstance()
+{
+	if (instance == 0)
+	{
+		instance = std::make_shared<V3Container>();
+	}
+
+	return instance;
+}
+
 V3::V3()
 {
+	std::cout << "V3 init" << std::endl;
 	Log::start();
+	debug("test");
 	events = std::make_shared<EventLayer>();
 	config = std::make_shared<ConfigLayer>(FileUtils::getWorkingDirectory() + FileUtils::getPathSeperator() + "resources", events);
 	tickables = std::make_shared<TickMap>();

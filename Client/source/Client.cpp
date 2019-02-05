@@ -47,7 +47,7 @@ public:
         );
         //V3::getInstance().getPipeline()->camera->moveEvent->addListener(listener);
 
-        renderId = V3::getInstance().getPipeline()->makeRenderCommand();
+        renderId = V3::getInstance()->getPipeline()->makeRenderCommand();
         /*auto command = V3::getInstance().getPipeline()->getRenderCommand(renderId);
         for (glm::vec3 location : cubePositions)
         {
@@ -82,7 +82,8 @@ public:
 
     void onStart() override
     {
-        tpsTarget = V3::getInstance().getConfig()->getInts("engine", "worldTickTarget")[0];
+        //tpsTarget = V3::getInstance()->getConfig()->getInts("engine", "worldTickTarget")[0];
+		tpsTarget = 30;
         lastPoll = Time::now();
         deltaTime = 1000.0 / tpsTarget;
         debugf("Sim: TPS target: %d", tpsTarget);
@@ -107,7 +108,7 @@ public:
                 state._rotation = state.rotation;
                 state.scale = glm::vec3(1.0f, 0.0f, 0.0f);
 
-                auto command = V3::getInstance().getPipeline()->getRenderCommand(renderId);
+                auto command = V3::getInstance()->getPipeline()->getRenderCommand(renderId);
                 objectId = command->addObject(
                     "flat",
                     "",
@@ -145,7 +146,7 @@ public:
 		}
 		
 		accumulator += pollTime;
-        V3::getInstance().getPipeline()->alpha = accumulator / deltaTime;
+        V3::getInstance()->getPipeline()->alpha = accumulator / deltaTime;
 		while(accumulator >= deltaTime)
 		{
 			for (int i = 0; i < 10; i++)
@@ -165,20 +166,19 @@ public:
             tickCount += 1;
 		}
 
-        V3::getInstance().getPipeline()->alpha = accumulator / deltaTime;
-        debugf("alpha: %0.4f", V3::getInstance().getPipeline()->alpha.load());
+        V3::getInstance()->getPipeline()->alpha = accumulator / deltaTime;
+        //debugf("alpha: %0.4f", V3::getInstance()->getPipeline()->alpha.load());
     };
 };
 
 int main()
 {
-
     EXT_DELTA_TIME_LOAD();
 
-    Simulation simulation;
-    simulation.start();
+	Simulation simulation;
+    //simulation.start();
 
-    V3::getInstance().start();
+    V3::getInstance()->start();
 
     simulation.stop();
 

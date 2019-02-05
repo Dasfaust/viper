@@ -7,6 +7,9 @@
     <Filter Include="events">
       <UniqueIdentifier>{5A9D08FC-463F-33D2-2FFA-46261B3BBA22}</UniqueIdentifier>
     </Filter>
+    <Filter Include="extensions">
+      <UniqueIdentifier>{9579B0DD-8131-F22A-EA38-CB86D60F8D1B}</UniqueIdentifier>
+    </Filter>
     <Filter Include="pipeline">
       <UniqueIdentifier>{1BCFC577-079C-2083-30B5-0E2B1CE15511}</UniqueIdentifier>
     </Filter>
@@ -16,8 +19,12 @@
     <Filter Include="view">
       <UniqueIdentifier>{60909F7C-4CC7-A00D-F5B3-8610E1C91C0F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="world">
+      <UniqueIdentifier>{6D35A710-D949-CFC1-A2CB-72210E9FCBF2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\EngineExtension.h" />
     <ClInclude Include="source\Logger.h" />
     <ClInclude Include="source\Macros.h" />
     <ClInclude Include="source\Threadable.h" />
@@ -35,16 +42,30 @@
     <ClInclude Include="source\events\EventListener.h">
       <Filter>events</Filter>
     </ClInclude>
+    <ClInclude Include="source\extensions\ExtDeltaTime.h">
+      <Filter>extensions</Filter>
+    </ClInclude>
     <ClInclude Include="source\pipeline\Pipeline.h">
+      <Filter>pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipeline\PipelineOpenGL.h">
+      <Filter>pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipeline\RenderCommand.h">
       <Filter>pipeline</Filter>
     </ClInclude>
     <ClInclude Include="source\util\FileUtils.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="source\util\Time.h">
+      <Filter>util</Filter>
+    </ClInclude>
     <ClInclude Include="source\view\ViewLayer.h">
       <Filter>view</Filter>
     </ClInclude>
-    <ClInclude Include="source\pipeline\PipelineOpenGL.h" />
+    <ClInclude Include="source\world\World.h">
+      <Filter>world</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\Logger.cpp" />
@@ -55,9 +76,11 @@
     <ClCompile Include="source\events\EventLayer.cpp">
       <Filter>events</Filter>
     </ClCompile>
+    <ClCompile Include="source\pipeline\PipelineOpenGL.cpp">
+      <Filter>pipeline</Filter>
+    </ClCompile>
     <ClCompile Include="source\view\ViewLayer.cpp">
       <Filter>view</Filter>
     </ClCompile>
-    <ClCompile Include="source\pipeline\PipelineOpenGL.cpp" />
   </ItemGroup>
 </Project>

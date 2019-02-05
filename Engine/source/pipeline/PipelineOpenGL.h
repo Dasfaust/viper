@@ -47,13 +47,13 @@ public:
 
 	void V3API tick() override;
 
-	void createShader(std::string name) override;
-	void meshToMemory(std::string name) override;
-	void modelToMemory(std::string name) override;
-	void meshToVRAM(std::string name) override;
-	void modelToVRAM(std::string name) override;
-	void textureToMemory(std::string name) override;
-	void textureToVRAM(std::string name) override;
-	unsigned int makeRenderCommand() override;
+	void V3API createShader(std::string name) override;
+	void V3API meshToMemory(std::string name) override;
+	void V3API modelToMemory(std::string name) override;
+	void V3API meshToVRAM(std::string name) override;
+	void V3API modelToVRAM(std::string name) override;
+	void V3API textureToMemory(std::string name) override;
+	void V3API textureToVRAM(std::string name) override;
+	unsigned int V3API makeRenderCommand() override;
 private:
 };

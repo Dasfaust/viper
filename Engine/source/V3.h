@@ -6,18 +6,10 @@
 #include "pipeline/Pipeline.h"
 #include "EngineExtension.h"
 
-#define v3i() V3::getInstance();
-
 class V3
 {
-protected:
-	V3();
 public:
-	static V3& getInstance()
-	{
-		static V3 instance;
-		return instance;
-	}
+	static V3API std::shared_ptr<V3> getInstance();
 
 	V3API ~V3();
 
@@ -40,6 +32,9 @@ public:
 	unsigned int V3API addExtension(std::shared_ptr<EngineExtension> object, double interval = 0.0);
 	void V3API removeTickable(unsigned int id);
 	void V3API removeExtension(unsigned int id);
+protected:
+	static std::shared_ptr<V3> instance;
+	V3();
 private:
 	std::shared_ptr<EventLayer> events;
 	std::shared_ptr<ConfigLayer> config;
@@ -48,4 +43,12 @@ private:
 
 	std::shared_ptr<TickMap> tickables;
 	std::shared_ptr<ExtensionMap> extensions;
+};
+
+struct V3Container : public V3
+{
+	V3Container() : V3()
+	{
+	
+	}
 };

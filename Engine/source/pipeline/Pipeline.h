@@ -29,7 +29,7 @@ public:
 		std::string name;
 		int id = -1;
 
-		virtual void setUniform(std::string name, UniformValue value) = 0;
+		V3API virtual void setUniform(std::string name, UniformValue value) = 0;
 	};
 
 	class Mesh

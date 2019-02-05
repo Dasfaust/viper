@@ -20,6 +20,7 @@ void Log::queue(Level level, std::string message)
 
 void Log::poll()
 {
+	std::cout << "poll outside" << std::endl;
 	while (running)
 	{
 		if (!messages->empty())
@@ -35,6 +36,7 @@ void Log::poll()
 
 void Log::start()
 {
+	std::cout << "log start" << std::endl;
 	running = true;
 	worker = std::thread(poll);
 }

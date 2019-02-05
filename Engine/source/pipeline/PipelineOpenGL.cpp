@@ -27,7 +27,9 @@ namespace OGLMouseHandling
 {
 	static float fieldOfView = 90.0f;
 	static bool initialized = false;
-	static float lastX = V3::getInstance().getView()->viewHeight / 2.0f, lastY = V3::getInstance().getView()->viewWidth / 2.0f, yaw = 0.0f, pitch = 0.0f;
+	static float lastX = 0.0f, lastY = 0.0f, yaw = 0.0f, pitch = 0.0f;
+	// Works on g++ but not msvc??? idk
+	//static float lastX = V3::getInstance()->getView()->viewHeight / 2.0f, lastY = V3::getInstance()->getView()->viewWidth / 2.0f, yaw = 0.0f, pitch = 0.0f;
 	static glm::vec3 front = glm::vec3(0.0f);
 
 	static void mouseCallback(GLFWwindow* window, double x, double y)
@@ -56,7 +58,7 @@ namespace OGLMouseHandling
 		front.y = sin(glm::radians(pitch));
 		front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
 
-		V3::getInstance().getPipeline()->camera->cameraFront = glm::normalize(front);
+		V3::getInstance()->getPipeline()->camera->cameraFront = glm::normalize(front);
 	}
 
 	static void mouseScrollCallback(GLFWwindow* window, double x, double y)
