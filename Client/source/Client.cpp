@@ -82,8 +82,12 @@ public:
 
     void onStart() override
     {
-        //tpsTarget = V3::getInstance()->getConfig()->getInts("engine", "worldTickTarget")[0];
-		tpsTarget = 30;
+        #ifdef V3_WIN64
+            tpsTarget = 30;
+        #else
+            // TODO: doesn't work in msvc. ???
+            tpsTarget = V3::getInstance()->getConfig()->getInts("engine", "worldTickTarget")[0];
+        #endif
         lastPoll = Time::now();
         deltaTime = 1000.0 / tpsTarget;
         debugf("Sim: TPS target: %d", tpsTarget);
@@ -150,22 +154,23 @@ public:
 		{
 			for (int i = 0; i < 10; i++)
             {
-                /*RenderCommand::WorldState state = V3::getInstance().getPipeline()->getRenderCommand(renderId)->getObject(objects[i])->instances[0];
+                RenderCommand::WorldState state = V3::getInstance()->getPipeline()->getRenderCommand(renderId)->getObject(objects[i])->instances[0];
                 state._worldCoordinates = state.worldCoordinates;
                 // state.worldCoordinates.x += deltaTime * (0.0005f);
 
                 state._rotation = state.rotation;
-                state.rotation = (V3::getInstance().elapsedTime) / 1000.0f * glm::radians(20.0f * i);
+                state.rotation = (V3::getInstance()->elapsedTime) / 1000.0f * glm::radians(20.0f * i);
 
                 state.scale = glm::vec3(0.5f, 1.0f, 0.0f);
-                V3::getInstance().getPipeline()->getRenderCommand(renderId)->getObject(objects[i])->instances[0] = state;*/
+                V3::getInstance()->getPipeline()->getRenderCommand(renderId)->getObject(objects[i])->instances[0] = state;
             }
 
             accumulator -= deltaTime;
             tickCount += 1;
 		}
 
-        V3::getInstance()->getPipeline()->alpha = accumulator / deltaTime;
+        double alpha =  accumulator / deltaTime;
+        V3::getInstance()->getPipeline()->alpha.compare_exchange_strong(alpha, alpha);
         //debugf("alpha: %0.4f", V3::getInstance()->getPipeline()->alpha.load());
     };
 };
