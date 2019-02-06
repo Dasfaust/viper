@@ -1,9 +1,12 @@
 #pragma once
 #include "../Tickable.h"
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 class RenderCommand : public Tickable
 {
@@ -12,11 +15,15 @@ public:
     {
         glm::vec3 _worldCoordinates = glm::vec3();
         glm::vec3 _scale = glm::vec3(1.0f);
-        float _rotation = 0.0f;
+        float _rotationX = 0.0f;
+        float _rotationY = 0.0f;
+        float _rotationZ = 0.0f;
 
         glm::vec3 worldCoordinates = glm::vec3();
         glm::vec3 scale = glm::vec3(1.0f);
-        float rotation = 0.0f;
+        float rotationX = 0.0f;
+        float rotationY = 0.0f;
+        float rotationZ = 0.0f;
     };
 
     unsigned int index = 0;

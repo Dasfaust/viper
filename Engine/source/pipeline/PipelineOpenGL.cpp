@@ -207,11 +207,17 @@ public:
 					glm::vec3 coords = state.worldCoordinates * ((float)pipeline->alpha) + state._worldCoordinates * ((float)(1.0f - pipeline->alpha));
 					model = glm::translate(model, coords);
 
-					float rotation = state.rotation * ((float)pipeline->alpha) + state._rotation * ((float)(1.0f - pipeline->alpha));
-					model = glm::rotate(model, rotation, state.scale);
+					float rotX = state.rotationX * ((float)pipeline->alpha) + state._rotationX * ((float)(1.0f - pipeline->alpha));
+					float rotY = state.rotationY * ((float)pipeline->alpha) + state._rotationY * ((float)(1.0f - pipeline->alpha));
+					float rotZ = state.rotationZ * ((float)pipeline->alpha) + state._rotationZ * ((float)(1.0f - pipeline->alpha));
+					model = glm::rotate(model, glm::radians(rotX), glm::vec3(1.0f, 0.0f, 0.0f));
+					model = glm::rotate(model, glm::radians(rotY), glm::vec3(0.0f, 1.0f, 0.0f));
+					model = glm::rotate(model, glm::radians(rotZ), glm::vec3(0.0f, 0.0f, 1.0f));
+
+					glm::vec3 scale = state.scale * ((float)pipeline->alpha) + state._scale * ((float)(1.0f - pipeline->alpha));
+					model = glm::scale(model, scale);
+
 					shader->setUniform("model", model);
-
-
 					shader->setUniform("view", pipeline->camera->view);
 					shader->setUniform("projection", pipeline->projMatrix);
 					_(glBindVertexArray(mesh->vaBuffer));
@@ -222,7 +228,7 @@ public:
 					}
 					else
 					{
-						_(glBindBuffer(GL_ARRAY_BUFFER, mesh->indexBuffer));
+						_(glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer));
 						_(glDrawArrays(GL_TRIANGLES, 0, 36));
 					}
 					

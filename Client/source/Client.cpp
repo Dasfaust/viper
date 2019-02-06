@@ -76,8 +76,8 @@ public:
         int y = 0;
     };
 
-    int worldHeight = 8;
-    int worldWidth = 8;
+    int worldHeight = 16;
+    int worldWidth = 16;
     std::vector<Chunk> chunks;
 
     void onStart() override
@@ -106,17 +106,18 @@ public:
                 chunks[chunk.id] = chunk;
 
                 RenderCommand::WorldState state = { };
-                state.worldCoordinates = glm::vec3((float)chunk.x, 0.0f, (float)chunk.y);
+                state.worldCoordinates = glm::vec3((float)chunk.x, 1.0f, (float)chunk.y);
                 state._worldCoordinates = state.worldCoordinates;
-                state.rotation = -55.0f;
-                state._rotation = state.rotation;
-                state.scale = glm::vec3(1.0f, 0.0f, 0.0f);
+                state.rotationX = 90.0f;
+                state._rotationX = state.rotationX;
+                state.scale = glm::vec3(1.0f, 1.0f, 1.0f);
+                state._scale = state.scale;
 
                 auto command = V3::getInstance()->getPipeline()->getRenderCommand(renderId);
                 objectId = command->addObject(
                     "flat",
                     "",
-                    "container",
+                    "grass",
                     0,
                     "basic",
                     { state }
@@ -152,16 +153,16 @@ public:
 		accumulator += pollTime;
 		while(accumulator >= deltaTime)
 		{
-			for (int i = 0; i < 10; i++)
+			for (int i = 1; i < 0; i++)
             {
                 RenderCommand::WorldState state = V3::getInstance()->getPipeline()->getRenderCommand(renderId)->getObject(objects[i])->instances[0];
                 state._worldCoordinates = state.worldCoordinates;
                 // state.worldCoordinates.x += deltaTime * (0.0005f);
 
-                state._rotation = state.rotation;
-                state.rotation = (V3::getInstance()->elapsedTime) / 1000.0f * glm::radians(20.0f * i);
+                state._rotationX = state.rotationX;
+                state.rotationX += 0.00001f; /*V3::getInstance()->elapsedTime / 1000.0f * glm::radians(20.0f * i);*/
+                debugf("%0.04f", state.rotationX);
 
-                state.scale = glm::vec3(0.5f, 1.0f, 0.0f);
                 V3::getInstance()->getPipeline()->getRenderCommand(renderId)->getObject(objects[i])->instances[0] = state;
             }
 
