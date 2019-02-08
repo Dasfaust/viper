@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/Engine/source/**",
                 "${workspaceFolder}/Client/source/**",
-                "${workspaceFolder}/vendor/include/**"
+                "${workspaceFolder}/vendor/include/**",
+                "${workspaceFolder}/submodules/**"
             ],
             "defines": [],
             "compilerPath": "/bin/clang",

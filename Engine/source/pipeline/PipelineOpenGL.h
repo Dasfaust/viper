@@ -40,8 +40,6 @@ public:
 	std::shared_ptr<ViewLayer> view;
 	std::shared_ptr<EventLayer> events;
 
-	glm::mat4 projMatrix;
-
 	V3API PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_ptr<ViewLayer> view, std::shared_ptr<EventLayer> events);
 	V3API ~PipelineOpenGL() override;
 

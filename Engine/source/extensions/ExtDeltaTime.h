@@ -24,7 +24,7 @@ public:
     void tick() override
     {
         V3::getInstance()->framesPerSecond = frameAccumulator;
-        V3::getInstance()->getView()->setTitle(V3::getInstance()->debugWindowTitle + " - " + std::to_string(frameAccumulator) + " FPS, " + std::to_string(V3::getInstance()->deltaTime) + "ms");
+        //V3::getInstance()->getView()->setTitle(V3::getInstance()->debugWindowTitle + " - " + std::to_string(frameAccumulator) + " FPS, " + std::to_string(V3::getInstance()->deltaTime) + "ms");
         frameAccumulator = 0;
     };
 

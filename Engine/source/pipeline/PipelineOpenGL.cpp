@@ -3,6 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 #include "../util/FileUtils.h"
+#include "imgui_impl_opengl3.h"
 
 #define ASSERT(x) if (!(x)) throw std::runtime_error("Fatal error in rendering loop");
 #define _(x) poglClearError(); x; ASSERT(poglCheckError(#x, __FILE__, __LINE__));
@@ -23,48 +24,13 @@ static bool poglCheckError(const char* function, const char* file, int line)
 	return true;
 }
 
-namespace OGLMouseHandling
+// TODO abstract away
+static void charCallback(GLFWwindow* window, unsigned int c)
 {
-	static float fieldOfView = 90.0f;
-	static bool initialized = false;
-	static float lastX = 0.0f, lastY = 0.0f, yaw = 0.0f, pitch = 0.0f;
-	// Works on g++ but not msvc??? idk
-	//static float lastX = V3::getInstance()->getView()->viewHeight / 2.0f, lastY = V3::getInstance()->getView()->viewWidth / 2.0f, yaw = 0.0f, pitch = 0.0f;
-	static glm::vec3 front = glm::vec3(0.0f);
-
-	static void mouseCallback(GLFWwindow* window, double x, double y)
+	ImGuiIO& io = ImGui::GetIO();
+	if (c > 0 && c < 0x10000)
 	{
-		if (!initialized)
-		{
-			lastX = x;
-			lastY = y;
-			initialized = true;
-		}
-
-		float xOffset = x - lastX;
-		float yOffset = lastY - y; // y starts at bottom
-		lastX = x;
-		lastY = y;
-
-		float sensitivity = 0.15f;
-		xOffset *= sensitivity;
-		yOffset *= sensitivity;
-
-		pitch += yOffset;
-		pitch = glm::clamp(-89.0f, 89.0f, pitch);
-		yaw += xOffset;
-
-		front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
-		front.y = sin(glm::radians(pitch));
-		front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
-
-		V3::getInstance()->getPipeline()->camera->cameraFront = glm::normalize(front);
-	}
-
-	static void mouseScrollCallback(GLFWwindow* window, double x, double y)
-	{
-		fieldOfView -= y;
-		fieldOfView = glm::clamp(1.0f, 90.0f, fieldOfView);
+		io.AddInputCharacter((unsigned short)c);
 	}
 }
 
@@ -130,11 +96,15 @@ void PipelineOpenGL::OGLShader::setUniform(std::string name, Pipeline::Shader::U
 	}
 }
 
-class BasicRenderCommand : public RenderCommand
+class BasicRenderer : public RenderCommand
 {
 public:
-	PipelineOpenGL *pipeline;
-	BasicRenderCommand(PipelineOpenGL *pipeline) : pipeline(pipeline) { };
+	PipelineOpenGL* pipeline;
+
+	BasicRenderer(PipelineOpenGL* pipeline)
+	{
+		this->pipeline = pipeline;
+	}
 
 	void onObjectAdd(unsigned int id) override
 	{
@@ -176,10 +146,56 @@ public:
 		}
 	};
 
+	void rotateCamera()
+	{
+		/*float xOffset = V3::getInstance()->getPipeline()->camera->mouseViewport.x - V3::getInstance()->getPipeline()->camera->_mouseViewport.x;
+		float yOffset = V3::getInstance()->getPipeline()->camera->_mouseViewport.y - V3::getInstance()->getPipeline()->camera->mouseViewport.y; // y starts at bottom
+		V3::getInstance()->getPipeline()->camera->_mouseViewport.x = V3::getInstance()->getPipeline()->camera->mouseViewport.x;
+		V3::getInstance()->getPipeline()->camera->_mouseViewport.y = V3::getInstance()->getPipeline()->camera->mouseViewport.y;
+
+		float sensitivity = 0.15f;
+		xOffset *= sensitivity;
+		yOffset *= sensitivity;*/
+
+		auto camera = V3::getInstance()->getPipeline()->camera;
+		if (camera->mouseViewport != camera->_mouseViewport)
+		{
+			float xOffset = V3::getInstance()->getPipeline()->camera->mouseViewport.x * 0.001f;
+			float yOffset = V3::getInstance()->getPipeline()->camera->mouseViewport.y * 0.001f;
+
+			camera->_mouseViewport = camera->mouseViewport;
+
+			V3::getInstance()->getPipeline()->camera->pitch += yOffset;
+			V3::getInstance()->getPipeline()->camera->yaw += xOffset;
+		}
+	}
+
 	void tick() override
 	{
-		pipeline->projMatrix = glm::perspective(glm::radians(OGLMouseHandling::fieldOfView), pipeline->view->viewWidth / pipeline->view->viewHeight, 0.1f, 100.0f);
+		if ((*pipeline->view->buttonStates)[2].pressed)
+		{
+			rotateCamera();
+		}
 
+		if (pipeline->camera->position.y != pipeline->camera->distance)
+		{
+			float lerp = pipeline->camera->distance * ((float)pipeline->deltaTime / 1000.0f * pipeline->camera->zoomSpeed) + pipeline->camera->position.y * ((float)(1.0f - pipeline->deltaTime / 1000.0f * pipeline->camera->zoomSpeed));
+			pipeline->camera->position.y = lerp;
+		}
+
+		if (pipeline->camera->floorPosition != pipeline->camera->floorPositionTarget)
+		{
+			glm::vec3 lerp = pipeline->camera->floorPositionTarget * ((float)pipeline->deltaTime / 1000.0f * pipeline->camera->moveSpeed) + pipeline->camera->floorPosition * ((float)(1.0f - pipeline->deltaTime / 1000.0f * pipeline->camera->moveSpeed));
+			pipeline->camera->floorPosition = lerp;
+			pipeline->camera->position.x = lerp.x;
+			pipeline->camera->position.z = lerp.z;
+		}
+
+
+		pipeline->camera->projection = glm::perspective(glm::radians(pipeline->camera->fov), pipeline->view->viewWidth / pipeline->view->viewHeight, 0.1f, 1000.0f);
+		pipeline->camera->update();
+
+		glm::vec3 coords;
 		for(auto&& kv : objects)
 		{
 			auto object = kv.second;
@@ -199,12 +215,13 @@ public:
 			if (!object->mesh.empty())
 			{
 				// TODO proper instancing
+				
 				for (auto state : object->instances)
 				{
 					auto mesh = pipeline->loadedMeshes[object->mesh];
 					glm::mat4 model = glm::mat4(1.0f);
-
-					glm::vec3 coords = state.worldCoordinates * ((float)pipeline->alpha) + state._worldCoordinates * ((float)(1.0f - pipeline->alpha));
+					
+					coords = state.worldCoordinates * ((float)pipeline->alpha) + state._worldCoordinates * ((float)(1.0f - pipeline->alpha));
 					model = glm::translate(model, coords);
 
 					float rotX = state.rotationX * ((float)pipeline->alpha) + state._rotationX * ((float)(1.0f - pipeline->alpha));
@@ -219,7 +236,8 @@ public:
 
 					shader->setUniform("model", model);
 					shader->setUniform("view", pipeline->camera->view);
-					shader->setUniform("projection", pipeline->projMatrix);
+					shader->setUniform("projection", pipeline->camera->projection);
+
 					_(glBindVertexArray(mesh->vaBuffer));
 					if (mesh->indices.size() >= 3)
 					{
@@ -240,9 +258,11 @@ public:
 
 unsigned int PipelineOpenGL::makeRenderCommand()
 {
-	auto command = std::make_shared<BasicRenderCommand>(this);
+	auto command = std::make_shared<BasicRenderer>(this);
 
-	return addRenderCommand(command);
+	int id = addRenderCommand(command);
+
+	return id;
 }
 
 PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_ptr<ViewLayer> view, std::shared_ptr<EventLayer> events)
@@ -267,9 +287,65 @@ PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_
 
 	_(glEnable(GL_DEPTH_TEST));
 
-	glfwSetInputMode(view->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(view->getWindow(), OGLMouseHandling::mouseCallback);
-	glfwSetScrollCallback(view->getWindow(), OGLMouseHandling::mouseScrollCallback);
+	camera->viewportSize = glm::vec2(view->viewWidth, view->viewHeight);
+
+	camera->mouseListener = std::make_shared<EventListener<ViewEvents::OnMouseEventData>>(
+		[](ViewEvents::OnMouseEventData e)
+		{
+			if (!e.cancelled)
+			{
+				V3::getInstance()->getPipeline()->camera->mouseViewport = e.coordinates;
+
+				ImGuiIO& io = ImGui::GetIO();
+				io.MouseWheel += e.scroll.y;
+				io.MouseWheelH += e.scroll.x;
+				io.MousePos = ImVec2(e.coordinates.x, e.coordinates.y);
+
+				float zoom = e.scroll.y * V3::getInstance()->getPipeline()->camera->zoomSensitivity;
+				V3::getInstance()->getPipeline()->camera->distance = glm::clamp(V3::getInstance()->getPipeline()->camera->distance - zoom, V3::getInstance()->getPipeline()->camera->minZoom, V3::getInstance()->getPipeline()->camera->maxZoom);
+
+				for (auto&& kv : e.buttons)
+				{
+					io.MouseDown[kv.first] = kv.second.pressed;
+					//debugf("Mouse button state: %d: %d, %d", kv.first, kv.second.pressed, kv.second.released);
+				}
+
+				// event data doesn't work here. idk
+				if ((*V3::getInstance()->getView()->buttonStates)[2].pressed)
+				{
+					glfwSetInputMode(V3::getInstance()->getView()->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+				}
+				else
+				{
+					glfwSetInputMode(V3::getInstance()->getView()->getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				}
+			}
+		}
+	);
+	view->mouseEvent->addListener(camera->mouseListener);
+
+	camera->keyListener = std::make_shared<EventListener<ViewEvents::OnKeyEventData>>(
+		[](ViewEvents::OnKeyEventData e)
+		{
+			for (auto&& kv : e.buttons)
+			{
+				//debugf("Key state: %d: %d, %d", kv.first, kv.second.pressed, kv.second.released);
+
+				ImGuiIO& io = ImGui::GetIO();
+				if (kv.second.pressed)
+				{
+					io.KeysDown[kv.first] = true;
+				}
+				else
+				{
+					io.KeysDown[kv.first] = false;
+				}
+			}
+		}
+	);
+	view->keyEvent->addListener(camera->keyListener);
+
+	glfwSetCharCallback(view->getWindow(), charCallback);
 }
 
 PipelineOpenGL::~PipelineOpenGL()
@@ -279,29 +355,29 @@ PipelineOpenGL::~PipelineOpenGL()
 
 void PipelineOpenGL::tick()
 {
-	float cameraSpeed = 0.05f;
 	if (glfwGetKey(view->getWindow(), GLFW_KEY_W) == GLFW_PRESS)
 	{
-		camera->cameraPos += cameraSpeed * camera->cameraFront;
-		camera->moveEvent->triggerEvent(camera);
+		camera->moveForward(deltaTime);
+		//camera->moveEvent->triggerEvent(camera);
 	}
 	if (glfwGetKey(view->getWindow(), GLFW_KEY_S) == GLFW_PRESS)
 	{
-		camera->cameraPos -= cameraSpeed * camera->cameraFront;
-		camera->moveEvent->triggerEvent(camera);
+		camera->moveBack(deltaTime);
+		//camera->moveEvent->triggerEvent(camera);
 	}
 	if (glfwGetKey(view->getWindow(), GLFW_KEY_A) == GLFW_PRESS)
 	{
-		camera->cameraPos -= glm::normalize(glm::cross(camera->cameraFront, camera->cameraUp)) * cameraSpeed;
-		camera->moveEvent->triggerEvent(camera);
+		camera->moveLeft(deltaTime);
+		//camera->moveEvent->triggerEvent(camera);
 	}
 	if (glfwGetKey(view->getWindow(), GLFW_KEY_D) == GLFW_PRESS)
 	{
-		camera->cameraPos += glm::normalize(glm::cross(camera->cameraFront, camera->cameraUp)) * cameraSpeed;
-		camera->moveEvent->triggerEvent(camera);
+		camera->moveRight(deltaTime);
+		//camera->moveEvent->triggerEvent(camera);
 	}
 
 	camera->update();
+	camera->pollEvents();
 
 	for(auto command : (*renderCommands))
 	{

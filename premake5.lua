@@ -10,6 +10,8 @@ workspace "V3"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+include "submodules/imgui"
+
 project "Engine"
     location "Engine"
     kind "SharedLib"
@@ -28,7 +30,8 @@ project "Engine"
 
     includedirs
     {
-        "vendor/include"
+        "vendor/include",
+        "submodules/imgui"
     }
 
     filter "system:linux"
@@ -96,13 +99,15 @@ project "Client"
     includedirs
     {
         "Engine/source",
-        "vendor/include"
+        "vendor/include",
+        "submodules/imgui"
     }
 
     links
     {
         "Engine",
-        "tbb"
+        "tbb",
+        "imgui"
     }
 
 	postbuildcommands

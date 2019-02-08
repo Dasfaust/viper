@@ -14,6 +14,7 @@ public:
     struct WorldState
     {
         glm::vec3 _worldCoordinates = glm::vec3();
+        glm::vec3 interpCoordinates = glm::vec3();
         glm::vec3 _scale = glm::vec3(1.0f);
         float _rotationX = 0.0f;
         float _rotationY = 0.0f;
