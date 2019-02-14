@@ -3,7 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 #include "../util/FileUtils.h"
-#include "imgui_impl_opengl3.h"
+//#include "imgui_impl_opengl3.h"
 
 #define ASSERT(x) if (!(x)) throw std::runtime_error("Fatal error in rendering loop");
 #define _(x) poglClearError(); x; ASSERT(poglCheckError(#x, __FILE__, __LINE__));
@@ -27,11 +27,11 @@ static bool poglCheckError(const char* function, const char* file, int line)
 // TODO abstract away
 static void charCallback(GLFWwindow* window, unsigned int c)
 {
-	ImGuiIO& io = ImGui::GetIO();
+	/*ImGuiIO& io = ImGui::GetIO();
 	if (c > 0 && c < 0x10000)
 	{
 		io.AddInputCharacter((unsigned short)c);
-	}
+	}*/
 }
 
 void PipelineOpenGL::OGLShader::setUniform(std::string name, Pipeline::Shader::UniformValue value)
@@ -296,17 +296,17 @@ PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_
 			{
 				V3::getInstance()->getPipeline()->camera->mouseViewport = e.coordinates;
 
-				ImGuiIO& io = ImGui::GetIO();
-				io.MouseWheel += e.scroll.y;
-				io.MouseWheelH += e.scroll.x;
-				io.MousePos = ImVec2(e.coordinates.x, e.coordinates.y);
+				//ImGuiIO& io = ImGui::GetIO();
+				//io.MouseWheel += e.scroll.y;
+				//io.MouseWheelH += e.scroll.x;
+				//io.MousePos = ImVec2(e.coordinates.x, e.coordinates.y);
 
 				float zoom = e.scroll.y * V3::getInstance()->getPipeline()->camera->zoomSensitivity;
 				V3::getInstance()->getPipeline()->camera->distance = glm::clamp(V3::getInstance()->getPipeline()->camera->distance - zoom, V3::getInstance()->getPipeline()->camera->minZoom, V3::getInstance()->getPipeline()->camera->maxZoom);
 
 				for (auto&& kv : e.buttons)
 				{
-					io.MouseDown[kv.first] = kv.second.pressed;
+					//io.MouseDown[kv.first] = kv.second.pressed;
 					//debugf("Mouse button state: %d: %d, %d", kv.first, kv.second.pressed, kv.second.released);
 				}
 
@@ -331,7 +331,7 @@ PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_
 			{
 				//debugf("Key state: %d: %d, %d", kv.first, kv.second.pressed, kv.second.released);
 
-				ImGuiIO& io = ImGui::GetIO();
+				/*ImGuiIO& io = ImGui::GetIO();
 				if (kv.second.pressed)
 				{
 					io.KeysDown[kv.first] = true;
@@ -339,7 +339,7 @@ PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_
 				else
 				{
 					io.KeysDown[kv.first] = false;
-				}
+				}*/
 			}
 		}
 	);

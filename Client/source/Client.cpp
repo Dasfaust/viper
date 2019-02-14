@@ -7,10 +7,10 @@
 #include "util/Time.h"
 #include <unordered_set>
 #include "imgui.h"
-#include "pipeline/imgui_impl_opengl3.h"
+//#include "pipeline/imgui_impl_opengl3.h"
 #include "world/World.h"
 
-class ImGuiRenderer : public RenderCommand
+/*class ImGuiRenderer : public RenderCommand
 {
 public:
 	bool show = true;
@@ -80,21 +80,10 @@ public:
         ImGui::Text("Pos/prev pos: %.2f, %.2f, %.2f | %.2f, %.2f, %.2f", state.worldCoordinates.x, state.worldCoordinates.y, state.worldCoordinates.z, state._worldCoordinates.x, state._worldCoordinates.y, state._worldCoordinates.z);
         ImGui::End();
 
-        /*ImGui::SetNextWindowSize(ImVec2(350, 250));
-        if (!ImGui::Begin("Simulation State", &show))
-        {
-            // Early out if the window is collapsed, as an optimization.
-            ImGui::End();
-            return;
-        }
-        ImGui::Text("Poll time: %d, %.2fms", V3::getInstance()->framesPerSecond, V3::getInstance()->deltaTime);
-        ImGui::End();*/
-
-
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
-};
+};*/
 
 class Simulation : public Threadable
 {
@@ -164,8 +153,8 @@ public:
             debugf("%d", objectId);
         }
 
-        auto imgui = std::make_shared<ImGuiRenderer>();
-        V3::getInstance()->getPipeline()->addRenderCommand(imgui);
+        //auto imgui = std::make_shared<ImGuiRenderer>();
+        //V3::getInstance()->getPipeline()->addRenderCommand(imgui);
     };
 
     struct Chunk

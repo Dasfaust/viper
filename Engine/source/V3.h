@@ -5,7 +5,6 @@
 #include "events/EventLayer.h"
 #include "pipeline/Pipeline.h"
 #include "EngineExtension.h"
-#include "math/Math.h"
 
 class V3
 {
