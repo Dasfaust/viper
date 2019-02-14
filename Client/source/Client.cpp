@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include "imgui.h"
 #include "pipeline/imgui_impl_opengl3.h"
+#include "world/World.h"
 
 class ImGuiRenderer : public RenderCommand
 {
@@ -297,7 +298,8 @@ public:
 
 int main()
 {   
-    EXT_DELTA_TIME_LOAD();
+    EXT_DELTA_TIME_ADD();
+    EXT_WORLD_ADD();
 
 	Simulation simulation;
     simulation.start();

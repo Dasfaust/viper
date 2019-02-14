@@ -2,7 +2,7 @@
 #include "V3.h"
 #include "util/Time.h"
 
-#define EXT_DELTA_TIME_LOAD() V3::getInstance()->addExtension(std::make_shared<ExtDeltaTime>(), 1000.0);
+#define EXT_DELTA_TIME_ADD() V3::getInstance()->addExtension(std::make_shared<ExtDeltaTime>(), 1000.0);
 
 class ExtDeltaTime : public EngineExtension
 {
@@ -21,7 +21,7 @@ public:
         V3::getInstance()->elapsedTime = V3::getInstance()->elapsedTime + V3::getInstance()->deltaTime;
     };
 
-    void tick() override
+    void onTick() override
     {
         V3::getInstance()->framesPerSecond = frameAccumulator;
         //V3::getInstance()->getView()->setTitle(V3::getInstance()->debugWindowTitle + " - " + std::to_string(frameAccumulator) + " FPS, " + std::to_string(V3::getInstance()->deltaTime) + "ms");

@@ -8,6 +8,13 @@ namespace Math
     {
         T x, y, z;
 
+        Vec3()
+        {
+            this->x = 0.0f;
+            this->y = 0.0f;
+            this->z = 0.0f;
+        }
+
         Vec3(T x, T y, T z)
         {
             this->x = x;

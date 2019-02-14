@@ -9,6 +9,12 @@ namespace Math
     {
         T x, y;
 
+        Vec2()
+        {
+            this->x = 0.0f;
+            this->y = 0.0f;
+        }
+
         Vec2(T x, T y)
         {
             this->x = x;

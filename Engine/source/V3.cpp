@@ -4,7 +4,6 @@
 #include "pipeline/PipelineOpenGL.h"
 #include "util/Time.h"
 #include "util/FileUtils.h"
-//#include "world/World.h"
 
 std::shared_ptr<V3> V3::instance = 0;
 
@@ -22,7 +21,6 @@ V3::V3()
 {
 	std::cout << "V3 init" << std::endl;
 	Log::start();
-	debug("test");
 	events = std::make_shared<EventLayer>();
 	config = std::make_shared<ConfigLayer>(FileUtils::getWorkingDirectory() + FileUtils::getPathSeperator() + "resources", events);
 	tickables = std::make_shared<TickMap>();
@@ -75,6 +73,11 @@ std::shared_ptr<Pipeline> V3::getPipeline()
 
 void V3::start()
 {
+	for (std::pair<unsigned int, std::shared_ptr<EngineExtension>> element : (*extensions))
+	{
+		element.second->onStartup();
+	}
+
 	while (!view->closeRequested())
 	{
 		for (std::pair<unsigned int, std::shared_ptr<EngineExtension>> element : (*extensions))
@@ -104,7 +107,7 @@ void V3::start()
 			if (element.second->intervalAccumulator >= element.second->interval)
 			{
 				element.second->intervalAccumulator = 0.0;
-				element.second->tick();
+				element.second->onTick();
 			}
 			else
 			{

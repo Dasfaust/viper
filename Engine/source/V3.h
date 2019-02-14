@@ -48,8 +48,5 @@ private:
 
 struct V3Container : public V3
 {
-	V3Container() : V3()
-	{
-	
-	}
+	V3Container() : V3() { }
 };

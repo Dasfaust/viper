@@ -62,10 +62,10 @@ namespace Math
             float ar = w / h;
             float zr = zn - zf;
 
-            mat[0] = { 1.0f / (fh * ar),                  0.0f, 0.0f,          0.0f };
-            mat[1] = {             0.0f,             1.0f / fh, 0.0f,          0.0f };
-            mat[2] = {             0.0f, 0.0f, (-zn - zf) / zr, 2.0f * zf * zn / zr };
-            mat[3] = {             0.0f, 0.0f,            1.0f,                0.0f };
+            p.mat[0] = { 1.0f / (fh * ar),                  0.0f, 0.0f,          0.0f };
+            p.mat[1] = {             0.0f,             1.0f / fh, 0.0f,          0.0f };
+            p.mat[2] = {             0.0f, 0.0f, (-zn - zf) / zr, 2.0f * zf * zn / zr };
+            p.mat[3] = {             0.0f, 0.0f,            1.0f,                0.0f };
 
             return m(p);
         }
