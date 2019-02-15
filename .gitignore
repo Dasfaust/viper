@@ -266,3 +266,4 @@ Makefile*
 vendor/
 *.sln
 *.vcxproj.*
+*.vcxproj
