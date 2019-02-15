@@ -217,9 +217,9 @@ public:
 		};
 	};
 
-	inline unsigned int addRenderCommand(std::shared_ptr<RenderCommand> command)
+	inline int addRenderCommand(std::shared_ptr<RenderCommand> command)
 	{
-		unsigned int id = renderCommands->size();
+		int id = (int)renderCommands->size();
 		(*renderCommands)[id] = command;
 		return id;
 	};

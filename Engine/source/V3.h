@@ -28,8 +28,8 @@ public:
 
 	void V3API start();
 
-	unsigned int V3API addTickable(std::shared_ptr<Tickable> object);
-	unsigned int V3API addExtension(std::shared_ptr<EngineExtension> object, double interval = 0.0);
+	int V3API addTickable(std::shared_ptr<Tickable> object);
+	int V3API addExtension(std::shared_ptr<EngineExtension> object, double interval = 0.0);
 	void V3API removeTickable(unsigned int id);
 	void V3API removeExtension(unsigned int id);
 protected:

@@ -55,7 +55,7 @@ void World::tick()
     if (stepPerformanceAccumulator >= 1000.0)
     {
         stepsPerSecond = stepCount;
-        stepPerformanceAccumulator = 0.0;
+        stepPerformanceAccumulator = 0;
         stepCount = 0;
     }
     else 

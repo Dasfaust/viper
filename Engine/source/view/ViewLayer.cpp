@@ -85,8 +85,8 @@ void ViewEvents::mouseScrollCallback(GLFWwindow* window, double x, double y)
 	data->scroll = glm::vec2(x, y);
 	data->coordinates = (*V3::getInstance()->getView()->mouseCoords);
 	data->buttons = (*checkButtonStates());
-	V3::getInstance()->getView()->scrollCoords->x = x;
-	V3::getInstance()->getView()->scrollCoords->y = y;
+	V3::getInstance()->getView()->scrollCoords->x = (float)x;
+	V3::getInstance()->getView()->scrollCoords->y = (float)y;
 	V3::getInstance()->getView()->mouseEvent->triggerEvent(data);
 }
 
@@ -104,8 +104,8 @@ ViewLayer::ViewLayer(std::shared_ptr<EventLayer> events, std::shared_ptr<ConfigL
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
 	auto size = config->getInts("engine", "clientSize");
-	viewWidth = size[0];
-	viewHeight = size[1];
+	viewWidth = (float)size[0];
+	viewHeight = (float)size[1];
 	window = glfwCreateWindow(size[0], size[1], "Window", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 

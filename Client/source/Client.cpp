@@ -96,9 +96,9 @@ public:
     double deltaTime = 0.0;
     double accumulator = 0.0;
 
-    double tickCount = 0.0;
+    int tickCount = 0;
     double perfAccumulator = 0.0;
-    std::atomic<double> ticksPerSecond = 0.0;
+    int ticksPerSecond = 0;
 
     unsigned int renderId;
     unsigned int terrainId;
@@ -233,13 +233,14 @@ public:
 			ticksPerSecond = tickCount;
 			//debugf("Sim: TPS = %.2f", ticksPerSecond.load());
 			perfAccumulator = 0.0;
-			tickCount = 0.0;
+			tickCount = 0;
+			debugf("tps: %d", ticksPerSecond);
 		}
 		else
 		{
 			perfAccumulator += pollTime;
 		}
-		
+
 		accumulator += pollTime;
 		while(accumulator >= deltaTime)
 		{
@@ -279,9 +280,12 @@ public:
             tickCount += 1;
 		}
 
-        double alpha =  accumulator / deltaTime;
-        V3::getInstance()->getPipeline()->alpha.compare_exchange_strong(alpha, alpha);
-        //debugf("alpha: %0.4f", V3::getInstance()->getPipeline()->alpha.load());
+		double alpha = accumulator / deltaTime;
+		double target = alpha;
+		V3::getInstance()->getPipeline()->alpha.compare_exchange_weak(target, alpha);
+		//V3::getInstance()->getPipeline()->alpha = alpha;
+		//V3::getInstance()->getPipeline()->alpha.store(alpha);
+		//debugf("alpha: %0.4f", alpha);
     };
 };
 
@@ -297,5 +301,5 @@ int main()
 
     simulation.stop();
 
-    return 0;
+    return EXIT_SUCCESS;
 }

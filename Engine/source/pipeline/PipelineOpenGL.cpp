@@ -195,6 +195,8 @@ public:
 		pipeline->camera->projection = glm::perspective(glm::radians(pipeline->camera->fov), pipeline->view->viewWidth / pipeline->view->viewHeight, 0.1f, 1000.0f);
 		pipeline->camera->update();
 
+		//debugf("a: %0.2f", pipeline->alpha.load());
+
 		glm::vec3 coords;
 		for(auto&& kv : objects)
 		{
@@ -242,14 +244,13 @@ public:
 					if (mesh->indices.size() >= 3)
 					{
 						_(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer));
-						_(glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, nullptr));
+						_(glDrawElements(GL_TRIANGLES, (GLsizei)mesh->indices.size(), GL_UNSIGNED_INT, nullptr));
 					}
 					else
 					{
 						_(glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer));
 						_(glDrawArrays(GL_TRIANGLES, 0, 36));
 					}
-					
 				}
 			}
 		}

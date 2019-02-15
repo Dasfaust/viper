@@ -36,7 +36,7 @@ private:
     double stepTime;
     double deltaTime;
     double stepAccumulator;
-    int stepPerformanceAccumulator;
+    double stepPerformanceAccumulator;
 };
 
 struct WorldContainer : public World

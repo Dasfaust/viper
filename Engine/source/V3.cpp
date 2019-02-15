@@ -120,24 +120,25 @@ void V3::start()
 		{
 			element.second->onTickEnd();
 		}
+
 	}
 
 	info("Shutting down, goodbye.");
-	tickables->empty();
-	extensions->empty();
+	static_cast<void>(tickables->empty());
+	static_cast<void>(extensions->empty());
 }
 
-unsigned int V3::addTickable(std::shared_ptr<Tickable> object)
+int V3::addTickable(std::shared_ptr<Tickable> object)
 {
-	unsigned int id = tickables->size();
+	int id = (int)tickables->size();
 	(*tickables)[id] = object;
 	return id;
 }
 
-unsigned int V3::addExtension(std::shared_ptr<EngineExtension> object, double interval)
+int V3::addExtension(std::shared_ptr<EngineExtension> object, double interval)
 {
 	object->interval = interval;
-	unsigned int id = extensions->size();
+	int id = (int)extensions->size();
 	(*extensions)[id] = object;
 	return id;
 }
