@@ -1,3 +1,6 @@
 [submodule "submodules/imgui"]
 	path = submodules/imgui
 	url = https://github.com/Dasfaust/imgui.git
+[submodule "submodules/gladogl"]
+	path = submodules/gladogl
+	url = https://github.com/Dasfaust/gladogl.git
