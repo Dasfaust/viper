@@ -144,7 +144,7 @@ public:
             objectId = command->addObject(
                 "cube",
                 "",
-                "lewd",
+                "container",
                 0,
                 "basic",
                 { state }
@@ -234,7 +234,7 @@ public:
 			//debugf("Sim: TPS = %.2f", ticksPerSecond.load());
 			perfAccumulator = 0.0;
 			tickCount = 0;
-			debugf("tps: %d", ticksPerSecond);
+			//debugf("tps: %d", ticksPerSecond);
 		}
 		else
 		{
