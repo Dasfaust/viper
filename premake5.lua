@@ -11,6 +11,7 @@ workspace "V3"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 include "submodules/imgui"
+include "submodules/gladogl"
 
 project "Engine"
     location "Engine"
@@ -31,7 +32,8 @@ project "Engine"
     includedirs
     {
         "vendor/include",
-        "submodules/imgui"
+        "submodules/imgui",
+		"submodules/gladogl/include"
     }
 
     filter "system:linux"
@@ -55,7 +57,7 @@ project "Engine"
 
 		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.97.0/Source/lib" }
 
-		links { "vulkan-1", "glfw3dll", "glew32d", "opengl32", "imgui" }
+		links { "vulkan-1", "glfw3dll", "glew32d", "opengl32", "imgui", "glad" }
 
         postbuildcommands
         {
@@ -64,13 +66,13 @@ project "Engine"
 		
 		defines "V3_WIN64"
 		defines "V3_WIN64_DLL"
+	filter { "system:windows", "configurations:debug" }
+		buildoptions "/MDd"
 
     filter "configurations:debug"
         defines "V3_DEBUG"
         symbols "On"
         optimize "Off"
-    filter { "system:windows", "configurations:debug" }
-        buildoptions "/MDd"
 
     filter "configurations:release"
         defines "V3_RELEASE"
@@ -100,14 +102,16 @@ project "Client"
     {
         "Engine/source",
         "vendor/include",
-        "submodules/imgui"
+        "submodules/imgui",
+		"submodules/gladogl/include"
     }
 
     links
     {
         "Engine",
         "tbb",
-        "imgui"
+        "imgui",
+		"glad"
     }
 
 	postbuildcommands
@@ -161,13 +165,13 @@ project "Client"
         }
 		
 		defines "V3_WIN64"
+	filter { "system:windows", "configurations:debug" }
+        buildoptions "/MDd"
 
     filter "configurations:debug"
         defines "V3_DEBUG"
         symbols "On"
         links { "tbb_debug" }
-    filter { "system:windows", "configurations:debug" }
-        buildoptions "/MDd"
 
     filter "configurations:release"
         defines "V3_RELEASE"

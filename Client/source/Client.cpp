@@ -144,7 +144,7 @@ public:
             objectId = command->addObject(
                 "cube",
                 "",
-                "container",
+                "lewd",
                 0,
                 "basic",
                 { state }
@@ -283,9 +283,6 @@ public:
 		double alpha = accumulator / deltaTime;
 		double target = alpha;
 		V3::getInstance()->getPipeline()->alpha.compare_exchange_weak(target, alpha);
-		//V3::getInstance()->getPipeline()->alpha = alpha;
-		//V3::getInstance()->getPipeline()->alpha.store(alpha);
-		//debugf("alpha: %0.4f", alpha);
     };
 };
 

@@ -1,22 +1,48 @@
 #pragma once
+#include <vector>
 
 typedef void* EntityHandle;
-struct ECSBase
+struct ComponentBase
 {
-    EntityHandle entity;
+    EntityHandle entity = nullptr;
 
-    static long next();
+    static unsigned int registerType();
 };
+
+typedef unsigned int(*CreateComponentFunc)(std::vector<short> mem, EntityHandle entity, ComponentBase* comp);
+typedef void(*RemoveComponentFunc)(ComponentBase* comp);
 
 template<typename T>
-struct ECSComponentBase : public ECSBase
+struct Component : public ComponentBase
 {
-    static const long id;
+	static const CreateComponentFunc create;
+	static const RemoveComponentFunc remove;
+	static const size_t size;
+
+	static const unsigned int type;
 };
 template<typename T>
-const long ECSComponentBase<T>::id = ECSBase::next();
+const unsigned int Component<T>::type = ComponentBase::registerType();
+template<typename T>
+const size_t Component<T>::size = sizeof(T);
 
-struct Component : public ECSComponentBase<Component>
+template<typename C>
+unsigned int CreateComponent(std::vector<short> mem, EntityHandle entity, ComponentBase* comp)
 {
-
+	unsigned int index = mem.size();
+	mem.resize(index + C::size);
+	C* c = new(&mem[index]) C(*(C*)comp);
+	c->entity = entity;
+	return index;
 };
+template<typename T>
+const CreateComponentFunc Component<T>::create = CreateComponent<T>;
+
+template<typename C>
+void RemoveComponent(ComponentBase* comp)
+{
+	C* c = (C*)comp;
+	c->~C();
+}
+template<typename T>
+const RemoveComponentFunc Component<T>::remove = RemoveComponent<T>;

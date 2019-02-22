@@ -267,3 +267,5 @@ vendor/
 *.sln
 *.vcxproj.*
 *.vcxproj
+
+Client/resources/textures/lewd\.png

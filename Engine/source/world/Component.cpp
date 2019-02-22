@@ -1,8 +1,8 @@
 #include "Component.h"
 
-static long gComponentIndex = 0;
+static unsigned int gComponentTypeIndex = 0;
 
-long ECSBase::next()
+unsigned int ComponentBase::registerType()
 {
-    return gComponentIndex++;
+    return gComponentTypeIndex++;
 }

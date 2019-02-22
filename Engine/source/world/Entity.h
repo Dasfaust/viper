@@ -6,5 +6,5 @@
 struct Entity
 {
 public:
-    std::vector<std::shared_ptr<ECSBase>> components;
+    std::vector<std::shared_ptr<ComponentBase>> components;
 };
