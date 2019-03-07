@@ -4,3 +4,6 @@
 [submodule "submodules/gladogl"]
 	path = submodules/gladogl
 	url = https://github.com/Dasfaust/gladogl.git
+[submodule "submodules/MemoryPool"]
+	path = submodules/MemoryPool
+	url = https://github.com/Dasfaust/MemoryPool.git

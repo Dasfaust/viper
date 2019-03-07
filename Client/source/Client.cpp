@@ -144,7 +144,7 @@ public:
             objectId = command->addObject(
                 "cube",
                 "",
-                "container",
+                "lewd",
                 0,
                 "basic",
                 { state }
@@ -217,6 +217,11 @@ public:
         }
 
         debug("Sim: started.");
+
+		//Memory::test();
+
+		//auto c = Memory::
+		//debugf("pos comp: %.2f, %.2f, %.2f", World::getEntity(ent->id)->);
     };
 
     void tick() override

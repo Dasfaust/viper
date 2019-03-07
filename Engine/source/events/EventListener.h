@@ -16,9 +16,9 @@ public:
 
 	tbb::concurrent_queue<EventData> queue;
 
-	virtual void callback(std::shared_ptr<EventData> data)
+	virtual void callback(EventData& data)
 	{
-		queue.emplace((*data));
+		queue.emplace(data);
 	}
 
 	virtual void poll()

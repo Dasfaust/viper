@@ -40,7 +40,7 @@ namespace ViewEvents
 			listeners.push_back(listener);
 		};
 
-		void triggerEvent(std::shared_ptr<OnMouseEventData> data)
+		void triggerEvent(OnMouseEventData& data)
 		{
 			for (auto& listener : listeners)
 			{
@@ -67,7 +67,7 @@ namespace ViewEvents
 			listeners.push_back(listener);
 		};
 
-		void triggerEvent(std::shared_ptr<OnKeyEventData> data)
+		void triggerEvent(OnKeyEventData& data)
 		{
 			for (auto& listener : listeners)
 			{

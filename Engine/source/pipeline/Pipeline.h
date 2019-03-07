@@ -84,27 +84,27 @@ public:
 				listeners.push_back(listener);
 			};
 
-			void triggerEvent(std::weak_ptr<OnCameraMoveEventData> data)
+			void triggerEvent(OnCameraMoveEventData& data)
 			{
-				for (auto& listener : listeners)
-				{
-					listener->callback(data.lock());
-				}
-			};
-
-			void triggerEvent(std::shared_ptr<Camera> camera)
-			{
-				std::shared_ptr<OnCameraMoveEventData> data = std::make_shared<OnCameraMoveEventData>();
-
-				/*data->cameraPos = camera->position;
-				data->cameraFront = camera->direction;
-				data->cameraUp = camera->up;*/
-
 				for (auto& listener : listeners)
 				{
 					listener->callback(data);
 				}
 			};
+
+			/*void triggerEvent(Camera& camera)
+			{
+				auto data = OnCameraMoveEventData { };
+
+				data->cameraPos = camera->position;
+				data->cameraFront = camera->direction;
+				data->cameraUp = camera->up;
+
+				for (auto& listener : listeners)
+				{
+					listener->callback(data);
+				}
+			};*/
 		};
 
 		std::shared_ptr<EventListener<ViewEvents::OnMouseEventData>> mouseListener;

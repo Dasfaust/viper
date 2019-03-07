@@ -16,48 +16,79 @@ std::shared_ptr<World> World::getInstance()
 
 World::World()
 {
-
+	ECS::init();
 }
 
 World::~World()
 {
 
-	for (std::unordered_map<unsigned int, std::vector<unsigned int>>::iterator it = components.begin(); it != components.end(); it++)
-	{
-		size_t size = ComponentBase::getSize(it->first);
-		auto removeFn = ComponentBase::getRemoveFn(it->first);
-		for (int i = 0; i < it->second.size(); i += size)
-		{
-			removeFn((ComponentBase*)&it->second[i]);
-		}
-	}
-
-	for (unsigned int e = 0; e < entities.size(); e++)
-	{
-		delete entities[e];
-	}
 }
 
 void World::onStartup()
 {
-    auto config = V3::getInstance()->getConfig();
-    stepsPerSecondTarget = config->getInts("engine", "worldStepsPerSecond")[0];
-    stepsAsync = config->getBools("engine", "worldStepAsync")[0];
-    stepThreadCount = config->getInts("engine", "worldStepThreads")[0];
+	auto config = V3::getInstance()->getConfig();
+	stepsPerSecondTarget = config->getInts("engine", "worldStepsPerSecond")[0];
+	stepsAsync = config->getBools("engine", "worldStepAsync")[0];
+	stepThreadCount = config->getInts("engine", "worldStepThreads")[0];
 
-    debugf("World init: steps: %d, async: %d, threads: %d", stepsPerSecondTarget, stepsAsync, stepThreadCount);
+	debugf("World init: steps: %d, async: %d, threads: %d", stepsPerSecondTarget, stepsAsync, stepThreadCount);
 
-    if (stepsAsync)
-    {
-        this->start();
-    }
-    else
-    {
-        V3::getInstance()->addTickable(getInstance());
-    }
+	lastStep = Time::now();
+	deltaTime = 1000.0 / stepsPerSecondTarget;
 
-    lastStep = Time::now();
-    deltaTime = 1000.0 / stepsPerSecondTarget;
+	class SomeComp : public Component<SomeComp>
+	{
+	public:
+		int someInt = 10;
+	};
+
+	class SomeSystem : public System<SomeComp>
+	{
+	public:
+
+	};
+
+	auto system = ECS::makeSystem<SomeComp>();
+	auto comp = system->makeComponent();
+	unsigned int id = comp->id;
+	SomeComp* get = system->getComponent(id);
+	debugf("SomeComp: %d, type: %d", get->someInt, get->type_id);
+
+	auto ent = ECS::makeEntity();
+	debugf("Entity ID: %d", ent->id);
+	ECS::deleteEntity(ent);
+	ent = ECS::makeEntity();
+	debugf("Entity ID: %d", ent->id);
+	auto ent2 = ECS::makeEntity();
+	debugf("Entity ID: %d", ent2->id);
+
+	ECS::addComponentToEntity<SomeComp>(ent, get);
+	for (auto c : ECS::getEntityComponents(ent))
+	{
+		debugf("Entity (%d) component type: %d", ent->id, c->type_id);
+	}
+
+	system->deleteComponent(comp);
+	for (auto c : ECS::getEntityComponents(ent))
+	{
+		debugf("Entity (%d) component type: %d", ent->id, c->type_id);
+	}
+
+	comp = system->makeComponent();
+	ECS::addComponentToEntity<SomeComp>(ent, comp);
+	ECS::deleteEntity(ent);
+	debugf("Num components: %d", ECS::components.size());
+	debugf("Num comp->ent: %d", ECS::compToEnt.size());
+	debugf("Num ent->comp: %d", ECS::entToComp.size());
+
+	if (stepsAsync)
+	{
+		this->start();
+	}
+	else
+	{
+		V3::getInstance()->addTickable(getInstance());
+	}
 }
 
 void World::tick()
@@ -80,52 +111,14 @@ void World::tick()
     stepAccumulator += stepTime;
     while (stepAccumulator >= deltaTime)
     {
+		for (auto kv : ECS::systems)
+		{
+			(&kv)->second->tick_func();
+		}
 
         stepAccumulator -= deltaTime;
         stepCount++;
     }
 
     stepAlpha = stepAccumulator / deltaTime;
-}
-
-EntityHandle World::makeEntity(ComponentBase* components, const unsigned int* componentTypes, size_t num)
-{
-	auto ent = new std::pair<unsigned int, std::vector<std::pair<unsigned int, unsigned int>>>();
-	auto handle = (EntityHandle)ent;
-
-	for (unsigned int i = 0; i < num; i++)
-	{
-		auto createFn = ComponentBase::getCreateFn(componentTypes[i]);
-
-		auto pair = std::pair<unsigned int, unsigned int>();
-		pair.first = componentTypes[i];
-		pair.second = createFn(this->components[componentTypes[i]], handle, &components[i]);
-
-		ent->second.push_back(pair);
-	}
-
-	unsigned int id = entities.size();
-	entities.push_back(ent);
-
-	return handle;
-}
-
-void World::removeComponentInternal(unsigned int id, unsigned int index)
-{
-
-}
-
-void World::removeEntity(EntityHandle handle)
-{
-	auto ent = getEntityRaw(handle);
-	for (int i = 0; i < ent.size(); i++)
-	{
-		removeComponentInternal(ent[i].first, ent[i].second);
-	}
-
-	unsigned int dest = getEntityIndex(handle);
-	unsigned int last = entities.size() - 1;
-	delete entities[dest];
-	entities[dest] = entities[last];
-	entities.pop_back();
 }

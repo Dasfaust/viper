@@ -4,6 +4,7 @@
 #include "pipeline/PipelineOpenGL.h"
 #include "util/Time.h"
 #include "util/FileUtils.h"
+#include "Memory.h"
 
 std::shared_ptr<V3> V3::instance = 0;
 
@@ -126,6 +127,8 @@ void V3::start()
 	info("Shutting down, goodbye.");
 	static_cast<void>(tickables->empty());
 	static_cast<void>(extensions->empty());
+
+	Memory::purge();
 }
 
 int V3::addTickable(std::shared_ptr<Tickable> object)

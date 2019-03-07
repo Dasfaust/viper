@@ -37,11 +37,11 @@ namespace Event
 			listeners.push_back(listener);
 		}
 
-		void triggerEvent(std::weak_ptr<OnConfigChangedData> data)
+		void triggerEvent(OnConfigChangedData& data)
 		{
 			for (auto& listener : listeners)
 			{
-				listener->callback(data.lock());
+				listener->callback(data);
 			}
 		}
 	};

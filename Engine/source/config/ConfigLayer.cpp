@@ -272,7 +272,7 @@ void ConfigLayer::setInts(std::string section, std::string segment, std::vector<
 		Variant var = i;
 		vars.push_back(var);
 	}
-	std::shared_ptr<Event::OnConfigChangedData> data = std::make_shared<Event::OnConfigChangedData>(section, segment, vars);
+	auto data = Event::OnConfigChangedData { section, segment, vars };
 	events->getOnConfigChanged()->triggerEvent(data);
 }
 

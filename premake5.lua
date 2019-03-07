@@ -12,6 +12,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 include "submodules/imgui"
 include "submodules/gladogl"
+include "submodules/MemoryPool"
 
 project "Engine"
     location "Engine"
@@ -26,14 +27,16 @@ project "Engine"
         "%{prj.name}/source/**.h",
         "%{prj.name}/source/**.hpp",
         "%{prj.name}/source/**.c",
-        "%{prj.name}/source/**.cpp"
+        "%{prj.name}/source/**.cpp",
+		"%{prj.name}/source/**.tcc"
     }
 
     includedirs
     {
         "vendor/include",
         "submodules/imgui",
-		"submodules/gladogl/include"
+		"submodules/gladogl/include",
+		"submodules/MemoryPool/C-11"
     }
 
     filter "system:linux"
@@ -95,7 +98,8 @@ project "Client"
         "%{prj.name}/source/**.h",
         "%{prj.name}/source/**.hpp",
         "%{prj.name}/source/**.c",
-        "%{prj.name}/source/**.cpp"
+        "%{prj.name}/source/**.cpp",
+		"%{prj.name}/source/**.tcc"
     }
 
     includedirs
@@ -103,7 +107,8 @@ project "Client"
         "Engine/source",
         "vendor/include",
         "submodules/imgui",
-		"submodules/gladogl/include"
+		"submodules/gladogl/include",
+		"submodules/MemoryPool/C-11"
     }
 
     links

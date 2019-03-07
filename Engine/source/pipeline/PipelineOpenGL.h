@@ -1,6 +1,7 @@
 #pragma once
 #include "Pipeline.h"
 #include "../V3.h"
+#include "../world/World.h"
 
 class PipelineOpenGL : public Pipeline
 {
@@ -53,5 +54,14 @@ public:
 	void V3API textureToMemory(std::string name) override;
 	void V3API textureToVRAM(std::string name) override;
 	unsigned int V3API makeRenderCommand() override;
+
+	class RenderComponent : public Component<RenderComponent>
+	{
+	public:
+		glm::vec3 locationPrevious;
+		glm::vec3 locationCurrent;
+	};
+
+	tbb::concurrent_vector<RenderComponent> components;
 private:
 };

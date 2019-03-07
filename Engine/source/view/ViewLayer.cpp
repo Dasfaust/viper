@@ -65,26 +65,26 @@ static std::shared_ptr<std::unordered_map<int, ViewEvents::ButtonState>> ViewEve
 // Only called when mouse moves
 void ViewEvents::mouseCallback(GLFWwindow* window, double x, double y)
 {
-	auto data = std::make_shared<OnMouseEventData>();
+	auto data = OnMouseEventData { };
 
-	data->coordinates = glm::vec2(x, y);
-	if ((*V3::getInstance()->getView()->mouseCoords) != data->coordinates)
+	data.coordinates = glm::vec2(x, y);
+	if ((*V3::getInstance()->getView()->mouseCoords) != data.coordinates)
 	{
-		V3::getInstance()->getView()->mouseCoords->x = data->coordinates.x;
-		V3::getInstance()->getView()->mouseCoords->y = data->coordinates.y;
+		V3::getInstance()->getView()->mouseCoords->x = data.coordinates.x;
+		V3::getInstance()->getView()->mouseCoords->y = data.coordinates.y;
 	}
 
-	data->buttons = (*checkButtonStates());
+	data.buttons = (*checkButtonStates());
 
 	V3::getInstance()->getView()->mouseEvent->triggerEvent(data);
 }
 
 void ViewEvents::mouseScrollCallback(GLFWwindow* window, double x, double y)
 {
-	auto data = std::make_shared<OnMouseEventData>();
-	data->scroll = glm::vec2(x, y);
-	data->coordinates = (*V3::getInstance()->getView()->mouseCoords);
-	data->buttons = (*checkButtonStates());
+	auto data = OnMouseEventData { };
+	data.scroll = glm::vec2(x, y);
+	data.coordinates = (*V3::getInstance()->getView()->mouseCoords);
+	data.buttons = (*checkButtonStates());
 	V3::getInstance()->getView()->scrollCoords->x = (float)x;
 	V3::getInstance()->getView()->scrollCoords->y = (float)y;
 	V3::getInstance()->getView()->mouseEvent->triggerEvent(data);
@@ -149,13 +149,13 @@ void ViewLayer::tick()
 	auto buttons = ViewEvents::checkButtonStates();
 	if (buttons->size() > 0)
 	{
-		auto data = std::make_shared<ViewEvents::OnMouseEventData>();
+		auto data = ViewEvents::OnMouseEventData { };
 
-		data->coordinates = (*mouseCoords);
+		data.coordinates = (*mouseCoords);
 
 		for (auto&& kv : (*buttons))
 		{
-			data->buttons[kv.first] = kv.second;
+			data.buttons[kv.first] = kv.second;
 		}
 
 		mouseEvent->triggerEvent(data);
@@ -164,11 +164,11 @@ void ViewLayer::tick()
 	auto keys = ViewEvents::checkKeyStates();
 	if (keys->size() > 0)
 	{
-		auto data = std::make_shared<ViewEvents::OnKeyEventData>();
+		auto data = ViewEvents::OnKeyEventData { };
 
 		for (auto&& kv : (*keys))
 		{
-			data->buttons[kv.first] = kv.second;
+			data.buttons[kv.first] = kv.second;
 		}
 
 		keyEvent->triggerEvent(data);
