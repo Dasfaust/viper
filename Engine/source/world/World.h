@@ -23,6 +23,8 @@ public:
 			this->tick();
 		}
 	};
+
+	void onShutdown() override;
 protected:
     static std::shared_ptr<World> instance;
     World();

@@ -9,6 +9,15 @@
 #include "imgui.h"
 //#include "pipeline/imgui_impl_opengl3.h"
 #include "world/World.h"
+#include "events/Event.h"
+
+class TestEvent : public EventData
+{
+public:
+	unsigned int someVal = 0;
+};
+
+static std::shared_ptr<Event<TestEvent>> ev = std::make_shared<Event<TestEvent>>();
 
 /*class ImGuiRenderer : public RenderCommand
 {
@@ -88,8 +97,6 @@ public:
 class Simulation : public Threadable
 {
 public:
-    std::shared_ptr<EventListener<Pipeline::Camera::OnCameraMoveEventData>> listener;
-
     unsigned int tpsTarget = 0;
     double lastPoll = 0.0;
     double pollTime = 0.0;
@@ -120,11 +127,6 @@ public:
 
     Simulation()
     {
-        listener = std::make_shared<EventListener<Pipeline::Camera::OnCameraMoveEventData>>(
-			[](Pipeline::Camera::OnCameraMoveEventData e) { /*debugf("OnCameraMoveEvent: %0.2f, %0.2f, %0.2f", e.cameraPos.x, e.cameraPos.y, e.cameraPos.z);*/ }
-        );
-        //V3::getInstance().getPipeline()->camera->moveEvent->addListener(listener);
-
         renderId = V3::getInstance()->getPipeline()->makeRenderCommand();
         debugf(
             "renderer: %d",
@@ -144,7 +146,7 @@ public:
             objectId = command->addObject(
                 "cube",
                 "",
-                "lewd",
+                "container",
                 0,
                 "basic",
                 { state }
@@ -167,6 +169,11 @@ public:
     int worldHeight = 16;
     int worldWidth = 16;
     std::vector<Chunk> chunks;
+
+	std::shared_ptr<EventListener<TestEvent>> li = ev->listen([](TestEvent* data)
+	{
+		debugf("TestEvent2: %d", data->someVal);
+	});
 
     void onStart() override
     {
@@ -222,15 +229,17 @@ public:
 
 		//auto c = Memory::
 		//debugf("pos comp: %.2f, %.2f, %.2f", World::getEntity(ent->id)->);
+
+		//auto ev = EventBase<TestEvent>::getInstance();
     };
 
     void tick() override
     {
+		li->poll(ev);
+
         double newPoll = Time::now();
 		pollTime = newPoll - lastPoll;
 		lastPoll = newPoll;
-
-        listener->poll();
 
         // Diagnostics
 		if (perfAccumulator >= 1000.0)
@@ -291,17 +300,46 @@ public:
     };
 };
 
+class Game : public V3Application
+{
+public:
+	std::shared_ptr<EventListener<TestEvent>> li = ev->listen([](TestEvent* data)
+	{
+		debugf("TestEvent1: %d", data->someVal);
+	});
+
+	Simulation sim;
+
+	inline void onStartup() override
+	{
+		debugf("V3Application: onStartup");
+		sim.start();
+
+		auto e = ev->makeEvent();
+		e->someVal = 87;
+		ev->fire(e);
+	};
+
+	inline void onTick() override
+	{
+		li->poll(ev);
+	};
+
+	inline void onShutdown() override
+	{
+		sim.stop();
+	};
+};
+
 int main()
 {   
     EXT_DELTA_TIME_ADD();
     EXT_WORLD_ADD();
 
-	Simulation simulation;
-    simulation.start();
+	auto game = std::make_shared<Game>();
+	V3::getInstance()->addExtension(game, 0.0);
 
     V3::getInstance()->start();
-
-    simulation.stop();
 
     return EXIT_SUCCESS;
 }

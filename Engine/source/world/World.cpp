@@ -122,3 +122,11 @@ void World::tick()
 
     stepAlpha = stepAccumulator / deltaTime;
 }
+
+void World::onShutdown()
+{
+	if (stepsAsync)
+	{
+		this->stop();
+	}
+}

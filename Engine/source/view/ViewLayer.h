@@ -20,7 +20,7 @@ namespace ViewEvents
 		bool released = false;
 	};
 
-	struct OnMouseEventData
+	/*struct OnMouseEventData
 	{
 		bool cancelled = false;
 		std::unordered_map<int, ButtonState> buttons;
@@ -74,7 +74,7 @@ namespace ViewEvents
 				listener->callback(data);
 			}
 		};
-	};
+	};*/
 
 	static void mouseCallback(GLFWwindow* window, double x, double y);
 
@@ -94,8 +94,8 @@ public:
 	std::shared_ptr<glm::vec2> scrollCoords;
 	std::shared_ptr<std::unordered_map<int, ViewEvents::ButtonState>> buttonStates;
 	std::shared_ptr<std::unordered_map<int, ViewEvents::ButtonState>> keyStates;
-	std::shared_ptr<ViewEvents::OnMouseEvent> mouseEvent;
-	std::shared_ptr<ViewEvents::OnKeyEvent> keyEvent;
+	//std::shared_ptr<ViewEvents::OnMouseEvent> mouseEvent;
+	//std::shared_ptr<ViewEvents::OnKeyEvent> keyEvent;
 
 	V3API ViewLayer(std::shared_ptr<EventLayer> events, std::shared_ptr<ConfigLayer> config);
 	V3API ~ViewLayer();

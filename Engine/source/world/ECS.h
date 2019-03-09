@@ -109,6 +109,14 @@ namespace ECS
 			critf("ECS was asked for entity that doesn't exist: %d", id);
 		}
 	}
+
+	static void purge()
+	{
+		for (auto kv : entities)
+		{
+			deleteEntity(kv.second);
+		}
+	};
 };
 
 template<typename Self>
@@ -134,7 +142,7 @@ public:
 
 	inline void tick() override
 	{
-		debugf("System type (%d) update", type_id);
+		//debugf("System type (%d) update", type_id);
 	};
 
 	static void deleteComponentInternal(ECSBase* component)
@@ -155,7 +163,6 @@ public:
 		{
 			for (auto ent : ECS::compToEnt[id])
 			{
-				debugf("Removing component from entity id %d", ent->id);
 				if (ECS::entToComp.count(ent->id))
 				{
 					auto list = ECS::entToComp[ent->id];

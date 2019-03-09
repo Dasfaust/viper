@@ -49,3 +49,9 @@ struct V3Container : public V3
 {
 	V3Container() : V3() { }
 };
+
+class V3Application : public EngineExtension
+{
+public:
+	~V3Application() { };
+};

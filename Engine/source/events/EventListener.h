@@ -1,34 +1,42 @@
 #pragma once
 #include <memory>
-#include <functional>
 #include <tbb/concurrent_queue.h>
 
-template<class EventData>
-class EventListener
+class EventBase
 {
 public:
-	void(*unary)(EventData);
-	EventListener(void(*unary)(EventData))
+};
+
+template<class T>
+class EventListener : public EngineExtension
+{
+public:
+	void(*handle)(T*);
+	void(*propegate)(std::shared_ptr<EventBase>, T*);
+
+	EventListener(void(*handle)(T*), void(*propegate)(std::shared_ptr<EventBase>, T*))
 	{
-		this->unary = unary;
+		this->handle = handle;
+		this->propegate = propegate;
 	}
 	virtual ~EventListener() { }
 
-	tbb::concurrent_queue<EventData> queue;
+	tbb::concurrent_queue<T*> queue;
 
-	virtual void callback(EventData& data)
+	virtual void call(T* data)
 	{
 		queue.emplace(data);
 	}
 
-	virtual void poll()
+	virtual void poll(std::shared_ptr<EventBase> handler)
 	{
 		while (!queue.empty())
 		{
-			EventData result;
+			T* result;
 			if (queue.try_pop(result))
 			{
-				unary(result);
+				handle(result);
+				propegate(handler, result);
 			}
 		}
 	}

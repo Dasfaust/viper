@@ -4,7 +4,7 @@
 #include "pipeline/PipelineOpenGL.h"
 #include "util/Time.h"
 #include "util/FileUtils.h"
-#include "Memory.h"
+#include "world/ECS.h"
 
 std::shared_ptr<V3> V3::instance = 0;
 
@@ -121,14 +121,18 @@ void V3::start()
 		{
 			element.second->onTickEnd();
 		}
-
 	}
 
 	info("Shutting down, goodbye.");
+
+	for (std::pair<unsigned int, std::shared_ptr<EngineExtension>> element : (*extensions))
+	{
+		element.second->onShutdown();
+	}
+
 	static_cast<void>(tickables->empty());
 	static_cast<void>(extensions->empty());
-
-	Memory::purge();
+	static_cast<void>(ECS::purge());
 }
 
 int V3::addTickable(std::shared_ptr<Tickable> object)

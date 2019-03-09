@@ -65,7 +65,7 @@ static std::shared_ptr<std::unordered_map<int, ViewEvents::ButtonState>> ViewEve
 // Only called when mouse moves
 void ViewEvents::mouseCallback(GLFWwindow* window, double x, double y)
 {
-	auto data = OnMouseEventData { };
+	/*auto data = OnMouseEventData { };
 
 	data.coordinates = glm::vec2(x, y);
 	if ((*V3::getInstance()->getView()->mouseCoords) != data.coordinates)
@@ -76,18 +76,18 @@ void ViewEvents::mouseCallback(GLFWwindow* window, double x, double y)
 
 	data.buttons = (*checkButtonStates());
 
-	V3::getInstance()->getView()->mouseEvent->triggerEvent(data);
+	V3::getInstance()->getView()->mouseEvent->triggerEvent(data);*/
 }
 
 void ViewEvents::mouseScrollCallback(GLFWwindow* window, double x, double y)
 {
-	auto data = OnMouseEventData { };
+	/*auto data = OnMouseEventData { };
 	data.scroll = glm::vec2(x, y);
 	data.coordinates = (*V3::getInstance()->getView()->mouseCoords);
 	data.buttons = (*checkButtonStates());
 	V3::getInstance()->getView()->scrollCoords->x = (float)x;
 	V3::getInstance()->getView()->scrollCoords->y = (float)y;
-	V3::getInstance()->getView()->mouseEvent->triggerEvent(data);
+	V3::getInstance()->getView()->mouseEvent->triggerEvent(data);*/
 }
 
 ViewLayer::ViewLayer(std::shared_ptr<EventLayer> events, std::shared_ptr<ConfigLayer> config)
@@ -109,10 +109,10 @@ ViewLayer::ViewLayer(std::shared_ptr<EventLayer> events, std::shared_ptr<ConfigL
 	window = glfwCreateWindow(size[0], size[1], "Window", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
-	mouseEvent = std::make_shared<ViewEvents::OnMouseEvent>();
+	//mouseEvent = std::make_shared<ViewEvents::OnMouseEvent>();
 	mouseCoords = std::make_shared<glm::vec2>();
 	scrollCoords = std::make_shared<glm::vec2>();
-	keyEvent = std::make_shared<ViewEvents::OnKeyEvent>();
+	//keyEvent = std::make_shared<ViewEvents::OnKeyEvent>();
 	buttonStates = std::make_shared<std::unordered_map<int, ViewEvents::ButtonState>>();
 	keyStates = std::make_shared<std::unordered_map<int, ViewEvents::ButtonState>>();
 	glfwSetCursorPosCallback(window, ViewEvents::mouseCallback);
@@ -149,7 +149,7 @@ void ViewLayer::tick()
 	auto buttons = ViewEvents::checkButtonStates();
 	if (buttons->size() > 0)
 	{
-		auto data = ViewEvents::OnMouseEventData { };
+		/*auto data = ViewEvents::OnMouseEventData { };
 
 		data.coordinates = (*mouseCoords);
 
@@ -158,19 +158,19 @@ void ViewLayer::tick()
 			data.buttons[kv.first] = kv.second;
 		}
 
-		mouseEvent->triggerEvent(data);
+		mouseEvent->triggerEvent(data);*/
 	}
 	
 	auto keys = ViewEvents::checkKeyStates();
 	if (keys->size() > 0)
 	{
-		auto data = ViewEvents::OnKeyEventData { };
+		/*auto data = ViewEvents::OnKeyEventData { };
 
 		for (auto&& kv : (*keys))
 		{
 			data.buttons[kv.first] = kv.second;
 		}
 
-		keyEvent->triggerEvent(data);
+		keyEvent->triggerEvent(data);*/
 	}
 }

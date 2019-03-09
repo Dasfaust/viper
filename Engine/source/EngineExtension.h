@@ -19,5 +19,7 @@ public:
 
     virtual void onPostRender() { };
 
+	virtual void onShutdown() { };
+
     virtual void tickWait() { };
 };

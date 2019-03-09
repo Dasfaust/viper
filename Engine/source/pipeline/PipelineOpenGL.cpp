@@ -290,7 +290,7 @@ PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_
 
 	camera->viewportSize = glm::vec2(view->viewWidth, view->viewHeight);
 
-	camera->mouseListener = std::make_shared<EventListener<ViewEvents::OnMouseEventData>>(
+	/*camera->mouseListener = std::make_shared<EventListener<ViewEvents::OnMouseEventData>>(
 		[](ViewEvents::OnMouseEventData e)
 		{
 			if (!e.cancelled)
@@ -323,16 +323,16 @@ PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_
 			}
 		}
 	);
-	view->mouseEvent->addListener(camera->mouseListener);
+	view->mouseEvent->addListener(camera->mouseListener);*/
 
-	camera->keyListener = std::make_shared<EventListener<ViewEvents::OnKeyEventData>>(
+	/*camera->keyListener = std::make_shared<EventListener<ViewEvents::OnKeyEventData>>(
 		[](ViewEvents::OnKeyEventData e)
 		{
 			for (auto&& kv : e.buttons)
 			{
 				//debugf("Key state: %d: %d, %d", kv.first, kv.second.pressed, kv.second.released);
 
-				/*ImGuiIO& io = ImGui::GetIO();
+				ImGuiIO& io = ImGui::GetIO();
 				if (kv.second.pressed)
 				{
 					io.KeysDown[kv.first] = true;
@@ -340,11 +340,11 @@ PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_
 				else
 				{
 					io.KeysDown[kv.first] = false;
-				}*/
+				}
 			}
 		}
 	);
-	view->keyEvent->addListener(camera->keyListener);
+	view->keyEvent->addListener(camera->keyListener);*/
 
 	glfwSetCharCallback(view->getWindow(), charCallback);
 }
@@ -378,7 +378,7 @@ void PipelineOpenGL::tick()
 	}
 
 	camera->update();
-	camera->pollEvents();
+	//camera->pollEvents();
 
 	for(auto command : (*renderCommands))
 	{

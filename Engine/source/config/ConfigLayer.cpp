@@ -272,8 +272,6 @@ void ConfigLayer::setInts(std::string section, std::string segment, std::vector<
 		Variant var = i;
 		vars.push_back(var);
 	}
-	auto data = Event::OnConfigChangedData { section, segment, vars };
-	events->getOnConfigChanged()->triggerEvent(data);
 }
 
 tbb::concurrent_vector<float> ConfigLayer::getFloats(std::string section, std::string segment)

@@ -9,6 +9,7 @@
 #include <glm/matrix.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <atomic>
 
 class Pipeline : public Tickable
 {
@@ -65,7 +66,7 @@ public:
 	class Camera
 	{
 	public:
-		struct OnCameraMoveEventData
+		/*struct OnCameraMoveEventData
 		{
 			glm::vec3 cameraPos;
 			glm::vec3 cameraFront;
@@ -92,7 +93,7 @@ public:
 				}
 			};
 
-			/*void triggerEvent(Camera& camera)
+			void triggerEvent(Camera& camera)
 			{
 				auto data = OnCameraMoveEventData { };
 
@@ -104,13 +105,13 @@ public:
 				{
 					listener->callback(data);
 				}
-			};*/
+			};
 		};
 
 		std::shared_ptr<EventListener<ViewEvents::OnMouseEventData>> mouseListener;
 		std::shared_ptr<EventListener<ViewEvents::OnKeyEventData>> keyListener;
 
-		std::shared_ptr<OnCameraMoveEvent> moveEvent;
+		std::shared_ptr<OnCameraMoveEvent> moveEvent;*/
 
 		float moveSpeed = 2.0f;
 		float moveSensitivity = 0.08f;
@@ -142,7 +143,7 @@ public:
 
 		Camera()
 		{
-			moveEvent = std::make_shared<OnCameraMoveEvent>();
+			//moveEvent = std::make_shared<OnCameraMoveEvent>();
 		};
 
 		void moveForward(double deltaTime)
@@ -192,8 +193,8 @@ public:
 
 		inline void pollEvents()
 		{
-			mouseListener->poll();
-			keyListener->poll();
+			//mouseListener->poll();
+			//keyListener->poll();
 		}
 
 		inline glm::vec3 cursorToWorld()
