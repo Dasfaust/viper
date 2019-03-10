@@ -3,6 +3,7 @@
 #include <atomic>
 #include <memory>
 #include <tbb/concurrent_queue.h>
+#include <chrono>
 
 namespace Log
 {
@@ -30,6 +31,10 @@ void Log::poll()
 			{
 				std::cout << (*result).c_str() << std::endl;
 			}
+		}
+		else
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
 		}
 	}
 }

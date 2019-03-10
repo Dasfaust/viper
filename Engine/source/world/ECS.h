@@ -12,7 +12,8 @@ public:
 	unsigned int parent;
 	unsigned int type_id = 0;
 	std::function<void(ECSBase*)> del_func;
-	std::function<void()> tick_func;
+	std::function<void(unsigned int)> tick_func;
+	bool is_client = false;
 
 	virtual ~ECSBase()
 	{
@@ -30,6 +31,7 @@ namespace ECS
 	static std::unordered_map<unsigned int, ECSBase*> entities;
 	static std::unordered_map<unsigned int, std::vector<ECSBase*>> entToComp;
 	static std::unordered_map<unsigned int, ECSBase*> components;
+	static std::vector<unsigned int> componentIds;
 	static std::unordered_map<unsigned int, std::vector<ECSBase*>> compToEnt;
 	static std::unordered_map<unsigned int, ECSBase*> systems;
 
@@ -129,20 +131,31 @@ template<typename Self>
 const size_t Component<Self>::size = sizeof(Self);
 
 template<typename Comp>
-class System : public ECSBase, public Tickable
+class ComponentTicker
+{
+public:
+	virtual void tick(Comp* comp)
+	{
+		
+	};
+};
+
+template<typename Comp>
+class System : public ECSBase
 {
 public:
 	static const unsigned int type_id;
 	MemoryPool<Comp> heap;
+	std::shared_ptr<ComponentTicker<Comp>> ticker;
 
-	static void tickInternal()
+	static void tickInternal(unsigned int id)
 	{
-		static_cast<System<Comp>*>(ECS::systems[type_id])->tick();
+		static_cast<System<Comp>*>(ECS::systems[type_id])->tick(id);
 	};
 
-	inline void tick() override
+	inline void tick(unsigned int id)
 	{
-		//debugf("System type (%d) update", type_id);
+		ticker->tick(static_cast<Comp*>(ECS::components[id]));
 	};
 
 	static void deleteComponentInternal(ECSBase* component)
@@ -153,6 +166,7 @@ public:
 			ECS::compToEnt.erase(id);
 		}
 		ECS::components.erase(id);
+		ECS::componentIds.erase(std::remove(ECS::componentIds.begin(), ECS::componentIds.end(), id), ECS::componentIds.end());
 		static_cast<System<Comp>*>(ECS::systems[component->type_id])->heap.deleteElement(static_cast<Comp*>(component));
 	}
 
@@ -182,7 +196,9 @@ public:
 		comp->id = id;
 		comp->type_id = type_id;
 		comp->del_func = deleteComponentInternal;
+		comp->tick_func = tickInternal;
 		ECS::components[id] = comp;
+		ECS::componentIds.push_back(id);
 		return static_cast<Comp*>(ECS::components[id]);
 	};
 
@@ -205,9 +221,10 @@ const unsigned int System<Comp>::type_id = ECS::nextTypeId++;
 namespace ECS
 {
 	template<typename T>
-	static System<T>* makeSystem()
+	static System<T>* makeSystem(std::shared_ptr<ComponentTicker<T>> ticker)
 	{
 		auto sys = new System<T>();
+		sys->ticker = ticker;
 		sys->tick_func = System<T>::tickInternal;
 		systems[sys->type_id] = sys;
 		return static_cast<System<T>*>(ECS::systems[sys->type_id]);

@@ -308,12 +308,12 @@ public:
 		debugf("TestEvent1: %d", data->someVal);
 	});
 
-	Simulation sim;
+	//Simulation sim;
 
 	inline void onStartup() override
 	{
 		debugf("V3Application: onStartup");
-		sim.start();
+		//sim.start();
 
 		auto e = ev->makeEvent();
 		e->someVal = 87;
@@ -327,7 +327,7 @@ public:
 
 	inline void onShutdown() override
 	{
-		sim.stop();
+		//sim.stop();
 	};
 };
 
