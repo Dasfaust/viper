@@ -4,6 +4,7 @@
 #include <stb/stb_image.h>
 #include "../util/FileUtils.h"
 //#include "imgui_impl_opengl3.h"
+#include "../V3.h"
 
 #define ASSERT(x) if (!(x)) throw std::runtime_error("Fatal error in rendering loop");
 #define _(x) poglClearError(); x; ASSERT(poglCheckError(#x, __FILE__, __LINE__));
@@ -157,16 +158,16 @@ public:
 		xOffset *= sensitivity;
 		yOffset *= sensitivity;*/
 
-		auto camera = V3::getInstance()->getPipeline()->camera;
+		auto camera = pipeline->camera;
 		if (camera->mouseViewport != camera->_mouseViewport)
 		{
-			float xOffset = V3::getInstance()->getPipeline()->camera->mouseViewport.x * 0.001f;
-			float yOffset = V3::getInstance()->getPipeline()->camera->mouseViewport.y * 0.001f;
+			float xOffset = pipeline->camera->mouseViewport.x * 0.001f;
+			float yOffset = pipeline->camera->mouseViewport.y * 0.001f;
 
 			camera->_mouseViewport = camera->mouseViewport;
 
-			V3::getInstance()->getPipeline()->camera->pitch += yOffset;
-			V3::getInstance()->getPipeline()->camera->yaw += xOffset;
+			pipeline->camera->pitch += yOffset;
+			pipeline->camera->yaw += xOffset;
 		}
 	}
 
@@ -266,29 +267,13 @@ unsigned int PipelineOpenGL::makeRenderCommand()
 	return id;
 }
 
-PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_ptr<ViewLayer> view, std::shared_ptr<EventLayer> events)
+PipelineOpenGL::PipelineOpenGL()
 {
-	this->config = config;
-	this->view = view;
-	this->events = events;
 	this->renderCommands = std::make_shared<tbb::concurrent_unordered_map<unsigned int, std::shared_ptr<RenderCommand>>>();
 	this->loadedShaders = tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLShader>>();
 	this->loadedMeshes = tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLMesh>>();
 	this->loadedModels = tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLModel>>();
 	this->loadedTextures = tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLTexture>>();
-
-	camera = std::make_shared<Camera>();
-
-	info("Rendering API: OpenGL");
-
-	config->load("meshes", ConfigLayer::TYPE_CONFIG);
-	config->load("shaders", ConfigLayer::TYPE_CONFIG);
-	config->load("models", ConfigLayer::TYPE_CONFIG);
-	config->load("textures", ConfigLayer::TYPE_CONFIG);
-
-	_(glEnable(GL_DEPTH_TEST));
-
-	camera->viewportSize = glm::vec2(view->viewWidth, view->viewHeight);
 
 	/*camera->mouseListener = std::make_shared<EventListener<ViewEvents::OnMouseEventData>>(
 		[](ViewEvents::OnMouseEventData e)
@@ -345,6 +330,25 @@ PipelineOpenGL::PipelineOpenGL(std::shared_ptr<ConfigLayer> config, std::shared_
 		}
 	);
 	view->keyEvent->addListener(camera->keyListener);*/
+}
+
+void PipelineOpenGL::onStartup()
+{
+	camera = std::make_shared<Camera>();
+
+	info("Rendering API: OpenGL");
+
+	config = v3->getModule<ConfigLayer>();
+	view = v3->getModule<ViewLayer>();
+
+	config->load("meshes", ConfigLayer::TYPE_CONFIG);
+	config->load("shaders", ConfigLayer::TYPE_CONFIG);
+	config->load("models", ConfigLayer::TYPE_CONFIG);
+	config->load("textures", ConfigLayer::TYPE_CONFIG);
+
+	_(glEnable(GL_DEPTH_TEST));
+
+	camera->viewportSize = glm::vec2(view->viewWidth, view->viewHeight);
 
 	glfwSetCharCallback(view->getWindow(), charCallback);
 }
@@ -354,7 +358,7 @@ PipelineOpenGL::~PipelineOpenGL()
 	
 }
 
-void PipelineOpenGL::tick()
+void PipelineOpenGL::onTick()
 {
 	if (glfwGetKey(view->getWindow(), GLFW_KEY_W) == GLFW_PRESS)
 	{

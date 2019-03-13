@@ -1,6 +1,7 @@
 #pragma once
 #include "../view/ViewLayer.h"
 #include "RenderCommand.h"
+#include "../Module.h"
 #include <boost/variant.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -10,8 +11,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <atomic>
+#include "tbb/concurrent_unordered_map.h"
 
-class Pipeline : public Tickable
+class V3;
+
+class Pipeline : public Module
 {
 public:
 	std::shared_ptr<tbb::concurrent_unordered_map<unsigned int, std::shared_ptr<RenderCommand>>> renderCommands;

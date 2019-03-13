@@ -1,13 +1,13 @@
 #pragma once
 #include "../Macros.h"
-#include "../events/EventLayer.h"
 #include "../util/FileUtils.h"
+#include "../Module.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>
 #include "tbb/concurrent_unordered_map.h"
 #include "tbb/concurrent_vector.h"
 
-class ConfigLayer
+class ConfigLayer : public Module
 {
 public:
 	enum Type
@@ -18,7 +18,7 @@ public:
 
 	typedef boost::variant<int, float, bool, std::string> Variant;
 
-	V3API ConfigLayer(std::string workingDir, std::shared_ptr<EventLayer> events);
+	V3API ConfigLayer();
 	virtual V3API ~ConfigLayer();
 
 	void V3API load(std::string file, Type type);
@@ -30,7 +30,6 @@ public:
 	tbb::concurrent_vector<std::string> V3API getStrings(std::string section, std::string segment);
 private:
 	std::string workingDir;
-	std::shared_ptr<EventLayer> events;
 
 	// filename, (config address: value)[]
 	typedef tbb::concurrent_unordered_map<std::string, tbb::concurrent_vector<std::string>> StringSegment;

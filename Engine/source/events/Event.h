@@ -29,7 +29,6 @@ public:
 			
 			if (data->index >= _listeners.size() - 1)
 			{
-				debug("Deleting event data");
 				_heap.deleteElement(data);
 			}
 

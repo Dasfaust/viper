@@ -1,15 +1,12 @@
 #include "V3.h"
-#include "extensions/ExtDeltaTime.h"
-#include "pipeline/RenderCommand.h"
 #include "pipeline/Pipeline.h"
-#include "events/EventLayer.h"
+#include "view/ViewLayer.h"
+#include "config/ConfigLayer.h"
 #include "Threadable.h"
-#include "util/Time.h"
-#include <unordered_set>
 #include "imgui.h"
 //#include "pipeline/imgui_impl_opengl3.h"
 #include "world/World.h"
-#include "events/Event.h"
+#include "pipeline/PipelineOpenGL.h"
 
 class TestEvent : public EventData
 {
@@ -94,7 +91,7 @@ public:
 	}
 };*/
 
-class Simulation : public Threadable
+/*class Simulation : public Threadable
 {
 public:
     unsigned int tpsTarget = 0;
@@ -115,14 +112,14 @@ public:
     glm::vec3 cubePositions[2] = {
         glm::vec3( 0.0f,  1.5f,  0.0f), 
         glm::vec3( 0.0f,  1.0f,  0.0f)
-        /*glm::vec3(-1.5f, -2.2f, -2.5f),  
+        glm::vec3(-1.5f, -2.2f, -2.5f),  
         glm::vec3(-3.8f, -2.0f, -12.3f),  
         glm::vec3( 2.4f, -0.4f, -3.5f),  
         glm::vec3(-1.7f,  3.0f, -7.5f),  
         glm::vec3( 1.3f, -2.0f, -2.5f),  
         glm::vec3( 1.5f,  2.0f, -2.5f), 
         glm::vec3( 1.5f,  0.2f, -1.5f), 
-        glm::vec3(-1.3f,  1.0f, -1.5f)*/
+        glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
     Simulation()
@@ -287,7 +284,7 @@ public:
                 state.rotationX += 0.1f; /*V3::getInstance()->elapsedTime / 1000.0f * glm::radians(20.0f * i);*/
                 //debugf("%0.04f", state.rotationX);
 
-                V3::getInstance()->getPipeline()->getRenderCommand(renderId)->getObject(objects[i])->instances[0] = state;
+                /*V3::getInstance()->getPipeline()->getRenderCommand(renderId)->getObject(objects[i])->instances[0] = state;
             }
 
             accumulator -= deltaTime;
@@ -298,31 +295,46 @@ public:
 		double target = alpha;
 		V3::getInstance()->getPipeline()->alpha.compare_exchange_weak(target, alpha);
     };
-};
+};*/
 
 class Game : public V3Application
 {
 public:
-	std::shared_ptr<EventListener<TestEvent>> li = ev->listen([](TestEvent* data)
-	{
-		debugf("TestEvent1: %d", data->someVal);
-	});
+	std::shared_ptr<EventListener<ViewEvents::MouseEvent>> li;
+	std::shared_ptr<EventListener<ViewEvents::KeyEvent>> li2;
 
 	//Simulation sim;
 
 	inline void onStartup() override
 	{
+		v3->getModule<ViewLayer>()->setApplicationName("A Game of Life");
 		debugf("V3Application: onStartup");
 		//sim.start();
 
 		auto e = ev->makeEvent();
 		e->someVal = 87;
 		ev->fire(e);
+
+		li = v3->getModule<ViewLayer>()->mouseEvent->listen([](ViewEvents::MouseEvent* data)
+		{
+			//debugf("Mouse (x: %.2f, y: %.2f)", data->cursor_coordinates.x, data->cursor_coordinates.y);
+		});
+
+		li2 = v3->getModule<ViewLayer>()->keyEvent->listen([](ViewEvents::KeyEvent* data)
+		{
+			for (auto kv : data->buttons)
+			{
+				auto button = (&kv)->first;
+				auto state = (&kv)->second;
+				//debugf("Key (id: %d, u/d: %d)", button, state);
+			}
+		});
 	};
 
 	inline void onTick() override
 	{
-		li->poll(ev);
+		li->poll(v3->getModule<ViewLayer>()->mouseEvent);
+		li2->poll(v3->getModule<ViewLayer>()->keyEvent);
 	};
 
 	inline void onShutdown() override
@@ -332,14 +344,14 @@ public:
 };
 
 int main()
-{   
-    EXT_DELTA_TIME_ADD();
-    EXT_WORLD_ADD();
-
-	auto game = std::make_shared<Game>();
-	V3::getInstance()->addExtension(game, 0.0);
-
-    V3::getInstance()->start();
+{
+	std::shared_ptr<V3> v3 = std::make_shared<V3>();
+	v3->initModule<ConfigLayer>();
+	v3->initModule<ViewLayer>();
+	v3->initModule<PipelineOpenGL>();
+	v3->initModule<World>();
+	v3->initModule<Game>();
+	v3->start();
 
     return EXIT_SUCCESS;
 }

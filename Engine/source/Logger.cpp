@@ -21,7 +21,6 @@ void Log::queue(Level level, std::string message)
 
 void Log::poll()
 {
-	std::cout << "poll outside" << std::endl;
 	while (running)
 	{
 		if (!messages->empty())
@@ -37,11 +36,19 @@ void Log::poll()
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
 		}
 	}
+
+	if (!messages->empty())
+	{
+		std::shared_ptr<std::string> result;
+		if (messages->try_pop(result))
+		{
+			std::cout << (*result).c_str() << std::endl;
+		}
+	}
 }
 
 void Log::start()
 {
-	std::cout << "log start" << std::endl;
 	running = true;
 	worker = std::thread(poll);
 }

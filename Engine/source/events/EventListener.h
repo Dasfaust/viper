@@ -8,7 +8,7 @@ public:
 };
 
 template<class T>
-class EventListener : public EngineExtension
+class EventListener
 {
 public:
 	void(*handle)(T*);

@@ -1,56 +1,78 @@
 #pragma once
 #include "Macros.h"
-#include "config/ConfigLayer.h"
-#include "view/ViewLayer.h"
-#include "events/EventLayer.h"
-#include "pipeline/Pipeline.h"
-#include "EngineExtension.h"
+#include "Logger.h"
+#include "core/DeltaTime.h"
+#include <unordered_map>
+#include <atomic>
 
 class V3
 {
 public:
-	static V3API std::shared_ptr<V3> getInstance();
-
+	V3API V3();
 	V3API ~V3();
 
-	std::shared_ptr<EventLayer> V3API getEvents();
-	std::shared_ptr<ConfigLayer> V3API getConfig();
-	std::shared_ptr<ViewLayer> V3API getView();
-	std::shared_ptr<Pipeline> V3API getPipeline();
-
-	std::string debugWindowTitle;
-	unsigned int framesPerSecond = 0;
-	double deltaTime = 0;
-	std::atomic<double> elapsedTime = 0.0;
-
 	typedef std::unordered_map<int, std::shared_ptr<Tickable>> TickMap;
-	typedef std::unordered_map<int, std::shared_ptr<EngineExtension>> ExtensionMap;
 
 	void V3API start();
 
 	int V3API addTickable(std::shared_ptr<Tickable> object);
-	int V3API addExtension(std::shared_ptr<EngineExtension> object, double interval = 0.0);
-	void V3API removeTickable(unsigned int id);
-	void V3API removeExtension(unsigned int id);
-protected:
-	static std::shared_ptr<V3> instance;
-	V3();
+
+	template<typename T>
+	T* initModule(double interval = 0.0)
+	{
+		unsigned int id = moduleIndex++;
+		debugf("Module init: %d (%s)", id, typeid(T).name());
+		T* module = new T();
+		module->v3 = this;
+		module->interval = interval;
+		modules[id] = module;
+		return static_cast<T*>(modules[id]);
+	};
+
+	template<typename T>
+	T* getModule()
+	{
+		for (auto kv : modules)
+		{
+			if (dynamic_cast<T*>((&kv)->second) != nullptr)
+			{
+				return static_cast<T*>((&kv)->second);
+			}
+		}
+		critf("Module %s requested but is not initialized", typeid(T).name());
+		return nullptr;
+	};
+
+	template<typename T>
+	bool isModuleLoaded()
+	{
+		for (auto kv : modules)
+		{
+			if (dynamic_cast<T*>((&kv)->second) != nullptr)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	inline void shutdown()
+	{
+		bool expected = false;
+		while(!running.compare_exchange_weak(expected, false));
+	};
 private:
-	std::shared_ptr<EventLayer> events;
-	std::shared_ptr<ConfigLayer> config;
-	std::shared_ptr<ViewLayer> view;
-	std::shared_ptr<Pipeline> pipeline;
+	std::atomic<bool> running = true;
+
+	unsigned int moduleIndex = 0;
+	std::unordered_map<unsigned int, Module*> modules;
 
 	std::shared_ptr<TickMap> tickables;
-	std::shared_ptr<ExtensionMap> extensions;
+
+	DeltaTime* dt;
 };
 
-struct V3Container : public V3
-{
-	V3Container() : V3() { }
-};
-
-class V3Application : public EngineExtension
+class V3Application : public Module
 {
 public:
 	~V3Application() { };

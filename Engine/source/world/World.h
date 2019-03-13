@@ -1,11 +1,9 @@
 #pragma once
-#include "../EngineExtension.h"
+#include "../Module.h"
 #include "../Threadable.h"
 #include "ECS.h"
 #include <unordered_map>
 #include <tuple>
-
-#define EXT_WORLD_ADD() V3::getInstance()->addExtension(World::getInstance(), 0.0);
 
 class Worker : public Threadable
 {
@@ -59,16 +57,16 @@ public:
 	};
 };
 
-class World : public EngineExtension, public Threadable
+class World : public Module, public Threadable
 {
 public:
-	static V3API std::shared_ptr<World> getInstance();
-
+	int stepsPerSecond = 0;
 	std::vector<std::shared_ptr<Worker>> workers;
 	tbb::concurrent_queue<unsigned int> entsToDelete;
 	tbb::concurrent_queue<unsigned int> compsToDelete;
 
-	~World();
+	V3API World();
+	V3API ~World();
 
 	void onStartup() override;
 	void tick() override;
@@ -92,15 +90,11 @@ public:
 	{
 		compsToDelete.emplace(id);
 	};
-protected:
-    static std::shared_ptr<World> instance;
-    World();
 private:
     int stepsPerSecondTarget;
     bool stepsAsync = false;
     int stepThreadCount = 1;
 
-    int stepsPerSecond = 0;
     double stepAlpha = 0.0;
     int stepCount = 0;
     double lastStep = 0.0;
@@ -108,9 +102,4 @@ private:
     double deltaTime = 0.0;
     double stepAccumulator = 0.0;
     double stepPerformanceAccumulator = 0.0;
-};
-
-struct WorldContainer : public World
-{
-	WorldContainer() : World() { }
 };

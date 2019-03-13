@@ -1,22 +1,11 @@
 #include "World.h"
 #include "../V3.h"
 #include "../util/Time.h"
-
-std::shared_ptr<World> World::instance = 0;
-
-std::shared_ptr<World> World::getInstance()
-{
-	if (instance == 0)
-	{
-		instance = std::make_shared<WorldContainer>();
-	}
-
-	return instance;
-}
+#include "../config/ConfigLayer.h"
 
 World::World()
 {
-	ECS::init();
+
 }
 
 World::~World()
@@ -26,7 +15,9 @@ World::~World()
 
 void World::onStartup()
 {
-	auto config = V3::getInstance()->getConfig();
+	ECS::init();
+
+	auto config = v3->getModule<ConfigLayer>();
 	stepsPerSecondTarget = config->getInts("engine", "worldStepsPerSecond")[0];
 	stepsAsync = config->getBools("engine", "worldStepAsync")[0];
 	stepThreadCount = config->getInts("engine", "worldStepThreads")[0];
@@ -107,10 +98,6 @@ void World::onStartup()
 
 		debugf("Starting world async");
 		this->start();
-	}
-	else
-	{
-		V3::getInstance()->addTickable(getInstance());
 	}
 }
 

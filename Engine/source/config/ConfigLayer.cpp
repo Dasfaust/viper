@@ -3,10 +3,9 @@
 #include <iostream>
 #include <fstream>
 
-ConfigLayer::ConfigLayer(std::string workingDir, std::shared_ptr<EventLayer> events)
+ConfigLayer::ConfigLayer()
 {
-	this->workingDir = workingDir;
-	this->events = events;
+	this->workingDir = FileUtils::getWorkingDirectory() + FileUtils::getPathSeperator() + "resources";
 	stringValues = std::make_shared<StringMap>();
 	intValues = std::make_shared<IntMap>();
 	floatValues = std::make_shared<FloatMap>();
