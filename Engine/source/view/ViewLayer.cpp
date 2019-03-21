@@ -181,6 +181,8 @@ void ViewLayer::onTick()
 	auto dt = v3->getModule<DeltaTime>();
 	auto wd = v3->getModule<World>();
 	setTitle(" -> FPS: " + std::to_string(dt->framesPerSecond) + " TPS: " + std::to_string(wd->stepsPerSecond));
+#else
+	setTitle("");
 #endif
 
 	if (glfwWindowShouldClose(window))

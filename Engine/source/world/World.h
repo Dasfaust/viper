@@ -32,7 +32,7 @@ public:
 				for (int i = std::get<0>(job); i < std::get<1>(job); i++)
 				{
 					
-					if (i <= ECS::componentIds.size() - 1)
+					/*if (i <= ECS::componentIds.size() - 1)
 					{
 						unsigned int id = ECS::componentIds[i];
 						ECS::components[id]->tick_func(id);
@@ -40,7 +40,7 @@ public:
 					else
 					{
 						break;
-					}
+					}*/
 				}
 			}
 		}

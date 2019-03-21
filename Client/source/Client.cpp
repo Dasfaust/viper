@@ -329,6 +329,33 @@ public:
 				//debugf("Key (id: %d, u/d: %d)", button, state);
 			}
 		});
+
+		/*class SomeComp : public Component<SomeComp>
+		{
+		public:
+			int someInt = 10;
+		};
+		class Ticker : public ComponentTicker<SomeComp>
+		{
+		public:
+			void tick(SomeComp* comp) override
+			{
+				comp->someInt = rand();
+				debug("Ent tick");
+			};
+		};
+		auto ticker = std::make_shared<Ticker>();
+		auto system = ECS::makeSystem<SomeComp>(ticker);
+		for (int i = 0; i < 1000000; i++)
+		{
+			auto e = ECS::makeEntity();
+			auto c = system->makeComponent();
+			ECS::addComponentToEntity<SomeComp>(e, c);
+		}
+		debugf("Num entities: %d", ECS::entities.size());
+		debugf("Num components: %d", ECS::components.size());
+		debugf("Num comp->ent: %d", ECS::compToEnt.size());
+		debugf("Num ent->comp: %d", ECS::entToComp.size());*/
 	};
 
 	inline void onTick() override

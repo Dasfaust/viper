@@ -15,7 +15,7 @@ World::~World()
 
 void World::onStartup()
 {
-	ECS::init();
+	//ECS::init();
 
 	auto config = v3->getModule<ConfigLayer>();
 	stepsPerSecondTarget = config->getInts("engine", "worldStepsPerSecond")[0];
@@ -96,8 +96,12 @@ void World::onStartup()
 			debugf("Worker %d started", i);
 		}
 
-		debugf("Starting world async");
+		debugf("Starting world (async)");
 		this->start();
+	}
+	else
+	{
+		debugf("Starting world");
 	}
 }
 
@@ -112,7 +116,6 @@ void World::tick()
         stepsPerSecond = stepCount;
         stepPerformanceAccumulator = 0;
         stepCount = 0;
-		debugf("World TPS: %d", stepsPerSecond);
     }
     else 
     {
@@ -124,7 +127,7 @@ void World::tick()
     {
 		if (stepsAsync)
 		{
-			if (ECS::componentIds.size() > 1000)
+			/*if (ECS::componentIds.size() > 1000)
 			{
 				unsigned int itemsPerWorker = ECS::components.size() / stepThreadCount;
 				for (unsigned int i = 0; i < stepThreadCount; i++)
@@ -180,18 +183,18 @@ void World::tick()
 						comp->tick_func(id);
 					}
 				}
-			}
+			}*/
 		}
 		else
 		{
-			for (auto id : ECS::componentIds)
+			/*for (auto id : ECS::componentIds)
 			{
 				auto comp = ECS::components[id];
 				if (!comp->is_client)
 				{
 					comp->tick_func(id);
 				}
-			}
+			}*/
 		}
 
         stepAccumulator -= deltaTime;
@@ -211,4 +214,6 @@ void World::onShutdown()
 			worker->stop();
 		}
 	}
+
+	//static_cast<void>(ECS::purge());
 }

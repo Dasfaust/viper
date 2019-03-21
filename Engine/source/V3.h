@@ -11,11 +11,7 @@ public:
 	V3API V3();
 	V3API ~V3();
 
-	typedef std::unordered_map<int, std::shared_ptr<Tickable>> TickMap;
-
 	void V3API start();
-
-	int V3API addTickable(std::shared_ptr<Tickable> object);
 
 	template<typename T>
 	T* initModule(double interval = 0.0)
@@ -66,8 +62,6 @@ private:
 
 	unsigned int moduleIndex = 0;
 	std::unordered_map<unsigned int, Module*> modules;
-
-	std::shared_ptr<TickMap> tickables;
 
 	DeltaTime* dt;
 };
