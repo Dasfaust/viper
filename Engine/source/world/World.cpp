@@ -15,7 +15,7 @@ World::~World()
 
 void World::onStartup()
 {
-	//ECS::init();
+	ecs = std::make_shared<ECS>();
 
 	auto config = v3->getModule<ConfigLayer>();
 	stepsPerSecondTarget = config->getInts("engine", "worldStepsPerSecond")[0];
@@ -27,71 +27,11 @@ void World::onStartup()
 	lastStep = Time::now();
 	deltaTime = 1000.0 / stepsPerSecondTarget;
 
-	/*class SomeComp : public Component<SomeComp>
-	{
-	public:
-		int someInt = 10;
-	};
-
-	class Ticker : public ComponentTicker<SomeComp>
-	{
-	public:
-		void tick(SomeComp* comp) override
-		{
-			comp->someInt = rand();
-		};
-	};
-	auto ticker = std::make_shared<Ticker>();
-	auto system = ECS::makeSystem<SomeComp>(ticker);
-	auto comp = system->makeComponent();
-	unsigned int id = comp->id;
-	SomeComp* get = system->getComponent(id);
-	debugf("SomeComp: %d, type: %d", get->someInt, get->type_id);
-
-	auto ent = ECS::makeEntity();
-	debugf("Entity ID: %d", ent->id);
-	ECS::deleteEntity(ent);
-	ent = ECS::makeEntity();
-	debugf("Entity ID: %d", ent->id);
-	auto ent2 = ECS::makeEntity();
-	debugf("Entity ID: %d", ent2->id);
-
-	ECS::addComponentToEntity<SomeComp>(ent, get);
-	for (auto c : ECS::getEntityComponents(ent))
-	{
-		debugf("Entity (%d) component type: %d", ent->id, c->type_id);
-	}
-
-	system->deleteComponent(comp);
-	for (auto c : ECS::getEntityComponents(ent))
-	{
-		debugf("Entity (%d) component type: %d", ent->id, c->type_id);
-	}
-
-	comp = system->makeComponent();
-	ECS::addComponentToEntity<SomeComp>(ent, comp);
-	ECS::deleteEntity(ent);
-	debugf("Num components: %d", ECS::components.size());
-	debugf("Num comp->ent: %d", ECS::compToEnt.size());
-	debugf("Num ent->comp: %d", ECS::entToComp.size());
-
-	for (int i = 0; i < 800000; i++)
-	{
-		auto e = ECS::makeEntity();
-		auto c = system->makeComponent();
-		ECS::addComponentToEntity<SomeComp>(e, c);
-	}
-
-	debugf("Num entities: %d", ECS::entities.size());
-	debugf("Num components: %d", ECS::components.size());
-	debugf("Num comp->ent: %d", ECS::compToEnt.size());
-	debugf("Num ent->comp: %d", ECS::entToComp.size());*/
-
 	if (stepsAsync)
 	{
 		for (int i = 0; i < stepThreadCount; i++)
 		{
-			workers.push_back(std::make_shared<Worker>());
+			workers.push_back(std::make_shared<Worker>(this));
 			workers[i]->start();
 			debugf("Worker %d started", i);
 		}
@@ -127,72 +67,104 @@ void World::tick()
     {
 		if (stepsAsync)
 		{
-			/*if (ECS::componentIds.size() > 1000)
+			auto systems = ecs->getSystems();
+
+			for (auto kv : systems)
 			{
-				unsigned int itemsPerWorker = ECS::components.size() / stepThreadCount;
-				for (unsigned int i = 0; i < stepThreadCount; i++)
+				for (auto system : (&kv)->second)
 				{
-					unsigned int start = i * itemsPerWorker + 1;
-					workers[i]->queueJob(std::make_tuple(start, start + itemsPerWorker));
-				}
+					auto comps = ecs->getComponents(system->type);
 
-				for (auto worker : workers)
-				{
-					while (!worker->finished);
-				}
-
-				if (!entsToDelete.empty())
-				{
-					unsigned int id;
-					if (entsToDelete.try_pop(id))
+					if (comps.size() >= stepThreadCount)
 					{
-						ECS::deleteEntity(ECS::getEntity(id));
-					}
-				}
-
-				if (!compsToDelete.empty())
-				{
-					unsigned int id;
-					if (compsToDelete.try_pop(id))
-					{
-						auto comp = ECS::components[id];
-						if (ECS::compToEnt.count(id))
+						unsigned int itemsPerWorker = comps.size() / stepThreadCount;
+						for (unsigned int i = 0; i < stepThreadCount; i++)
 						{
-							for (auto ent : ECS::compToEnt[id])
+							unsigned int start = i * itemsPerWorker + 1;
+							workers[i]->queueJob(std::make_tuple(system, start, start + itemsPerWorker));
+						}
+
+						for (auto worker : workers)
+						{
+							while (!worker->finished);
+						}
+
+						if (!entsToDelete.empty())
+						{
+							unsigned int id;
+							if (entsToDelete.try_pop(id))
 							{
-								if (ECS::entToComp.count(ent->id))
-								{
-									auto list = ECS::entToComp[ent->id];
-									std::iter_swap(list.begin(), list.end() - 1);
-									list.pop_back();
-									ECS::entToComp[ent->id] = list;
-								}
+								ecs->deleteEntity(id);
 							}
 						}
-						comp->del_func(comp);
 					}
-				}
-			}
-			else
-			{
-				for (auto id : ECS::componentIds)
-				{
-					auto comp = ECS::components[id];
-					if (!comp->is_client)
+					else
 					{
-						comp->tick_func(id);
+						for (auto comp : comps)
+						{
+							system->tickInternal(comp);
+						}
 					}
 				}
-			}*/
+
+				/*auto comps = ecs->getComponentIds(sys->type);
+
+				if (comps.size() >= stepThreadCount)
+				{
+					unsigned int itemsPerWorker = comps.size() / stepThreadCount;
+					for (unsigned int i = 0; i < stepThreadCount; i++)
+					{
+						unsigned int start = i * itemsPerWorker + 1;
+						workers[i]->queueJob(std::make_tuple(sys->id, start, start + itemsPerWorker));
+					}
+
+					for (auto worker : workers)
+					{
+						while (!worker->finished);
+					}
+
+					if (!entsToDelete.empty())
+					{
+						unsigned int id;
+						if (entsToDelete.try_pop(id))
+						{
+							ecs->deleteEntity(id);
+						}
+					}
+				}
+				else
+				{
+					for (auto comp : comps)
+					{
+						sys->tickInternal(ecs->getComponent(sys->type, comp));
+					}
+				}*/
+			}
 		}
 		else
 		{
-			/*for (auto id : ECS::componentIds)
+			auto systems = ecs->getSystems();
+
+			for (auto kv : systems)
 			{
-				auto comp = ECS::components[id];
-				if (!comp->is_client)
+				for (auto system : (&kv)->second)
 				{
-					comp->tick_func(id);
+					auto comps = ecs->getComponents(system->type);
+
+					for (auto comp : comps)
+					{
+						system->tickInternal(comp);
+					}
+				}
+			}
+
+			/*for (auto sys : systems)
+			{
+				auto comps = ecs->getComponents(sys->type);
+
+				for (auto comp : comps)
+				{
+					sys->tickInternal(comp);
 				}
 			}*/
 		}
@@ -215,5 +187,5 @@ void World::onShutdown()
 		}
 	}
 
-	//static_cast<void>(ECS::purge());
+	static_cast<void>(ecs->purge());
 }

@@ -17,9 +17,8 @@ V3::~V3()
 
 void V3::start()
 {
-	debugf("Num modules: %d", modules.size());
+	debugf("Engine start: modules loaded: %d", modules.size());
 
-	debug("Starting up...");
 	for (auto element : modules)
 	{
 		element.second->onStartup();
