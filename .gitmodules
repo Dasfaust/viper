@@ -7,3 +7,6 @@
 [submodule "submodules/MemoryPool"]
 	path = submodules/MemoryPool
 	url = https://github.com/Dasfaust/MemoryPool.git
+[submodule "submodules/concurrentqueue"]
+	path = submodules/concurrentqueue
+	url = https://github.com/Dasfaust/concurrentqueue.git
