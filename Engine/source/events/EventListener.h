@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include <tbb/concurrent_queue.h>
+#include "concurrentqueue.h"
 
 class EventBase
 {
@@ -21,23 +21,20 @@ public:
 	}
 	virtual ~EventListener() { }
 
-	tbb::concurrent_queue<T*> queue;
+	moodycamel::ConcurrentQueue<T*> queue;
 
 	virtual void call(T* data)
 	{
-		queue.emplace(data);
+		queue.enqueue(data);
 	}
 
 	virtual void poll(std::shared_ptr<EventBase> handler)
 	{
-		while (!queue.empty())
+		T* result;
+		while(queue.try_dequeue(result))
 		{
-			T* result;
-			if (queue.try_pop(result))
-			{
-				handle(result);
-				propegate(handler, result);
-			}
+			handle(result);
+			propegate(handler, result);
 		}
 	}
 };

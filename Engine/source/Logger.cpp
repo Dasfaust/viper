@@ -2,49 +2,42 @@
 #include <thread>
 #include <atomic>
 #include <memory>
-#include <tbb/concurrent_queue.h>
+#include "concurrentqueue.h"
 #include <chrono>
 
 namespace Log
 {
 	static std::atomic<bool> running = false;
 	static std::thread worker;
-	static std::shared_ptr<tbb::concurrent_queue<std::shared_ptr<std::string>>> messages = std::make_shared<tbb::concurrent_queue<std::shared_ptr<std::string>>>();;
+	static std::shared_ptr<moodycamel::ConcurrentQueue<std::string>> messages = std::make_shared<moodycamel::ConcurrentQueue<std::string>>();;
 }
 
 void Log::queue(Level level, std::string message)
 {
 	std::string input = "V3::" + message;
-	std::shared_ptr<std::string> ptr = std::make_shared<std::string>(input);
-	messages->push(ptr);
+	messages->enqueue(input);
 }
 
 void Log::poll()
 {
 	while (running)
 	{
-		if (!messages->empty())
-		{
-			std::shared_ptr<std::string> result;
-			if (messages->try_pop(result))
-			{
-				std::cout << (*result).c_str() << std::endl;
-			}
-		}
+		if (checkQueue()){ }
 		else
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
 		}
 	}
+}
 
-	if (!messages->empty())
+bool Log::checkQueue()
+{
+	std::string message;
+	while(messages->try_dequeue(message))
 	{
-		std::shared_ptr<std::string> result;
-		if (messages->try_pop(result))
-		{
-			std::cout << (*result).c_str() << std::endl;
-		}
+		std::cout << message.c_str() << std::endl;
 	}
+	return message.length();
 }
 
 void Log::start()

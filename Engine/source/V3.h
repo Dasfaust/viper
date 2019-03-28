@@ -2,7 +2,7 @@
 #include "Macros.h"
 #include "Logger.h"
 #include "core/DeltaTime.h"
-#include <unordered_map>
+#include <boost/container/flat_map.hpp>
 #include <atomic>
 
 class V3
@@ -61,7 +61,7 @@ private:
 	std::atomic<bool> running = true;
 
 	unsigned int moduleIndex = 0;
-	std::unordered_map<unsigned int, Module*> modules;
+	boost::container::flat_map<unsigned int, Module*> modules;
 
 	DeltaTime* dt;
 };

@@ -1,6 +1,5 @@
 #include "V3.h"
 #include <memory>
-#include "world/ECS.h"-
 
 V3::V3()
 {
@@ -68,8 +67,13 @@ void V3::start()
 	{
 		element.second->onShutdown();
 	}
-
+	for (std::pair<unsigned int, Module*> element : modules)
+	{
+		delete element.second;
+	}
 	static_cast<void>(modules.empty());
 
 	info("Complete. Goodbye!");
+
+	Log::checkQueue();
 }

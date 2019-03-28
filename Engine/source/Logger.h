@@ -51,6 +51,8 @@ namespace Log
 
 	void V3API poll();
 
+	bool V3API checkQueue();
+
 	void V3API start();
 
 	void V3API stop();

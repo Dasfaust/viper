@@ -4,9 +4,9 @@
 #include "../config/ConfigLayer.h"
 #include "../world/World.h"
 
-static std::unordered_map<int, ViewEvents::ButtonState> ViewEvents::checkButtonStates()
+static boost::container::flat_map<int, ViewEvents::ButtonState> ViewEvents::checkButtonStates()
 {
-	std::unordered_map<int, ViewEvents::ButtonState> states;
+	boost::container::flat_map<int, ViewEvents::ButtonState> states;
 
 	for (int i = 0; i < GLFW_MOUSE_BUTTON_LAST; i++)
 	{
@@ -34,9 +34,9 @@ static std::unordered_map<int, ViewEvents::ButtonState> ViewEvents::checkButtonS
 	return states;
 }
 
-static std::unordered_map<int, ViewEvents::ButtonState> ViewEvents::checkKeyStates()
+static boost::container::flat_map<int, ViewEvents::ButtonState> ViewEvents::checkKeyStates()
 {
-	std::unordered_map<int, ViewEvents::ButtonState> states;
+	boost::container::flat_map<int, ViewEvents::ButtonState> states;
 
 	for (int i = 0; i < GLFW_KEY_LAST; i++)
 	{
@@ -123,8 +123,8 @@ void ViewLayer::onStartup()
 	mouseCoords = std::make_shared<glm::vec2>();
 	scrollCoords = std::make_shared<glm::vec2>();
 	keyEvent = std::make_shared<Event<ViewEvents::KeyEvent>>();
-	buttonStates = std::make_shared<std::unordered_map<int, ViewEvents::ButtonState>>();
-	keyStates = std::make_shared<std::unordered_map<int, ViewEvents::ButtonState>>();
+	buttonStates = std::make_shared<boost::container::flat_map<int, ViewEvents::ButtonState>>();
+	keyStates = std::make_shared<boost::container::flat_map<int, ViewEvents::ButtonState>>();
 	glfwSetCursorPosCallback(window, ViewEvents::mouseCallback);
 	glfwSetScrollCallback(window, ViewEvents::mouseScrollCallback);
 
@@ -179,8 +179,8 @@ void ViewLayer::onTick()
 
 #ifdef V3_DEBUG
 	auto dt = v3->getModule<DeltaTime>();
-	auto wd = v3->getModule<World>();
-	setTitle(" -> FPS: " + std::to_string(dt->framesPerSecond) + " TPS: " + std::to_string(wd->stepsPerSecond));
+	//auto wd = v3->getModule<World>();
+	setTitle(" -> FPS: " + std::to_string(dt->framesPerSecond) /*+ " TPS: " + std::to_string(wd->stepsPerSecond)*/);
 #else
 	setTitle("");
 #endif

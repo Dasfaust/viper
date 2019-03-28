@@ -10,12 +10,12 @@ World::World()
 
 World::~World()
 {
-
+	delete ecs;
 }
 
 void World::onStartup()
 {
-	ecs = std::make_shared<ECS>();
+	ecs = new ECS::Container();
 
 	auto config = v3->getModule<ConfigLayer>();
 	stepsPerSecondTarget = config->getInts("engine", "worldStepsPerSecond")[0];
@@ -29,11 +29,11 @@ void World::onStartup()
 
 	if (stepsAsync)
 	{
-		for (int i = 0; i < stepThreadCount; i++)
+		for (unsigned int i = 0; i < stepThreadCount; i++)
 		{
-			workers.push_back(std::make_shared<Worker>(this));
+			workers.push_back(std::make_shared<Worker>(this, i));
 			workers[i]->start();
-			debugf("Worker %d started", i);
+			debugf("Worker %d started", i + 1);
 		}
 
 		debugf("Starting world (async)");
@@ -56,6 +56,7 @@ void World::tick()
         stepsPerSecond = stepCount;
         stepPerformanceAccumulator = 0;
         stepCount = 0;
+		debugf("TPS: %d", stepsPerSecond);
     }
     else 
     {
@@ -65,115 +66,81 @@ void World::tick()
     stepAccumulator += stepTime;
     while (stepAccumulator >= deltaTime)
     {
+		//debug("Step start");
 		if (stepsAsync)
 		{
-			auto systems = ecs->getSystems();
-
-			for (auto kv : systems)
+			for (ECS::System* system : ecs->getSystems())
 			{
-				for (auto system : (&kv)->second)
+				for (auto kv : system->getTypes())
 				{
-					auto comps = ecs->getComponents(system->type);
+					unsigned int elements = (ecs->getHeap((&kv)->first).size() / (&kv)->second) - 1;
 
-					if (comps.size() >= stepThreadCount)
+					if (elements >= stepThreadCount)
 					{
-						unsigned int itemsPerWorker = comps.size() / stepThreadCount;
+						unsigned int itemsPerWorker = elements / stepThreadCount;
+						//debugf("Items per worker: %d", itemsPerWorker);
+						unsigned int lastIndex = 0;
 						for (unsigned int i = 0; i < stepThreadCount; i++)
 						{
-							unsigned int start = i * itemsPerWorker + 1;
-							workers[i]->queueJob(std::make_tuple(system, start, start + itemsPerWorker));
-						}
-
-						for (auto worker : workers)
-						{
-							while (!worker->finished);
-						}
-
-						if (!entsToDelete.empty())
-						{
-							unsigned int id;
-							if (entsToDelete.try_pop(id))
-							{
-								ecs->deleteEntity(id);
-							}
+							int start = lastIndex + (&kv)->second;
+							int end = (i + 1 == stepThreadCount ? -1 : (itemsPerWorker = 1 ? start : (lastIndex + (itemsPerWorker * (&kv)->second))));
+							lastIndex = end;
+							//debugf("Worker range: %d - %d", start, end);
+							workers[i]->queueJob({ system, (&kv)->first, start, end });
 						}
 					}
 					else
 					{
-						for (auto comp : comps)
-						{
-							system->tickInternal(comp);
-						}
-					}
-				}
-
-				/*auto comps = ecs->getComponentIds(sys->type);
-
-				if (comps.size() >= stepThreadCount)
-				{
-					unsigned int itemsPerWorker = comps.size() / stepThreadCount;
-					for (unsigned int i = 0; i < stepThreadCount; i++)
-					{
-						unsigned int start = i * itemsPerWorker + 1;
-						workers[i]->queueJob(std::make_tuple(sys->id, start, start + itemsPerWorker));
+						workers[0]->queueJob({ system, (&kv)->first, -1, -1 });
 					}
 
 					for (auto worker : workers)
 					{
-						while (!worker->finished);
+						bool result;
+						while (!worker->finished.try_dequeue(result))
+						{
+							std::this_thread::sleep_for(std::chrono::milliseconds(1));
+						}
 					}
 
-					if (!entsToDelete.empty())
+					while (!entsToDelete.empty())
 					{
 						unsigned int id;
 						if (entsToDelete.try_pop(id))
 						{
-							ecs->deleteEntity(id);
+							ecs->deleteEntity(ecs->getEntity(id));
 						}
 					}
 				}
-				else
-				{
-					for (auto comp : comps)
-					{
-						sys->tickInternal(ecs->getComponent(sys->type, comp));
-					}
-				}*/
 			}
 		}
 		else
 		{
-			auto systems = ecs->getSystems();
-
-			for (auto kv : systems)
+			for (ECS::System* system : ecs->getSystems())
 			{
-				for (auto system : (&kv)->second)
+				for (auto kv : system->getTypes())
 				{
-					auto comps = ecs->getComponents(system->type);
-
-					for (auto comp : comps)
-					{
-						system->tickInternal(comp);
-					}
+					tickSystem(system, (&kv)->first);
 				}
 			}
-
-			/*for (auto sys : systems)
-			{
-				auto comps = ecs->getComponents(sys->type);
-
-				for (auto comp : comps)
-				{
-					sys->tickInternal(comp);
-				}
-			}*/
 		}
+		//debug("Step end");
 
         stepAccumulator -= deltaTime;
         stepCount++;
     }
 
     stepAlpha = stepAccumulator / deltaTime;
+}
+
+void World::tickSystem(ECS::System* system, uint8 type, int start, int end)
+{
+	std::vector<uint32> heap = ecs->getHeap(type);
+	size_t size = system->getTypes()[type];
+	for (unsigned int i = start; i < (end > -1 ? end + size : heap.size()); i += size)
+	{
+		system->tick(deltaTime, reinterpret_cast<ECS::Component*>(&heap[i]), ecs);
+	}
 }
 
 void World::onShutdown()
@@ -186,6 +153,4 @@ void World::onShutdown()
 			worker->stop();
 		}
 	}
-
-	static_cast<void>(ecs->purge());
 }

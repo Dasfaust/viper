@@ -222,7 +222,7 @@ public:
 		auto comp = getComponent<T>(id);
 		comp->parent = id;
 
-		entities[entity][comp->type] = comp;
+		entities[entity][comp->id] = comp;
 	};
 
 	inline std::unordered_map<unsigned int, Component*> getEntityComponents(unsigned int entity)

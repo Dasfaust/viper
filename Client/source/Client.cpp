@@ -7,6 +7,7 @@
 //#include "pipeline/imgui_impl_opengl3.h"
 #include "world/World.h"
 #include "pipeline/PipelineOpenGL.h"
+#include "pipeline/ClientServerCommunication.h"
 
 class TestEvent : public EventData
 {
@@ -303,13 +304,10 @@ public:
 	std::shared_ptr<EventListener<ViewEvents::MouseEvent>> li;
 	std::shared_ptr<EventListener<ViewEvents::KeyEvent>> li2;
 
-	//Simulation sim;
-
 	inline void onStartup() override
 	{
 		v3->getModule<ViewLayer>()->setApplicationName("A Game of Life");
 		debugf("V3Application: onStartup");
-		//sim.start();
 
 		auto e = ev->makeEvent();
 		e->someVal = 87;
@@ -317,7 +315,7 @@ public:
 
 		li = v3->getModule<ViewLayer>()->mouseEvent->listen([](ViewEvents::MouseEvent* data)
 		{
-			//debugf("Mouse (x: %.2f, y: %.2f)", data->cursor_coordinates.x, data->cursor_coordinates.y);
+			
 		});
 
 		li2 = v3->getModule<ViewLayer>()->keyEvent->listen([](ViewEvents::KeyEvent* data)
@@ -326,36 +324,28 @@ public:
 			{
 				auto button = (&kv)->first;
 				auto state = (&kv)->second;
-				//debugf("Key (id: %d, u/d: %d)", button, state);
+				
 			}
 		});
 
-		/*class SomeComp : public Component<SomeComp>
+		/*struct C : public Component
 		{
-		public:
-			int someInt = 10;
+
 		};
-		class Ticker : public ComponentTicker<SomeComp>
+
+		class S : public System<C>
 		{
-		public:
-			void tick(SomeComp* comp) override
-			{
-				comp->someInt = rand();
-				debug("Ent tick");
-			};
+
 		};
-		auto ticker = std::make_shared<Ticker>();
-		auto system = ECS::makeSystem<SomeComp>(ticker);
-		for (int i = 0; i < 1000000; i++)
+		auto ecs = v3->getModule<World>()->ecs;
+		ecs->makeSystem<S, C>(v3->getModule<World>());
+		unsigned int ee = v3->getModule<World>()->ecs->makeEntity();
+		for (int i = 0; i < 500000; i++)
 		{
-			auto e = ECS::makeEntity();
-			auto c = system->makeComponent();
-			ECS::addComponentToEntity<SomeComp>(e, c);
+			auto c = ecs->makeComponent<C>();
+			ecs->attach<C>(ee, c->id);
 		}
-		debugf("Num entities: %d", ECS::entities.size());
-		debugf("Num components: %d", ECS::components.size());
-		debugf("Num comp->ent: %d", ECS::compToEnt.size());
-		debugf("Num ent->comp: %d", ECS::entToComp.size());*/
+		debugf("Entity components: %d", ecs->getEntityComponents(ee).size());*/
 	};
 
 	inline void onTick() override
@@ -366,7 +356,7 @@ public:
 
 	inline void onShutdown() override
 	{
-		//sim.stop();
+		
 	};
 };
 
@@ -378,6 +368,7 @@ int main()
 	v3->initModule<PipelineOpenGL>();
 	v3->initModule<World>();
 	v3->initModule<Game>();
+	//v3->initModule<ClientServerCommunication>();
 	v3->start();
 
     return EXIT_SUCCESS;

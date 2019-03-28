@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 #endif
 #include "glm/vec2.hpp"
-#include <unordered_map>
+#include <boost/container/flat_map.hpp>
 
 namespace ViewEvents
 {
@@ -21,7 +21,7 @@ namespace ViewEvents
 	class MouseEvent : public EventData
 	{
 	public:
-		std::unordered_map<int, ButtonState> button_states;
+		boost::container::flat_map<int, ButtonState> button_states;
 		glm::vec2 cursor_coordinates;
 		glm::vec2 scroll_wheel_coordinates;
 	};
@@ -29,15 +29,15 @@ namespace ViewEvents
 	class KeyEvent : public EventData
 	{
 	public:
-		std::unordered_map<int, ButtonState> buttons;
+		boost::container::flat_map<int, ButtonState> buttons;
 	};
 
 	static void mouseCallback(GLFWwindow* window, double x, double y);
 
 	static void mouseScrollCallback(GLFWwindow* window, double x, double y);
 
-	static std::unordered_map<int, ButtonState> checkButtonStates();
-	static std::unordered_map<int, ButtonState> checkKeyStates();
+	static boost::container::flat_map<int, ButtonState> checkButtonStates();
+	static boost::container::flat_map<int, ButtonState> checkKeyStates();
 }
 
 class ViewLayer : public Module
@@ -48,8 +48,8 @@ public:
 	
 	std::shared_ptr<glm::vec2> mouseCoords;
 	std::shared_ptr<glm::vec2> scrollCoords;
-	std::shared_ptr<std::unordered_map<int, ViewEvents::ButtonState>> buttonStates;
-	std::shared_ptr<std::unordered_map<int, ViewEvents::ButtonState>> keyStates;
+	std::shared_ptr<boost::container::flat_map<int, ViewEvents::ButtonState>> buttonStates;
+	std::shared_ptr<boost::container::flat_map<int, ViewEvents::ButtonState>> keyStates;
 
 	std::shared_ptr<Event<ViewEvents::MouseEvent>> mouseEvent;
 	std::shared_ptr<Event<ViewEvents::KeyEvent>> keyEvent;

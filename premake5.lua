@@ -13,6 +13,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 include "submodules/imgui"
 include "submodules/gladogl"
 include "submodules/MemoryPool"
+include "submodules/concurrentqueue"
 
 project "Engine"
     location "Engine"
@@ -36,7 +37,8 @@ project "Engine"
         "vendor/include",
         "submodules/imgui",
 		"submodules/gladogl/include",
-		"submodules/MemoryPool/C-11"
+		"submodules/MemoryPool/C-11",
+		"submodules/concurrentqueue"
     }
 
     filter "system:linux"
@@ -108,7 +110,8 @@ project "Client"
         "vendor/include",
         "submodules/imgui",
 		"submodules/gladogl/include",
-		"submodules/MemoryPool/C-11"
+		"submodules/MemoryPool/C-11",
+		"submodules/concurrentqueue"
     }
 
     links
