@@ -46,16 +46,25 @@ namespace ECS
 			debugf("Heap size: %d", heap[0].size());*/
 
 			std::vector<uint32> ents;
-			for (unsigned int i = 0; i < 6; i++)
+			for (unsigned int i = 0; i < 10; i++)
 			{
 				ents.push_back(createEntity());
 				uint32 c1 = createComponent<TestComponent>(getEntity(ents[i]));
 				debugf("Component: %d", c1);
 			}
 
+			debugf("Entities: %d", heap[0].size() / resolveType<Entity>().size);
+			debugf("Components: %d", heap[1].size() / resolveType<TestComponent>().size);
+
+			uint32 e = createEntity();
+			auto ei = getEntity(e);
+			auto info = resolveType<TestComponent>();
+			uint32 c = createComponent(ei, info.id, info.size);
+			debugf("Component: %d", getComponent<TestComponent>(ei)->index);
+
 			System* sys = createSystem([](double dt, Component* component, System* system, Container* container)
 			{
-				debugf("Ticking component: %d", component->index);
+				//debugf("Ticking component: %d", component->index);
 				TestComponent* comp = reinterpret_cast<TestComponent*>(component);
 				comp->val1 = rand();
 			}, { resolveType<TestComponent>().id });
@@ -94,10 +103,24 @@ namespace ECS
 			swapAndPop(entity);
 		};
 
+		inline void removeComponent(Entity* entity, Component* component)
+		{
+			entity->components.erase(component->type_id);
+			deleteComponent(component);
+		};
+
 		template<typename T>
 		uint32 createComponent(Entity* entity)
 		{
 			T* component = instantiate<T>(resolveType<T>());
+			entity->components[component->type_id] = deref(component->type_id, component->index);
+			component->entity = entity;
+			return component->index;
+		};
+
+		uint32 createComponent(Entity* entity, uint8 type, size_t size)
+		{
+			Component* component = reinterpret_cast<Component*>(instantiate({ type, size }));
 			entity->components[component->type_id] = deref(component->type_id, component->index);
 			component->entity = entity;
 			return component->index;
@@ -186,6 +209,14 @@ namespace ECS
 			T* instance = new(&heap[info.id][index]) T(*reinterpret_cast<T*>(&heap[info.id][0]));
 			instance->index = index;
 			return instance;
+		};
+
+		inline ObjectBase* instantiate(TypeInfo info)
+		{
+			uint32 index = allocate(info);
+			ObjectBase* clone = deref(info.id, 0)->clone(heap[info.id], index);
+			clone->index = index;
+			return clone;
 		};
 
 		inline ObjectBase* deref(uint8 type, uint32 index)

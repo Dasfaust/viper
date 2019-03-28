@@ -14,7 +14,8 @@ public:
 	int stepsPerSecond = 0;
 	std::vector<std::shared_ptr<Worker>> workers;
 	std::vector<std::shared_ptr<moodycamel::ConcurrentQueue<bool>>> queues;
-	tbb::concurrent_queue<unsigned int> entsToDelete;
+	moodycamel::ConcurrentQueue<ECS::Entity*> entsToDelete;
+	moodycamel::ConcurrentQueue<ECS::Component*> compsToDelete;
 	ECS::Container* ecs;
 
 	V3API World();
@@ -32,9 +33,14 @@ public:
 	};
 	void onShutdown() override;
 
-	inline void deleteEntity(unsigned int id)
+	inline void deleteEntity(ECS::Entity* entity)
 	{
-		entsToDelete.emplace(id);
+		entsToDelete.enqueue(entity);
+	};
+
+	inline void deleteComponent(ECS::Component* component)
+	{
+		compsToDelete.enqueue(component);
 	};
 
 	V3API void tickSystem(ECS::System* system, uint8 type, int start = -1, int end = -1);
@@ -87,7 +93,7 @@ public:
 			Job job;
 			while (jobs.try_dequeue(job))
 			{
-				debugf("Worker %d tick...", id);
+				//debugf("Worker %d tick...", id);
 				world->tickSystem(job.system, job.type, job.start, job.end);
 			}
 			finished.enqueue(true);

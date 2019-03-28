@@ -2,7 +2,6 @@
 #include "../V3.h"
 #include "../util/Time.h"
 #include "../config/ConfigLayer.h"
-#include <future>
 
 World::World()
 {
@@ -58,7 +57,7 @@ void World::tick()
         stepsPerSecond = stepCount;
         stepPerformanceAccumulator = 0;
         stepCount = 0;
-		debugf("TPS: %d", stepsPerSecond);
+		debugf("TPS target: %0.2f", ((float)stepsPerSecondTarget / (float)stepsPerSecond) * 100.0f);
     }
     else 
     {
@@ -77,19 +76,18 @@ void World::tick()
 				{
 					unsigned int elements = (ecs->getHeap((&kv)->first).size() / (&kv)->second) - 1;
 
-					debug("### STEP BEGIN");
-					std::vector<std::future<bool>> jobs;
+					//debug("### STEP BEGIN");
 					if (elements >= stepThreadCount)
 					{
 						unsigned int itemsPerWorker = elements / stepThreadCount;
-						debugf("Items per worker: %d", itemsPerWorker);
+						//debugf("Items per worker: %d", itemsPerWorker);
 						unsigned int lastIndex = 0;
 						for (unsigned int i = 0; i < stepThreadCount; i++)
 						{
 							int start = lastIndex + (&kv)->second;
 							int end = (i + 1 == stepThreadCount ? -1 : (itemsPerWorker == 1 ? start : (lastIndex + (itemsPerWorker * (&kv)->second))));
 							lastIndex = end;
-							debugf("Worker range: %d - %d", start, end);
+							//debugf("Worker range: %d - %d", start, end);
 
 							workers[i]->queueJob({ system, (&kv)->first, start, end });
 						}
@@ -113,22 +111,29 @@ void World::tick()
 						}
 					}
 
+					/*numTicks++;
 					for (unsigned int i = 0; i < ecs->getHeap(1).size(); i += 40)
 					{
 						auto comp = reinterpret_cast<ECS::TestComponent*>(&ecs->getHeap(1)[i]);
-						warnf("Component %d val: %.2f", comp->index, comp->val1);
-					}
-
-					while (!entsToDelete.empty())
-					{
-						unsigned int id;
-						if (entsToDelete.try_pop(id))
+						if (comp->val1 != numTicks)
 						{
-							ecs->deleteEntity(ecs->getEntity(id));
+							critf("Component %d has unexpected value: %.2f", comp->index, comp->val1);
 						}
+					}*/
+
+					ECS::Entity* entity;
+					while (entsToDelete.try_dequeue(entity))
+					{
+						ecs->deleteEntity(entity);
 					}
 
-					debug("### STEP END");
+					ECS::Component* component;
+					while (compsToDelete.try_dequeue(component))
+					{
+						ecs->deleteComponent(component);
+					}
+
+					//debug("### STEP END");
 				}
 			}
 		}

@@ -11,5 +11,10 @@ namespace ECS
 		uint8 type_id;
 		size_t type_size;
 		uint32 index;
+
+		ObjectBase* clone(std::vector<uint32>& heap, uint32 index)
+		{
+			return new(&heap[index]) ObjectBase(*this);
+		};
 	};
 };
