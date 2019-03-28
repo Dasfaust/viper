@@ -8,6 +8,11 @@
 
 namespace ECS
 {
+	struct TestComponent : public Component
+	{
+		double val1 = 0;
+	};
+
 	struct TypeInfo
 	{
 		uint8 id;
@@ -40,27 +45,19 @@ namespace ECS
 			heap[0].shrink_to_fit();
 			debugf("Heap size: %d", heap[0].size());*/
 
-			struct TestComponent : public Component
-			{
-				double val1;
-			};
-
 			std::vector<uint32> ents;
-			for (unsigned int i = 0; i < 2000000; i++)
+			for (unsigned int i = 0; i < 6; i++)
 			{
 				ents.push_back(createEntity());
 				uint32 c1 = createComponent<TestComponent>(getEntity(ents[i]));
-				//debugf("Component: entity %d, id %d, val %d", comp1->entity->index, comp1->index, comp1->val);
+				debugf("Component: %d", c1);
 			}
 
 			System* sys = createSystem([](double dt, Component* component, System* system, Container* container)
 			{
-				//debugf("Ticking component: %d", component->index);
+				debugf("Ticking component: %d", component->index);
 				TestComponent* comp = reinterpret_cast<TestComponent*>(component);
-				comp->val1 = sqrt(1073853);
-				comp->val1 = sqrt(103);
-				comp->val1 = sqrt(10734853);
-				comp->val1 = sqrt(907553);
+				comp->val1 = rand();
 			}, { resolveType<TestComponent>().id });
 		};
 

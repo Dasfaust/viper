@@ -5,8 +5,6 @@
 #include <unordered_map>
 #include <tuple>
 #include "concurrentqueue.h"
-#include <mutex>
-#include <condition_variable>
 
 class Worker;
 
@@ -15,6 +13,7 @@ class World : public Module, public Threadable
 public:
 	int stepsPerSecond = 0;
 	std::vector<std::shared_ptr<Worker>> workers;
+	std::vector<std::shared_ptr<moodycamel::ConcurrentQueue<bool>>> queues;
 	tbb::concurrent_queue<unsigned int> entsToDelete;
 	ECS::Container* ecs;
 
@@ -82,13 +81,20 @@ public:
 
 	void tick() override
 	{
-		Job job;
-		while (jobs.try_dequeue(job))
+		bool ready;
+		if (world->queues[id]->try_dequeue(ready))
 		{
-			//debugf("Worker %d tick...", id);
-			world->tickSystem(job.system, job.type, job.start, job.end);
+			Job job;
+			while (jobs.try_dequeue(job))
+			{
+				debugf("Worker %d tick...", id);
+				world->tickSystem(job.system, job.type, job.start, job.end);
+			}
+			finished.enqueue(true);
 		}
-		finished.enqueue(true);
-		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		else
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		}
 	};
 };

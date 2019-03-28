@@ -2,6 +2,7 @@
 #include "../V3.h"
 #include "../util/Time.h"
 #include "../config/ConfigLayer.h"
+#include <future>
 
 World::World()
 {
@@ -31,6 +32,7 @@ void World::onStartup()
 	{
 		for (unsigned int i = 0; i < stepThreadCount; i++)
 		{
+			queues.push_back(std::make_shared<moodycamel::ConcurrentQueue<bool>>());
 			workers.push_back(std::make_shared<Worker>(this, i));
 			workers[i]->start();
 			debugf("Worker %d started", i + 1);
@@ -75,23 +77,31 @@ void World::tick()
 				{
 					unsigned int elements = (ecs->getHeap((&kv)->first).size() / (&kv)->second) - 1;
 
+					debug("### STEP BEGIN");
+					std::vector<std::future<bool>> jobs;
 					if (elements >= stepThreadCount)
 					{
 						unsigned int itemsPerWorker = elements / stepThreadCount;
-						//debugf("Items per worker: %d", itemsPerWorker);
+						debugf("Items per worker: %d", itemsPerWorker);
 						unsigned int lastIndex = 0;
 						for (unsigned int i = 0; i < stepThreadCount; i++)
 						{
 							int start = lastIndex + (&kv)->second;
-							int end = (i + 1 == stepThreadCount ? -1 : (itemsPerWorker = 1 ? start : (lastIndex + (itemsPerWorker * (&kv)->second))));
+							int end = (i + 1 == stepThreadCount ? -1 : (itemsPerWorker == 1 ? start : (lastIndex + (itemsPerWorker * (&kv)->second))));
 							lastIndex = end;
-							//debugf("Worker range: %d - %d", start, end);
+							debugf("Worker range: %d - %d", start, end);
+
 							workers[i]->queueJob({ system, (&kv)->first, start, end });
 						}
 					}
 					else
 					{
 						workers[0]->queueJob({ system, (&kv)->first, -1, -1 });
+					}
+
+					for (auto queue : queues)
+					{
+						queue->enqueue(true);
 					}
 
 					for (auto worker : workers)
@@ -103,6 +113,12 @@ void World::tick()
 						}
 					}
 
+					for (unsigned int i = 0; i < ecs->getHeap(1).size(); i += 40)
+					{
+						auto comp = reinterpret_cast<ECS::TestComponent*>(&ecs->getHeap(1)[i]);
+						warnf("Component %d val: %.2f", comp->index, comp->val1);
+					}
+
 					while (!entsToDelete.empty())
 					{
 						unsigned int id;
@@ -111,6 +127,8 @@ void World::tick()
 							ecs->deleteEntity(ecs->getEntity(id));
 						}
 					}
+
+					debug("### STEP END");
 				}
 			}
 		}
@@ -135,7 +153,7 @@ void World::tick()
 
 void World::tickSystem(ECS::System* system, uint8 type, int start, int end)
 {
-	std::vector<uint32> heap = ecs->getHeap(type);
+	std::vector<uint32>& heap = ecs->getHeap(type);
 	size_t size = system->getTypes()[type];
 	for (unsigned int i = start; i < (end > -1 ? end + size : heap.size()); i += size)
 	{
