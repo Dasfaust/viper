@@ -97,7 +97,7 @@ void PipelineOpenGL::OGLShader::setUniform(std::string name, Pipeline::Shader::U
 	}
 }
 
-class BasicRenderer : public RenderCommand
+/*class BasicRenderer : public RenderCommand
 {
 public:
 	PipelineOpenGL* pipeline;
@@ -149,15 +149,6 @@ public:
 
 	void rotateCamera()
 	{
-		/*float xOffset = V3::getInstance()->getPipeline()->camera->mouseViewport.x - V3::getInstance()->getPipeline()->camera->_mouseViewport.x;
-		float yOffset = V3::getInstance()->getPipeline()->camera->_mouseViewport.y - V3::getInstance()->getPipeline()->camera->mouseViewport.y; // y starts at bottom
-		V3::getInstance()->getPipeline()->camera->_mouseViewport.x = V3::getInstance()->getPipeline()->camera->mouseViewport.x;
-		V3::getInstance()->getPipeline()->camera->_mouseViewport.y = V3::getInstance()->getPipeline()->camera->mouseViewport.y;
-
-		float sensitivity = 0.15f;
-		xOffset *= sensitivity;
-		yOffset *= sensitivity;*/
-
 		auto camera = pipeline->camera;
 		if (camera->mouseViewport != camera->_mouseViewport)
 		{
@@ -256,86 +247,18 @@ public:
 			}
 		}
 	};
-};
-
-unsigned int PipelineOpenGL::makeRenderCommand()
-{
-	auto command = std::make_shared<BasicRenderer>(this);
-
-	int id = addRenderCommand(command);
-
-	return id;
-}
+};*/
 
 PipelineOpenGL::PipelineOpenGL()
 {
-	this->renderCommands = std::make_shared<tbb::concurrent_unordered_map<unsigned int, std::shared_ptr<RenderCommand>>>();
-	this->loadedShaders = tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLShader>>();
-	this->loadedMeshes = tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLMesh>>();
-	this->loadedModels = tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLModel>>();
-	this->loadedTextures = tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLTexture>>();
-
-	/*camera->mouseListener = std::make_shared<EventListener<ViewEvents::OnMouseEventData>>(
-		[](ViewEvents::OnMouseEventData e)
-		{
-			if (!e.cancelled)
-			{
-				V3::getInstance()->getPipeline()->camera->mouseViewport = e.coordinates;
-
-				//ImGuiIO& io = ImGui::GetIO();
-				//io.MouseWheel += e.scroll.y;
-				//io.MouseWheelH += e.scroll.x;
-				//io.MousePos = ImVec2(e.coordinates.x, e.coordinates.y);
-
-				float zoom = e.scroll.y * V3::getInstance()->getPipeline()->camera->zoomSensitivity;
-				V3::getInstance()->getPipeline()->camera->distance = glm::clamp(V3::getInstance()->getPipeline()->camera->distance - zoom, V3::getInstance()->getPipeline()->camera->minZoom, V3::getInstance()->getPipeline()->camera->maxZoom);
-
-				for (auto&& kv : e.buttons)
-				{
-					//io.MouseDown[kv.first] = kv.second.pressed;
-					//debugf("Mouse button state: %d: %d, %d", kv.first, kv.second.pressed, kv.second.released);
-				}
-
-				// event data doesn't work here. idk
-				if ((*V3::getInstance()->getView()->buttonStates)[2].pressed)
-				{
-					glfwSetInputMode(V3::getInstance()->getView()->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-				}
-				else
-				{
-					glfwSetInputMode(V3::getInstance()->getView()->getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-				}
-			}
-		}
-	);
-	view->mouseEvent->addListener(camera->mouseListener);*/
-
-	/*camera->keyListener = std::make_shared<EventListener<ViewEvents::OnKeyEventData>>(
-		[](ViewEvents::OnKeyEventData e)
-		{
-			for (auto&& kv : e.buttons)
-			{
-				//debugf("Key state: %d: %d, %d", kv.first, kv.second.pressed, kv.second.released);
-
-				ImGuiIO& io = ImGui::GetIO();
-				if (kv.second.pressed)
-				{
-					io.KeysDown[kv.first] = true;
-				}
-				else
-				{
-					io.KeysDown[kv.first] = false;
-				}
-			}
-		}
-	);
-	view->keyEvent->addListener(camera->keyListener);*/
+	this->loadedShaders = boost::container::flat_map<std::string, std::shared_ptr<OGLShader>>();
+	this->loadedMeshes = boost::container::flat_map<std::string, std::shared_ptr<OGLMesh>>();
+	this->loadedModels = boost::container::flat_map<std::string, std::shared_ptr<OGLModel>>();
+	this->loadedTextures = boost::container::flat_map<std::string, std::shared_ptr<OGLTexture>>();
 }
 
 void PipelineOpenGL::onStartup()
 {
-	camera = std::make_shared<Camera>();
-
 	info("Rendering API: OpenGL");
 
 	config = v3->getModule<ConfigLayer>();
@@ -348,8 +271,6 @@ void PipelineOpenGL::onStartup()
 
 	_(glEnable(GL_DEPTH_TEST));
 
-	camera->viewportSize = glm::vec2(view->viewWidth, view->viewHeight);
-
 	glfwSetCharCallback(view->getWindow(), charCallback);
 }
 
@@ -360,48 +281,109 @@ PipelineOpenGL::~PipelineOpenGL()
 
 void PipelineOpenGL::onTick()
 {
-	if (glfwGetKey(view->getWindow(), GLFW_KEY_W) == GLFW_PRESS)
-	{
-		camera->moveForward(deltaTime);
-		//camera->moveEvent->triggerEvent(camera);
-	}
-	if (glfwGetKey(view->getWindow(), GLFW_KEY_S) == GLFW_PRESS)
-	{
-		camera->moveBack(deltaTime);
-		//camera->moveEvent->triggerEvent(camera);
-	}
-	if (glfwGetKey(view->getWindow(), GLFW_KEY_A) == GLFW_PRESS)
-	{
-		camera->moveLeft(deltaTime);
-		//camera->moveEvent->triggerEvent(camera);
-	}
-	if (glfwGetKey(view->getWindow(), GLFW_KEY_D) == GLFW_PRESS)
-	{
-		camera->moveRight(deltaTime);
-		//camera->moveEvent->triggerEvent(camera);
-	}
-
-	camera->update();
-	//camera->pollEvents();
-
-	for(auto command : (*renderCommands))
-	{
-		command.second->onPreRender();
-	}
-
+	//_(glClearColor(5.0f, 5.0f, 5.0f, 1.0f));
 	_(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-	for(auto command : (*renderCommands))
+	WorldState state;
+	while (stateUpdates.try_dequeue(state))
 	{
-		command.second->tick();
+		worldStateLast = worldStateCurrent;
+		worldStateCurrent = state;
 	}
 
-	for(auto command : (*renderCommands))
+	//debugf("State size: %d", worldStateCurrent.state.size());
+
+	for (auto kv : worldStateCurrent.state)
 	{
-		command.second->onPostRender();
+		MeshComponent mc = (&kv)->first;
+		loadResources(mc);
+		auto instances = (&kv)->second;
+		for (auto _kv : instances)
+		{
+			auto shader = loadedShaders[mc.shader];
+			_(glUseProgram(shader->id));
+
+			if (!mc.texture.empty())
+			{
+				auto texture = loadedTextures[mc.texture];
+				int textureSlot = mc.textureSlot;
+				_(glActiveTexture(GL_TEXTURE0 + textureSlot));
+				_(glBindTexture(GL_TEXTURE_2D, texture->id));
+				shader->setUniform("uTexture", textureSlot);
+			}
+
+			if (!mc.mesh.empty())
+			{
+				auto mesh = loadedMeshes[mc.mesh];
+				glm::vec3 loc = (&_kv)->second.location.location;
+				debugf("Mesh: %.2f, %.2f, %.2f", loc.x, loc.y, loc.z);
+
+				glm::mat4 model(1.0f);
+				model = glm::translate(model, loc);
+				model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f));
+				model = glm::scale(model, glm::vec3(1.0f));
+
+				shader->setUniform("model", model);
+				debugf("Cam: %.2f, %.2f, %.2f", worldStateCurrent.player.camera.location.x, worldStateCurrent.player.camera.location.y, worldStateCurrent.player.camera.location.z);
+				shader->setUniform("view", glm::lookAt(worldStateCurrent.player.camera.location, worldStateCurrent.player.camera.location + glm::normalize(glm::vec3(0.0f, -2.0f, -1.0f)), glm::vec3(0.0f, 1.0f, 0.0f)));
+				auto viewLayer = v3->getModule<ViewLayer>();
+				shader->setUniform("projection", glm::perspective(glm::radians(90.0f), viewLayer->viewWidth / viewLayer->viewHeight, 0.1f, 1000.0f));
+
+				_(glBindVertexArray(mesh->vaBuffer));
+				if (mesh->indices.size() >= 3)
+				{
+					_(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer));
+					_(glDrawElements(GL_TRIANGLES, (GLsizei)mesh->indices.size(), GL_UNSIGNED_INT, nullptr));
+				}
+				else
+				{
+					_(glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer));
+					_(glDrawArrays(GL_TRIANGLES, 0, 36));
+				}
+			}
+		}
 	}
 
 	glfwSwapBuffers(view->getWindow());
+}
+
+void V3API PipelineOpenGL::loadResources(MeshComponent mc)
+{
+	if (!mc.shader.empty())
+	{
+		//debugf("Shader: %s", mc.shader.c_str());
+		if (loadedShaders.find(mc.shader) == loadedShaders.end())
+		{
+			createShader(mc.shader);
+		}
+	}
+
+	if (!mc.mesh.empty())
+	{
+		if (loadedMeshes.find(mc.mesh) == loadedMeshes.end())
+		{
+			meshToMemory(mc.mesh);
+			meshToVRAM(mc.mesh);
+		}
+	}
+
+	if (!mc.model.empty())
+	{
+		if (loadedModels.find(mc.model) == loadedModels.end())
+		{
+			modelToMemory(mc.model);
+			modelToVRAM(mc.model);
+		}
+	}
+
+	if (!mc.texture.empty())
+	{
+		if (loadedTextures.find(mc.texture) == loadedTextures.end())
+		{
+			textureToMemory(mc.texture);
+			textureToVRAM(mc.texture);
+		}
+	}
 }
 
 static unsigned int compileShader(unsigned int type, const std::string& source)

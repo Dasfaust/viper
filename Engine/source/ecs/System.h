@@ -1,6 +1,9 @@
 #pragma once
-#include "Base.h"
+#include "Entity.h"
 #include <boost/container/flat_map.hpp>
+
+class World;
+class V3;
 
 namespace ECS
 {
@@ -9,15 +12,31 @@ namespace ECS
 	class System : public ObjectBase
 	{
 	public:
-		inline void init(void(*tickFunc)(double, Component*, System*, Container*), boost::container::flat_map<uint8, size_t>& types)
+		V3* v3;
+
+		inline void preinit(V3* v3)
 		{
-			this->tickFunc = tickFunc;
-			this->types = types;
+			this->v3 = v3;
 		};
 
-		inline void tick(double dt, Component* component, Container* container)
+		virtual void init(ECS::Container* container, World* world) { };
+
+		void(*tickFunc)(double, Component*, System*, Container*, World*);
+		void(*tickWait)(System*, World*);
+
+		inline void setTickFunction(void(*tickFunc)(double, Component*, System*, Container*, World*))
 		{
-			tickFunc(dt, component, this, container);
+			this->tickFunc = tickFunc;
+		};
+
+		inline void setWaitFunction(void(*tickWait)(System*, World*))
+		{
+			this->tickWait = tickWait;
+		};
+
+		inline void addType(uint8 id, size_t size)
+		{
+			types[id] = size;
 		};
 
 		inline boost::container::flat_map<uint8, size_t>& getTypes()
@@ -26,6 +45,5 @@ namespace ECS
 		};
 	private:
 		boost::container::flat_map<uint8, size_t> types;
-		void(*tickFunc)(double, Component*, System*, Container*);
 	};
 };

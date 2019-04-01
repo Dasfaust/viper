@@ -6,6 +6,6 @@ namespace ECS
 {
 	struct Entity : ObjectBase
 	{
-		boost::container::flat_map<uint8, ObjectBase*> components;
+		boost::container::flat_map<uint8, uint32> components;
 	};
 };

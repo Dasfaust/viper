@@ -26,10 +26,10 @@ public:
 
 	class OGLTexture : public Pipeline::Texture { };
 
-	tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLShader>> loadedShaders;
-	tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLMesh>> loadedMeshes;
-	tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLModel>> loadedModels;
-	tbb::concurrent_unordered_map<std::string, std::shared_ptr<OGLTexture>> loadedTextures;
+	boost::container::flat_map<std::string, std::shared_ptr<OGLShader>> loadedShaders;
+	boost::container::flat_map<std::string, std::shared_ptr<OGLMesh>> loadedMeshes;
+	boost::container::flat_map<std::string, std::shared_ptr<OGLModel>> loadedModels;
+	boost::container::flat_map<std::string, std::shared_ptr<OGLTexture>> loadedTextures;
 
 	V3API PipelineOpenGL();
 	V3API void onStartup() override;
@@ -37,6 +37,7 @@ public:
 
 	void V3API onTick() override;
 
+	void V3API loadResources(MeshComponent mc);
 	void V3API createShader(std::string name) override;
 	void V3API meshToMemory(std::string name) override;
 	void V3API modelToMemory(std::string name) override;
@@ -44,7 +45,6 @@ public:
 	void V3API modelToVRAM(std::string name) override;
 	void V3API textureToMemory(std::string name) override;
 	void V3API textureToVRAM(std::string name) override;
-	unsigned int V3API makeRenderCommand() override;
 
 	ConfigLayer* config;
 	ViewLayer* view;
