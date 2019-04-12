@@ -85,7 +85,7 @@ namespace ECS
 			std::string type = std::string(typeid(T).name());
 			if (!typeCache.count(type))
 			{
-				uint8 id = typeCache.size();
+				uint8 id = (uint8)typeCache.size();
 				size_t size = sizeof(T);
 				typeCache[type] = id;
 				typeIndex[id] = { id, size };
@@ -167,7 +167,7 @@ namespace ECS
 		inline void deleteComponent(Component* component)
 		{
 			Entity* entity = getEntity(component->entity);
-			size_t type = component->type_id;
+			uint8 type = component->type_id;
 			auto kv = swapAndPop(component);
 			entity->components.erase(type);
 		};
@@ -221,7 +221,7 @@ namespace ECS
 			{
 				heap[info.id] = std::vector<uint32>();
 			}
-			uint32 index = heap[info.id].size();
+			uint32 index = (uint32)heap[info.id].size();
 			heap[info.id].resize(index + info.size);
 			return index;
 		};
@@ -269,7 +269,7 @@ namespace ECS
 			uint8 type = obj->type_id;
 			size_t size = obj->type_size;
 
-			uint32 lastIndex = heap[type].size() - obj->type_size;
+			uint32 lastIndex = (uint32)(heap[type].size() - obj->type_size);
 			uint32 index = obj->index;
 
 			if (lastIndex == 0)
@@ -278,7 +278,7 @@ namespace ECS
 			}
 			else
 			{
-				ObjectBase* last = deref(obj->type_id, obj->type_size);
+				ObjectBase* last = deref(obj->type_id, obj->index);
 
 				memcpy(obj, last, size);
 				heap[type].resize(lastIndex);

@@ -61,6 +61,7 @@ public:
 
 	double stepAlpha = 0.0;
 	int stepsPerSecond = 0;
+	float stepTarget = 0.0;
 	std::vector<std::shared_ptr<Worker>> workers;
 	std::vector<std::shared_ptr<moodycamel::ConcurrentQueue<bool>>> queues;
 	moodycamel::ConcurrentQueue<std::pair<uint32, std::vector<ECS::TypeInfo>>> systemsToCreate;

@@ -17,19 +17,19 @@ public:
 		//debug("Movement init");
 		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world)
 		{
-			auto comp = reinterpret_cast<MovementInputComponent*>(component);
-			comp->forward = lastForward;
-			comp->right = lastRight;
+			//auto comp = reinterpret_cast<MovementInputComponent*>(component);
+			//comp->forward = lastForward;
+			//comp->right = lastRight;
 			//debugf("MoveInputComponent: forward %0.2f right %.02f", comp->forward, comp->right);
 		});
 
 		setWaitFunction([](ECS::System* system, World* world)
 		{
-			auto inst = reinterpret_cast<MovementInputSystem*>(system);
-			inst->keyEvent->poll(system->v3->getModule<ViewLayer>()->keyEvent);
+			//auto inst = reinterpret_cast<MovementInputSystem*>(system);
+			//inst->keyEvent->poll(system->v3->getModule<ViewLayer>()->keyEvent);
 		});
 
-		keyEvent = v3->getModule<ViewLayer>()->keyEvent->listen([](ViewEvents::KeyEvent* data)
+		/*keyEvent = v3->getModule<ViewLayer>()->keyEvent->listen([](ViewEvents::KeyEvent* data)
 		{
 			// TODO acceleration?
 
@@ -58,7 +58,7 @@ public:
 			{
 				lastRight = 0.0f;
 			}
-		});
+		});*/
 	};
 private:
 };

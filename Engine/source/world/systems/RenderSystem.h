@@ -1,7 +1,7 @@
 #pragma once
 #include "Components.h"
 #include "../../ecs/ECS.h"
-#include "../../pipeline/PipelineOpenGL.h"
+#include "../../pipeline/PipelineVk.h"
 #include "../../V3.h"
 #include "../World.h"
 
@@ -9,12 +9,12 @@ class RenderSystem : public ECS::System
 {
 public:
 	static Pipeline::WorldState worldState;
-	Pipeline* pipeline;
+	//Pipeline* pipeline;
 	ECS::TypeInfo meshT, locT, moveT, camT;
 
 	inline void init(ECS::Container* container, World* world) override
 	{
-		pipeline = world->v3->getModule<PipelineOpenGL>();
+		//pipeline = world->v3->getModule<PipelineOpenGL>();
 		meshT = container->resolveType<MeshComponent>();
 		locT = container->resolveType<LocationComponent>();
 		moveT = container->resolveType<MovementInputComponent>();
@@ -68,7 +68,8 @@ public:
 			if (RenderSystem::worldState.initialized)
 			{
 				RenderSystem::worldState.stepAlpha = world->stepAlpha;
-				world->v3->getModule<PipelineOpenGL>()->updateState(RenderSystem::worldState);
+				// TODO abstraction here
+				//world->v3->getModule<PipelineVk>()->updateState(RenderSystem::worldState);
 				RenderSystem::worldState = { false };
 			}
 		});

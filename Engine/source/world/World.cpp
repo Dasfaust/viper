@@ -31,7 +31,7 @@ void World::onStartup()
 
 	if (stepsAsync)
 	{
-		for (unsigned int i = 0; i < stepThreadCount; i++)
+		for (unsigned int i = 0; i < (unsigned int)stepThreadCount; i++)
 		{
 			queues.push_back(std::make_shared<moodycamel::ConcurrentQueue<bool>>());
 			workers.push_back(std::make_shared<Worker>(this, i));
@@ -56,10 +56,10 @@ void World::tick()
 
     if (stepPerformanceAccumulator >= 1000.0)
     {
-        stepsPerSecond = stepCount;
+        stepsPerSecond = (stepCount > stepsPerSecondTarget ? (stepCount - (stepCount - stepsPerSecondTarget)) : stepCount);
         stepPerformanceAccumulator = 0;
         stepCount = 0;
-		//debugf("TPS target: %0.2f", ((float)stepsPerSecondTarget / (float)stepsPerSecond) * 100.0f);
+		stepTarget = ((float)stepsPerSecondTarget / (float)stepsPerSecond) * 100.0f;
 		/*debugf("Systems: %d", ecs->getSystems().size());
 		auto type = ecs->resolveType<ECS::Entity>();
 		auto& entHeap = ecs->getHeap(0);
@@ -94,18 +94,18 @@ void World::tick()
 			{
 				for (auto kv : system->getTypes())
 				{
-					unsigned int elements = (ecs->getHeap((&kv)->first).size() / (&kv)->second) - 1;
+					unsigned int elements = (unsigned int)((ecs->getHeap((&kv)->first).size() / (&kv)->second) - 1);
 
 					//debug("### STEP BEGIN");
-					if (elements >= stepThreadCount)
+					if (elements >= (unsigned int)stepThreadCount)
 					{
 						unsigned int itemsPerWorker = elements / stepThreadCount;
 						//debugf("Items per worker: %d", itemsPerWorker);
 						unsigned int lastIndex = 0;
-						for (unsigned int i = 0; i < stepThreadCount; i++)
+						for (unsigned int i = 0; i < (unsigned int)stepThreadCount; i++)
 						{
-							int start = lastIndex + (&kv)->second;
-							int end = (i + 1 == stepThreadCount ? -1 : (itemsPerWorker == 1 ? start : (lastIndex + (itemsPerWorker * (&kv)->second))));
+							int start = (int)(lastIndex + (&kv)->second);
+							int end = (i + 1 == stepThreadCount ? -1 : (itemsPerWorker == 1 ? start : (lastIndex + (itemsPerWorker * (unsigned int)(&kv)->second))));
 							lastIndex = end;
 							//debugf("Worker range: %d - %d", start, end);
 
@@ -148,11 +148,12 @@ void World::tick()
 		}
 		else
 		{
+			debug("Ticking systems (sync)");
 			for (ECS::System* system : ecs->getSystems())
 			{
 				for (auto kv : system->getTypes())
 				{
-					tickSystem(system, (&kv)->first);
+					tickSystem(system, (&kv)->first, 0, -1);
 				}
 			}
 		}
@@ -216,7 +217,7 @@ void World::tickSystem(ECS::System* system, uint8 type, int start, int end)
 {
 	std::vector<uint32>& heap = ecs->getHeap(type);
 	size_t size = system->getTypes()[type];
-	for (unsigned int i = start; i < (end > -1 ? end + size : heap.size()); i += size)
+	for (unsigned int i = start; i < (end > -1 ? end + size : (uint32)heap.size()); i += (unsigned int)size)
 	{
 		if (i == 0) continue;
 		system->tickFunc(deltaTime, reinterpret_cast<ECS::Component*>(&heap[i]), system, ecs, this);

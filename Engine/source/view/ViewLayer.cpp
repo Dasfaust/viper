@@ -3,6 +3,7 @@
 #include "../V3.h"
 #include "../config/ConfigLayer.h"
 #include "../world/World.h"
+#include <sstream>
 
 static boost::container::flat_map<int, ViewEvents::ButtonState> ViewEvents::checkButtonStates()
 {
@@ -103,12 +104,12 @@ ViewLayer::ViewLayer()
 void ViewLayer::onStartup()
 {
 	glfwInit();
-	//glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	//glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	ViewEvents::instance = v3->getModule<ViewLayer>();
 
@@ -117,7 +118,7 @@ void ViewLayer::onStartup()
 	viewWidth = (float)size[0];
 	viewHeight = (float)size[1];
 	window = glfwCreateWindow(size[0], size[1], "Window", nullptr, nullptr);
-	glfwMakeContextCurrent(window);
+	//glfwMakeContextCurrent(window);
 
 	mouseEvent = std::make_shared<Event<ViewEvents::MouseEvent>>();
 	mouseCoords = std::make_shared<glm::vec2>();
@@ -128,7 +129,7 @@ void ViewLayer::onStartup()
 	glfwSetCursorPosCallback(window, ViewEvents::mouseCallback);
 	glfwSetScrollCallback(window, ViewEvents::mouseScrollCallback);
 
-	glewInit();
+	//glewInit();
 }
 
 ViewLayer::~ViewLayer()
@@ -176,14 +177,13 @@ void ViewLayer::onTick()
 		data->buttons = keys;
 		keyEvent->fire(data);
 	}
-
-#ifdef V3_DEBUG
+	
 	auto dt = v3->getModule<DeltaTime>();
 	auto wd = v3->getModule<World>();
-	setTitle(" -> FPS: " + std::to_string(dt->framesPerSecond) + " TPS: " + std::to_string(wd->stepsPerSecond));
-#else
-	setTitle("");
-#endif
+	std::ostringstream out;
+	out.precision(2);
+	out << std::fixed << wd->stepTarget;
+	setTitle(" -> frames/s: " + std::to_string(dt->framesPerSecond) + ", step target: " + out.str() + "%, steps/s: " + std::to_string(wd->stepsPerSecond));
 
 	if (glfwWindowShouldClose(window))
 	{

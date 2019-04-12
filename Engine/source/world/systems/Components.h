@@ -34,14 +34,9 @@ struct MeshComponent : public ECS::Component
 	unsigned int textureSlot;
 
 	size_t hash = 0;
-	size_t getHash()
+	void makeHash()
 	{
-		if (hash == 0)
-		{
-			std::hash<std::string>{}(mesh + model + texture + shader) + textureSlot;
-		}
-
-		return hash;
+		hash = std::hash<std::string>{}(mesh + model + texture + shader) + textureSlot;
 	};
 
 	bool operator=(const MeshComponent &c) const

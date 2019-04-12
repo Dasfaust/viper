@@ -62,6 +62,11 @@ project "Engine"
 
 		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.97.0/Source/lib" }
 
+		includedirs
+		{
+			"C:/VulkanSDK/1.1.97.0/Include"
+		}
+
 		links { "vulkan-1", "glfw3dll", "glew32d", "opengl32", "imgui" }
 
         postbuildcommands
@@ -164,6 +169,11 @@ project "Client"
 
         links
         { "vulkan-1", "glfw3dll", "glew32d", "opengl32" }
+
+		includedirs
+		{
+			"C:/VulkanSDK/1.1.97.0/Include"
+		}
 
         postbuildcommands
         {

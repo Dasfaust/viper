@@ -3,8 +3,7 @@
 #include "../Module.h"
 #include "../events/Event.h"
 #ifndef V3_GLFW_INCLUDE
-//#define GLFW_INCLUDE_VULKAN
-#include <GL/glew.h>
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #endif
 #include "glm/vec2.hpp"

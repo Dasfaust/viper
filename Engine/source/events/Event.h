@@ -20,7 +20,7 @@ public:
 
 	std::shared_ptr<EventListener<T>> listen(void(*func)(T*))
 	{
-		unsigned int position = listeners.size();
+		unsigned int position = (unsigned int)listeners.size();
 		listeners.resize(position + 1);
 		listeners[position] = std::make_shared<EventListener<T>>(func, [](std::shared_ptr<EventBase> event, T* data)
 		{
