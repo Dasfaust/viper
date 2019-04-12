@@ -1,12 +1,13 @@
 #include "V3.h"
 #include "pipeline/Pipeline.h"
-#include "view/ViewLayer.h"
 #include "config/ConfigLayer.h"
 #include "world/World.h"
 #include "pipeline/PipelineVk.h"
 #include "world/systems/MovementInputSystem.h"
 #include "world/systems/LocationSystem.h"
 #include "world/systems/RenderSystem.h"
+#include "networking/Networking.h"
+#include "console/ConsoleInput.h"
 
 class Game : public V3Application
 {
@@ -67,10 +68,12 @@ public:
 int main()
 {
 	std::shared_ptr<V3> v3 = std::make_shared<V3>();
+	v3->initModule<ConsoleInput>();
 	v3->initModule<ConfigLayer>();
 	//v3->initModule<ViewLayer>();
 	//v3->initModule<PipelineVk>();
 	v3->initModule<World>();
+	v3->initModule<Networking>();
 	v3->initModule<Game>();
 	v3->start();
 

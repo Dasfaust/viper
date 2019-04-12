@@ -9,34 +9,36 @@
 class Threadable : public Tickable
 {
 public:
+	std::atomic<bool> running = false;
+
 	Threadable() { }
 	virtual ~Threadable() { };
 
 	virtual void poll()
 	{
+		onStart();
 		while (running)
 		{
 			this->tick();
 		}
+		onStop();
 	};
 
 	virtual void start()
 	{
-		onStart();
 		this->running = true;
 		this->worker = std::thread(&Threadable::poll, this);
 	};
 
 	virtual void stop()
 	{
-		onStop();
-		this->running = false;
+		bool expected = true;
+		while (!this->running.compare_exchange_weak(expected, false));
 		this->worker.join();
 	};
 
 	virtual void onStart() { };
 	virtual void onStop() { };
 private:
-	std::atomic<bool> running = false;
 	std::thread worker;
 };

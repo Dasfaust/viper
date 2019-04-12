@@ -209,6 +209,11 @@ namespace ECS
 		{
 			return heap[type];
 		};
+
+		inline boost::container::flat_map<std::string, uint8> getTypes()
+		{
+			return typeCache;
+		};
 	private:
 		boost::container::flat_map<std::string, uint8> typeCache;
 		boost::container::flat_map<uint8, TypeInfo> typeIndex;

@@ -3,6 +3,7 @@
 #include "../util/Time.h"
 #include "../config/ConfigLayer.h"
 #include "systems/MovementInputSystem.h"
+#include "../ecs/ECSCommands.h"
 
 World::World()
 {
@@ -18,6 +19,10 @@ void World::onStartup()
 {
 	ecs = new ECS::Container();
 	Components::registerTypes(ecs);
+	if (v3->isModuleLoaded<ConsoleInput>())
+	{
+		v3->getModule<ConsoleInput>()->registerCommand("ecs", std::make_shared<ECSCommand>());
+	}
 
 	auto config = v3->getModule<ConfigLayer>();
 	stepsPerSecondTarget = config->getInts("engine", "worldStepsPerSecond")[0];

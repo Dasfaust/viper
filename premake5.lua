@@ -67,7 +67,7 @@ project "Engine"
 			"C:/VulkanSDK/1.1.97.0/Include"
 		}
 
-		links { "vulkan-1", "glfw3dll", "glew32d", "opengl32", "imgui" }
+		links { "vulkan-1", "glfw3dll", "glew32d", "opengl32", "imgui", "ws2_32" }
 
         postbuildcommands
         {
@@ -92,8 +92,8 @@ project "Engine"
         defines "V3_DIST"
         optimize "On"
 
-project "Client"
-    location "Client"
+project "Server"
+    location "Server"
     kind "ConsoleApp"
     language "C++"
 
@@ -128,7 +128,7 @@ project "Client"
 
 	postbuildcommands
 	{
-		("{COPY} resources ../bin/" .. outputdir .. "/Client/resources")
+		("{COPY} resources ../bin/" .. outputdir .. "/Server/resources")
 	}
 
     filter "system:linux"
@@ -153,7 +153,7 @@ project "Client"
 
         postbuildcommands
         {
-            ("{COPY} ../vendor/lib/lin64 ../bin/" .. outputdir .. "/Client/")
+            ("{COPY} ../vendor/lib/lin64 ../bin/" .. outputdir .. "/Server/")
         }
 
         defines "V3_LIN64"
@@ -168,7 +168,7 @@ project "Client"
 		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.97.0/Source/lib" }
 
         links
-        { "vulkan-1", "glfw3dll", "glew32d", "opengl32" }
+        { "vulkan-1", "glfw3dll", "glew32d", "opengl32", "ws2_32" }
 
 		includedirs
 		{
@@ -177,8 +177,8 @@ project "Client"
 
         postbuildcommands
         {
-            ("{COPY} ../vendor/lib/win64/*.dll ../bin/" .. outputdir .. "/Client/"),
-			("{COPY} ../vendor/lib/win64/*.lib ../bin/" .. outputdir .. "/Client/")
+            ("{COPY} ../vendor/lib/win64/*.dll ../bin/" .. outputdir .. "/Server/"),
+			("{COPY} ../vendor/lib/win64/*.lib ../bin/" .. outputdir .. "/Server/")
         }
 		
 		defines "V3_WIN64"

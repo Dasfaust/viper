@@ -3,13 +3,18 @@
 #include <boost/algorithm/string.hpp>
 #include "../Macros.h"
 
+// This is bonkers. Why MS... Why?
+#ifdef V3_WIN64
+#include <WS2tcpip.h>
+#include <windows.h>
+#endif
+
 namespace FileUtils
 {
 	inline std::string getPathSeperator();
 	inline std::string getWorkingDirectory();
 
 #ifdef V3_WIN64
-#include <windows.h>
 	inline std::string getPathSeperator()
 	{
 		return "\\";
@@ -21,7 +26,8 @@ namespace FileUtils
 		GetModuleFileName(NULL, res, _MAX_PATH);
 		std::wstring wstr(res);
 		std::string str(wstr.begin(), wstr.end());
-		boost::replace_all(str, "\\Client.exe", "");
+		// TODO: don't hardcode this
+		boost::replace_all(str, "\\Server.exe", "");
 		return str;
 	}
 #elif defined V3_LIN64
