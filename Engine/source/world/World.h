@@ -34,7 +34,7 @@ public:
 		inline PromiseState<T> tryGet()
 		{
 			T obj;
-			if (queue.try_dequeue(T))
+			if (queue.try_dequeue(obj))
 			{
 				return { true, obj };
 			}

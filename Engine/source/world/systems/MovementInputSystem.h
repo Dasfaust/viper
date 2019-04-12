@@ -1,13 +1,13 @@
 #pragma once
 #include "Components.h"
 #include "../World.h"
-#include "../../view/ViewLayer.h"
+//#include "../../view/ViewLayer.h"
 #include "../../V3.h"
 
 class MovementInputSystem : public ECS::System
 {
 public:
-	std::shared_ptr<EventListener<ViewEvents::KeyEvent>> keyEvent;
+	//std::shared_ptr<EventListener<ViewEvents::KeyEvent>> keyEvent;
 
 	static float lastForward;
 	static float lastRight;

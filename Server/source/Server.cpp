@@ -1,11 +1,8 @@
 #include "V3.h"
-#include "pipeline/Pipeline.h"
 #include "config/ConfigLayer.h"
 #include "world/World.h"
-#include "pipeline/PipelineVk.h"
 #include "world/systems/MovementInputSystem.h"
 #include "world/systems/LocationSystem.h"
-#include "world/systems/RenderSystem.h"
 #include "networking/Networking.h"
 #include "console/ConsoleInput.h"
 
@@ -24,7 +21,6 @@ public:
 
 		world->createSystem<MovementInputSystem, MovementInputComponent>(0);
 		world->createSystem<LocationSystem, LocationComponent>(1);
-		world->createSystem<RenderSystem, RenderComponent>(2);
 	};
 
 	inline void onTick() override
