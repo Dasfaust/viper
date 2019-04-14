@@ -21,6 +21,7 @@ public:
 			//comp->forward = lastForward;
 			//comp->right = lastRight;
 			//debugf("MoveInputComponent: forward %0.2f right %.02f", comp->forward, comp->right);
+			//rand();
 		});
 
 		setWaitFunction([](ECS::System* system, World* world)

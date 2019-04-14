@@ -9,6 +9,7 @@
 class Threadable : public Tickable
 {
 public:
+	std::thread worker;
 	std::atomic<bool> running = false;
 
 	Threadable() { }
@@ -39,6 +40,4 @@ public:
 
 	virtual void onStart() { };
 	virtual void onStop() { };
-private:
-	std::thread worker;
 };

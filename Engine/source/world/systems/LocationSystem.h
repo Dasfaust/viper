@@ -12,16 +12,24 @@ public:
 		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world)
 		{
 			LocationComponent* comp = reinterpret_cast<LocationComponent*>(component);
-			auto entity = container->getEntity(comp->entity);
-			auto& type = container->resolveType<MovementInputComponent>();
-			if (entity->components.count(type.id))
-			{
-				MovementInputComponent* m = container->getComponent<MovementInputComponent>(entity);
-				comp->location.x += m->forward;
-				comp->location.z += m->right;
-			}
 
-			//debugf("Location: %.0f, %.0f, %.0f", comp->location.x, comp->location.y, comp->location.z);
+			glm::vec3 loc = comp->location;
+			loc.x += dt;
+			//debugf("%.2f", loc.x);
+			ECS::Changeset change = { comp->index, 0, loc };
+			world->changesets[comp->type_id].enqueue(change);
+		});
+
+		setApplyChangeFunction([](std::string name, ECS::Component* comp, ECS::Changeset change)
+		{
+			if (name == "LocationComponent")
+			{
+				auto c = reinterpret_cast<LocationComponent*>(comp);
+				if (change.field == 0)
+				{
+					c->location = boost::any_cast<glm::vec3>(change.value);
+				}
+			}
 		});
 
 		setWaitFunction([](ECS::System* system, World* world)

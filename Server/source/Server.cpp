@@ -27,7 +27,7 @@ public:
 	{
 		if (entities.size() == 0)
 		{
-			entities.push_back(world->createEntity<MovementInputComponent, LocationComponent, MeshComponent, CameraComponent>([](uint32 index, ECS::Component* comp)
+			/*entities.push_back(world->createEntity<MovementInputComponent, LocationComponent, MeshComponent, CameraComponent>([](uint32 index, ECS::Component* comp)
 			{
 				if (index == 1)
 				{
@@ -51,7 +51,16 @@ public:
 					cam->location = glm::vec3(0.0f, 3.0f, 0.0f);
 				}
 			})->get());
-			debugf("Client: successful entity creation: %d", entities[0]->index);
+			debugf("Client: successful entity creation: %d", entities[0]->index);*/
+			for (int i = 0; i < 100; i++)
+			{
+				entities.push_back(world->createEntity<LocationComponent, MovementInputComponent>([](uint32 index, ECS::Component *comp)
+				{
+
+				})->get());
+			}
+
+			debug("Entities created");
 		}
 	};
 

@@ -268,4 +268,4 @@ vendor/
 *.vcxproj.*
 *.vcxproj
 
-Client/resources/textures/lewd\.png
+Client/

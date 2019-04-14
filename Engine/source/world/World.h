@@ -2,14 +2,14 @@
 #include "../Module.h"
 #include "../Threadable.h"
 #include "../ecs/ECS.h"
-#include <unordered_map>
-#include <tuple>
 #include "concurrentqueue.h"
 #include <future>
+#include "../util/Time.h"
+#include "tbb/concurrent_vector.h"
 
 class Worker;
 
-class World : public Module, public Threadable
+class World : public Module, Threadable
 {
 public:
 	template<typename T>
@@ -28,7 +28,7 @@ public:
 			return std::make_shared<Future<T>>();
 		};
 
-		std::vector<ECS::TypeInfo> components;
+		std::vector<std::shared_ptr<ECS::TypeInfo>> components;
 		void(*callback)(uint32, ECS::Component*);
 
 		inline PromiseState<T> tryGet()
@@ -59,36 +59,26 @@ public:
 		moodycamel::ConcurrentQueue<T> queue;
 	};
 
-	double stepAlpha = 0.0;
-	int stepsPerSecond = 0;
-	float stepTarget = 0.0;
 	std::vector<std::shared_ptr<Worker>> workers;
-	std::vector<std::shared_ptr<moodycamel::ConcurrentQueue<bool>>> queues;
-	moodycamel::ConcurrentQueue<std::pair<uint32, std::vector<ECS::TypeInfo>>> systemsToCreate;
+	tbb::concurrent_vector<std::shared_ptr<moodycamel::ConcurrentQueue<bool>>> queues;
+	moodycamel::ConcurrentQueue<std::pair<uint32, std::vector<std::shared_ptr<ECS::TypeInfo>>>> systemsToCreate;
 	moodycamel::ConcurrentQueue<std::shared_ptr<Future<ECS::Entity*>>> entsToCreate;
 	moodycamel::ConcurrentQueue<ECS::Entity*> entsToDelete;
 	moodycamel::ConcurrentQueue<ECS::Component*> compsToDelete;
+	boost::container::flat_map<uint8, moodycamel::ConcurrentQueue<ECS::Changeset>> changesets;
 	ECS::Container* ecs;
 
 	V3API World();
 	V3API ~World();
 
-	void onStartup() override;
-	void tick() override;
-
-	inline void onTick() override
-	{
-		if (!stepsAsync)
-		{
-			this->tick();
-		}
-	};
-	void onShutdown() override;
+	V3API void onStartup() override;
+	V3API void tick() override;
+	V3API void onShutdown() override;
 
 	template<typename T, typename A>
 	inline void createSystem(uint32 index)
 	{
-		std::vector<ECS::TypeInfo> vec{ ecs->resolveType<T>(), ecs->resolveType<A>() };
+		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>() };
 		debugf("System creation queued: %s -> %s", typeid(T).name(), typeid(A).name());
 		systemsToCreate.enqueue(std::make_pair(index, vec));
 	};
@@ -96,7 +86,7 @@ public:
 	template<typename T, typename A, typename B>
 	inline void createSystem(uint32 index)
 	{
-		std::vector<ECS::TypeInfo> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>() };
+		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>() };
 		debugf("System creation queued: %s -> %s, %s", typeid(T).name(), typeid(A).name(), typeid(B).name());
 		systemsToCreate.enqueue(std::make_pair(index, vec));
 	};
@@ -104,7 +94,7 @@ public:
 	template<typename T, typename A, typename B, typename C>
 	inline void createSystem(uint32 index)
 	{
-		std::vector<ECS::TypeInfo> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>(), ecs->resolveType<C>() };
+		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>(), ecs->resolveType<C>() };
 		debugf("System creation queued: %s -> %s, %s, %s", typeid(T).name(), typeid(A).name(), typeid(B).name(), typeid(C).name());
 		systemsToCreate.enqueue(std::make_pair(index, vec));
 	};
@@ -112,7 +102,7 @@ public:
 	template<typename T, typename A, typename B, typename C, typename E>
 	inline void createSystem(uint32 index)
 	{
-		std::vector<ECS::TypeInfo> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<E>() };
+		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<E>() };
 		debugf("System creation queued: %s -> %s, %s, %s, %s", typeid(T).name(), typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(E).name());
 		systemsToCreate.enqueue(std::make_pair(index, vec));
 	};
@@ -120,7 +110,7 @@ public:
 	template<typename T, typename A, typename B, typename C, typename E, typename F>
 	inline void createSystem(uint32 index)
 	{
-		std::vector<ECS::TypeInfo> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<E>(), ecs->resolveType<F>() };
+		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<E>(), ecs->resolveType<F>() };
 		debugf("System creation queued: %s -> %s, %s, %s, %s, %s", typeid(T).name(), typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(E).name(), typeid(F).name());
 		systemsToCreate.enqueue(std::make_pair(index, vec));
 	};
@@ -146,8 +136,8 @@ public:
 	{
 		auto future = createEntity();
 		future->callback = callback;
-		future->components = std::vector<ECS::TypeInfo>{ ecs->resolveType<A>() };
-		debugf("Component creation queued: %s", typeid(A).name());
+		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>() };
+		//debugf("Component creation queued: %s", typeid(A).name());
 		return future;
 	};
 	template<typename A, typename B>
@@ -155,8 +145,8 @@ public:
 	{
 		auto future = createEntity();
 		future->callback = callback;
-		future->components = std::vector<ECS::TypeInfo>{ ecs->resolveType<A>(), ecs->resolveType<B>() };
-		debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name());
+		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>(), ecs->resolveType<B>() };
+		//debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name());
 		return future;
 	};
 	template<typename A, typename B, typename C>
@@ -164,8 +154,8 @@ public:
 	{
 		auto future = createEntity();
 		future->callback = callback;
-		future->components = std::vector<ECS::TypeInfo>{ ecs->resolveType<A>(), ecs->resolveType<B>(), ecs->resolveType<C>() };
-		debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name(), typeid(C).name());
+		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>(), ecs->resolveType<B>(), ecs->resolveType<C>() };
+		//debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name(), typeid(C).name());
 		return future;
 	};
 	template<typename A, typename B, typename C, typename D>
@@ -173,8 +163,8 @@ public:
 	{
 		auto future = createEntity();
 		future->callback = callback;
-		future->components = std::vector<ECS::TypeInfo>{ ecs->resolveType<A>(), ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<D>() };
-		debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(D).name());
+		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>(), ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<D>() };
+		//debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(D).name());
 		return future;
 	};
 	template<typename A, typename B, typename C, typename D, typename E>
@@ -182,24 +172,22 @@ public:
 	{
 		auto future = createEntity();
 		future->callback = callback;
-		future->components = std::vector<ECS::TypeInfo>{ ecs->resolveType<A>(), ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<D>() , ecs->resolveType<E>() };
-		debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(D).name(), typeid(E).name());
+		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>(), ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<D>() , ecs->resolveType<E>() };
+		//debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(D).name(), typeid(E).name());
 		return future;
 	};
 
 	V3API void tickSystem(ECS::System* system, uint8 type, int start = 0, int end = -1);
 private:
-    int stepsPerSecondTarget;
-    bool stepsAsync = false;
     int stepThreadCount = 1;
-
-    int stepCount = 0;
-    double lastStep = 0.0;
-    double stepTime = 0.0;
-    double deltaTime = 0.0;
-    double stepAccumulator = 0.0;
-    double stepPerformanceAccumulator = 0.0;
-};
+	double targetDeltaTime = 0.0;
+	double actualDeltaTime = 0.0;
+	double actualStepDelta = 0.0;
+	double lastTickEnd = 0.0;
+	double lastStepEnd = 0.0;
+	double perfAccumulator = 0.0;
+	double stepAccumulator = 0.0;
+ };
 
 class Worker : public Threadable
 {
@@ -215,6 +203,7 @@ public:
 	unsigned int id;
 	moodycamel::ConcurrentQueue<Job> jobs;
 	moodycamel::ConcurrentQueue<bool> finished;
+	bool hasJob = false;
 	World* world;
 
 	Worker(World* world, unsigned int id)
@@ -230,20 +219,54 @@ public:
 
 	void tick() override
 	{
-		bool ready;
-		if (world->queues[id]->try_dequeue(ready))
+		/*bool ready = false;
+		double waitForReady = tnow();
+		if (world->queues.size() >= id && world->queues[id]->try_dequeue(ready))
 		{
+			//debugf("Worker %d wait for ready completed in %.2f ms", id, tnow() - waitForReady);
+
 			Job job;
+			double jobStart = tnow();
 			while (jobs.try_dequeue(job))
 			{
 				//debugf("Worker %d tick...", id);
+				double start = tnow();
 				world->tickSystem(job.system, job.type, job.start, job.end);
+				//debugf("Job tickSystem for type %d took %.2f ms", job.type, tnow() - start);
 			}
 			finished.enqueue(true);
+			//debugf("Worker %d jobs completed in %.2f ms", id, tnow() - jobStart);
 		}
-		else
+		double ms = 0.0;
+		if (sleep.try_dequeue(ms))
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)ms));
+		}*/
+
+		if (world->queues.size() >= id)
+		{
+			bool ready = false;
+			while (!(world->queues[id]->try_dequeue(ready)))
+			{
+				if (!running) break;
+				// Adds ~2ms to step time but CPU savings... Is there another way?
+				std::this_thread::sleep_for(std::chrono::microseconds(50));
+			}
+
+			if (ready)
+			{
+				Job job;
+				double jobStart = tnow();
+				while (jobs.try_dequeue(job))
+				{
+					//debugf("Worker %d tick...", id);
+					double start = tnow();
+					world->tickSystem(job.system, job.type, job.start, job.end);
+					//debugf("Job tickSystem for type %d took %.2f ms", job.type, tnow() - start);
+				}
+				finished.enqueue(true);
+				//debugf("Worker %d jobs completed in %.2f ms", id, tnow() - jobStart);
+			}
 		}
 	};
 };

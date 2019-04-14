@@ -4,7 +4,8 @@
 #include "Component.h"
 #include "Entity.h"
 #include "System.h"
-#include <boost/container/flat_map.hpp>
+#include <boost/algorithm/string.hpp>
+#include <unordered_map>
 
 namespace ECS
 {
@@ -13,10 +14,19 @@ namespace ECS
 		double val1 = 0;
 	};
 
-	struct TypeInfo
+	class TypeInfo
 	{
+	public:
+		TypeInfo(uint8 id, size_t size, std::string name)
+		{
+			this->id = id;
+			this->size = size;
+			this->name = name;
+		};
+
 		uint8 id;
 		size_t size;
+		std::string name;
 	};
 
 	// Contains, handles all ECS functions
@@ -80,15 +90,18 @@ namespace ECS
 		};
 
 		template<typename T>
-		inline TypeInfo& resolveType()
+		inline std::shared_ptr<TypeInfo> resolveType()
 		{
 			std::string type = std::string(typeid(T).name());
+			boost::erase_all(type, "class ");
+			boost::erase_all(type, "struct ");
 			if (!typeCache.count(type))
 			{
+				debugf("Type cache empty for class %s", type.c_str());
 				uint8 id = (uint8)typeCache.size();
 				size_t size = sizeof(T);
 				typeCache[type] = id;
-				typeIndex[id] = { id, size };
+				typeIndex[id] = std::make_shared<TypeInfo>(id, size, type);
 
 				// Create an instance to copy from for all future objects
 				uint32 index = allocate(typeIndex[id]);
@@ -99,7 +112,7 @@ namespace ECS
 			return typeIndex[typeCache[type]];
 		};
 
-		inline TypeInfo& resolveType(uint8 id)
+		inline std::shared_ptr<TypeInfo> resolveType(uint8 id)
 		{
 			return typeIndex[id];
 		};
@@ -146,7 +159,7 @@ namespace ECS
 
 		uint32 createComponent(Entity* entity, uint8 type, size_t size)
 		{
-			Component* component = reinterpret_cast<Component*>(deref(type, instantiate({ type, size })));
+			Component* component = reinterpret_cast<Component*>(deref(type, instantiate(resolveType(type))));
 			entity->components[component->type_id] = component->index;
 			component->entity = entity->index;
 			return component->index;
@@ -177,10 +190,10 @@ namespace ECS
 			deleteComponent(static_cast<Component*>(deref(type, index)));
 		};
 
-		inline System* createSystem(TypeInfo type, uint32 index, V3* v3, World* world)
+		inline System* createSystem(std::shared_ptr<TypeInfo> type, uint32 index, V3* v3, World* world)
 		{
 			uint32 id = instantiate(type);
-			System* system = reinterpret_cast<System*>(deref(type.id, id));
+			System* system = reinterpret_cast<System*>(deref(type->id, id));
 			system->index = id;
 			system->preinit(v3);
 			system->init(this, world);
@@ -216,42 +229,50 @@ namespace ECS
 		};
 	private:
 		boost::container::flat_map<std::string, uint8> typeCache;
-		boost::container::flat_map<uint8, TypeInfo> typeIndex;
-		boost::container::flat_map<uint8, std::vector<uint32>> heap;
+		boost::container::flat_map<uint8, std::shared_ptr<TypeInfo>> typeIndex;
+		std::unordered_map<uint8, std::vector<uint32>> heap;
 		std::vector<System*> systems;
 
-		inline uint32 allocate(TypeInfo info)
+		inline uint32 allocate(std::shared_ptr<TypeInfo> info)
 		{
-			if (!heap.count(info.id))
+			if (info->size > 8096)
 			{
-				heap[info.id] = std::vector<uint32>();
+				throw std::runtime_error("Object size leak: " + std::to_string(info->id) + " has invalid size of " + std::to_string(info->size));
 			}
-			uint32 index = (uint32)heap[info.id].size();
-			heap[info.id].resize(index + info.size);
+			if (!heap.count(info->id))
+			{
+				heap[info->id] = std::vector<uint32>();
+			}
+			uint32 index = (uint32)heap[info->id].size();
+			if (index + info->size > heap[info->id].max_size())
+			{
+				throw std::runtime_error("Out of memory: creating type " + std::to_string(info->id) + " would be larger than max_size");
+			}
+			heap[info->id].resize(index + info->size);
 			return index;
 		};
 
 		template<typename T>
-		inline T* instantiate(TypeInfo info, bool copy = true)
+		inline T* instantiate(std::shared_ptr<TypeInfo> info, bool copy = true)
 		{
 			uint32 index = allocate(info);
 			T* instance;
 			if (copy)
 			{
-				instance = new(&heap[info.id][index]) T(*reinterpret_cast<T*>(&heap[info.id][0]));
+				instance = new(&heap[info->id][index]) T(*reinterpret_cast<T*>(&heap[info->id][0]));
 			}
 			else
 			{
-				instance = new(&heap[info.id][index]) T();
+				instance = new(&heap[info->id][index]) T();
 			}
 			instance->index = index;
 			return instance;
 		};
 
-		inline uint32 instantiate(TypeInfo info)
+		inline uint32 instantiate(std::shared_ptr<TypeInfo> info)
 		{
 			uint32 index = allocate(info);
-			deref(info.id, 0)->clone(heap[info.id], index)->index = index;
+			deref(info->id, 0)->clone(heap[info->id], index)->index = index;
 			//debugf("Cloning type %d, new index %d", info.id, index);
 			return index;
 		};
@@ -264,8 +285,8 @@ namespace ECS
 		template<typename T>
 		inline T* deref(uint32 index)
 		{
-			TypeInfo info = resolveType<T>();
-			return reinterpret_cast<T*>(&heap[info.id][index]);
+			auto info = resolveType<T>();
+			return reinterpret_cast<T*>(&heap[info->id][index]);
 		}
 
 		// Returns the new index and old index of the last element

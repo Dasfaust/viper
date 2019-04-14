@@ -1,6 +1,6 @@
 #pragma once
-#include "Entity.h"
 #include <boost/container/flat_map.hpp>
+#include <boost/any.hpp>
 
 class World;
 class V3;
@@ -8,6 +8,13 @@ class V3;
 namespace ECS
 {
 	class Container;
+
+	struct Changeset
+	{
+		uint32 index;
+		uint32 field;
+		boost::any value;
+	};
 
 	class System : public ObjectBase
 	{
@@ -23,6 +30,7 @@ namespace ECS
 
 		void(*tickFunc)(double, Component*, System*, Container*, World*);
 		void(*tickWait)(System*, World*);
+		void(*applyChange)(std::string, Component*, Changeset);
 
 		inline void setTickFunction(void(*tickFunc)(double, Component*, System*, Container*, World*))
 		{
@@ -32,6 +40,11 @@ namespace ECS
 		inline void setWaitFunction(void(*tickWait)(System*, World*))
 		{
 			this->tickWait = tickWait;
+		};
+
+		inline void setApplyChangeFunction(void(*applyChange)(std::string, Component*, Changeset))
+		{
+			this->applyChange = applyChange;
 		};
 
 		inline void addType(uint8 id, size_t size)

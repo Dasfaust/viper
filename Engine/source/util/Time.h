@@ -1,6 +1,8 @@
 #pragma once
 #include <chrono>
 
+#define tnow() Time::now()
+
 namespace Time
 {
     static double now()

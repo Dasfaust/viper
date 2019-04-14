@@ -2,6 +2,11 @@
 #include "../Module.h"
 #include "TCPServer.h"
 
+class NetworkModule
+{
+	
+};
+
 class Networking : public Module
 {
 public:

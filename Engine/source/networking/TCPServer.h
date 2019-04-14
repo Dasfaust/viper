@@ -1,13 +1,17 @@
 #pragma once
+#include <minwinbase.h>
 #include "../Threadable.h"
 #include "../Logger.h"
 #include "../util/FileUtils.h"
-#include <minwinbase.h>
 #include "../util/json.hpp"
+#include "concurrentqueue.h"
 
 class TCPServer : public Threadable
 {
 public:
+	moodycamel::ConcurrentQueue<nlohmann::json> outgoing;
+	moodycamel::ConcurrentQueue<nlohmann::json> incoming;
+
 	void onStart() override
 	{
 		WSADATA data;
@@ -50,8 +54,9 @@ public:
 				FD_SET(client, &master);
 				info("Initiated client connection");
 
-				std::string msg = "Welcome!";
-				send(client, msg.c_str(), msg.size() + 1, 0);
+				nlohmann::json js = { { "call", 1 } };
+				auto str = js.dump();
+				send(client, str.c_str(), (int)str.size(), 0);
 			}
 			else
 			{
@@ -72,10 +77,17 @@ public:
 					std::string msg(buff);
 					if (msg.length() > 1)
 					{
-						debugf("Client: %s", msg.c_str());
+						nlohmann::json js = nlohmann::json::parse(msg);
+						js["socket"] = sock;
+						incoming.enqueue(js);
 					}
 				}
 			}
+		}
+
+		if (sockets == 0)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 	};
 
