@@ -6,8 +6,17 @@
 #include <future>
 #include "../util/Time.h"
 #include "tbb/concurrent_vector.h"
+#include <atomic>
+#include <glm/vec2.hpp>
 
 class Worker;
+
+struct MapCell
+{
+	ECS::Entity* entity;
+	glm::vec2 position;
+	glm::vec2 positionLast;
+};
 
 class World : public Module, Threadable
 {
@@ -67,6 +76,14 @@ public:
 	moodycamel::ConcurrentQueue<ECS::Component*> compsToDelete;
 	boost::container::flat_map<uint8, moodycamel::ConcurrentQueue<ECS::Changeset>> changesets;
 	ECS::Container* ecs;
+	std::atomic<bool> paused = false;
+	moodycamel::ConcurrentQueue<MapCell> mapGridUpdates;
+	boost::container::flat_map<int, std::vector<MapCell>> map;
+	int mapHeight = 128;
+	int mapWidth = 128;
+	std::atomic<bool> loaded = false;
+	std::atomic<float> loadProgress = 0.0f;
+	
 
 	V3API World();
 	V3API ~World();

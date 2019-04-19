@@ -7,6 +7,8 @@ namespace ECS
 {
 	struct Entity : ObjectBase
 	{
-		std::unordered_map<uint8, uint32> components;
+		// unordered_map throws 'Iterator cannot be incremented' error here on count()
+		// only if there are more than 1 entities. ???
+		boost::container::flat_map<uint8, uint32> components;
 	};
 };

@@ -14,10 +14,14 @@ public:
 			LocationComponent* comp = reinterpret_cast<LocationComponent*>(component);
 
 			glm::vec3 loc = comp->location;
-			loc.x += dt;
-			//debugf("%.2f", loc.x);
+			//loc.x += dt * 0.004;
+			loc.z += dt * 0.003;
+
 			ECS::Changeset change = { comp->index, 0, loc };
 			world->changesets[comp->type_id].enqueue(change);
+
+			MapCell cell = { container->getEntity(comp->entity), glm::vec2(comp->location.x, comp->location.y) };
+			world->mapGridUpdates.enqueue(cell);
 		});
 
 		setApplyChangeFunction([](std::string name, ECS::Component* comp, ECS::Changeset change)

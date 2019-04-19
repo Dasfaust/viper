@@ -54,7 +54,10 @@ struct MeshComponent : public ECS::Component
 	RenderSystem
 	Entity marked for rendering
 */
-struct RenderComponent : public ECS::Component { };
+struct RenderComponent : public ECS::Component
+{
+	bool dirty = true;
+};
 
 /*
 	RenderSystem

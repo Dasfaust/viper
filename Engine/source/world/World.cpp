@@ -4,6 +4,7 @@
 #include "systems/MovementInputSystem.h"
 #include "../ecs/ECSCommands.h"
 #include "boost/lockfree/stack.hpp"
+#include "../networking/Networking.h"
 
 World::World()
 {
@@ -42,88 +43,52 @@ void World::onStartup()
 		debugf("Worker %d started", i + 1);
 	}
 
+	if (v3->isModuleLoaded<Networking>())
+	{
+		v3->getModule<Networking>()->callbacks[4] = [](Networking* net, NetworkPlayer& player, nlohmann::json data)
+		{
+			bool expected = data["speed"];
+			debugf("World paused: %d", expected);
+			while (!net->v3->getModule<World>()->paused.compare_exchange_weak(expected, data["speed"]));
+
+			net->send("{\"call\":4,\"success\":true}"_json);
+		};
+	}
+
 	this->start();
 	debug("World startup complete");
 }
 
 void World::tick()
 {
+	if (!loaded)
+	{
+		int mapSize = mapWidth * mapHeight;
+		float progress = 0.0f;
+		int cellsLoaded = 1;
+		for (int x = 0; x < mapWidth; x++)
+		{
+			for (int y = 0; y < mapHeight; y++)
+			{
+				int cell = y * mapWidth + x;
+				map[cell] = { };
+
+				cellsLoaded++;
+				progress = (float)cellsLoaded / (float)mapSize;
+				nlohmann::json js;
+				js["call"] = 0;
+				js["progress"] = progress;
+				v3->getModule<Networking>()->send(js);
+			}
+		}
+
+		bool expected = true;
+		while (!loaded.compare_exchange_strong(expected, true));
+	}
+
 	double start = tnow();
 	actualDeltaTime = start - lastTickEnd;
 
-	perfAccumulator += actualDeltaTime;
-	if (perfAccumulator >= 1000.0)
-	{
-		perfAccumulator = 0.0;
-
-		debugf("World: tps: %.2f, sps: %.2f, step ms: %.2f", 1000.0 / actualDeltaTime, 1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta), actualStepDelta);
-	}
-
-	stepAccumulator += actualDeltaTime;
-	if (stepAccumulator >= targetDeltaTime)
-	{
-		//debugf("Step started after %.2f ms", timeSinceLastStep);
-
-		double jobsStart = tnow();
-		for (ECS::System* system : ecs->getSystems())
-		{
-			std::vector<uint32> activeWorkers;
-			for (auto kv : system->getTypes())
-			{
-				unsigned int elements = (unsigned int)((ecs->getHeap((&kv)->first).size() / (&kv)->second) - 1);
-
-				//debug("### STEP BEGIN");
-				if (elements >= (unsigned int)stepThreadCount)
-				{
-					unsigned int itemsPerWorker = elements / stepThreadCount;
-					//debugf("Items per worker: %d", itemsPerWorker);
-					unsigned int lastIndex = 0;
-					for (unsigned int i = 0; i < (unsigned int)stepThreadCount; i++)
-					{
-						int start = (int)(lastIndex + (&kv)->second);
-						int end = (i + 1 == stepThreadCount ? -1 : (itemsPerWorker == 1 ? start : (lastIndex + (itemsPerWorker * (unsigned int)(&kv)->second))));
-						lastIndex = end;
-						//debugf("Worker range: %d - %d", start, end);
-
-						workers[i]->queueJob({ system, (&kv)->first, start, end });
-						activeWorkers.push_back(i);
-					}
-				}
-				else
-				{
-					workers[0]->queueJob({ system, (&kv)->first, 0, -1 });
-					activeWorkers.push_back(0);
-					//debugf("Ticking all");
-				}
-
-				for (auto queue : queues)
-				{
-					queue->enqueue(true);
-				}
-
-				double jobWait = tnow();
-				for (uint32 w : activeWorkers)
-				{
-					bool result;
-					while (!workers[w]->finished.try_dequeue(result))
-					{
-
-					}
-					//workers[w]->sleep.enqueue(targetDeltaTime - actualStepDelta - 1);
-				}
-				//debugf("Job synchonization for system %d -> %d took %.2f ms", system->index, (&kv)->first, tnow() - jobWait);
-			}
-		}
-		//debugf("Jobs took %.2f ms", tnow() - jobsStart);
-
-		double end = tnow();
-		lastStepEnd = end;
-		actualStepDelta = end - start;
-		//debugf("Step ended after %.2fms", tnow() - start);
-		stepAccumulator = 0.0;
-	}
-
-	double modificationStart = tnow();
 	std::pair<uint32, std::vector<std::shared_ptr<ECS::TypeInfo>>> sys;
 	while (systemsToCreate.try_dequeue(sys))
 	{
@@ -145,11 +110,12 @@ void World::tick()
 	while (entsToCreate.try_dequeue(entFuture))
 	{
 		auto entity = ecs->getEntity(ecs->createEntity());
+		debugf("Created entity: %d", entity->index);
 		for (uint32 i = 0; i < entFuture->components.size(); i++)
 		{
 			auto info = entFuture->components[i];
-			//debugf("Created component: type %d, size %d", info.id, info.size);
 			uint32 id = ecs->createComponent(entity, info->id, info->size);
+			debugf("Created component: id %d, type %d, size %d", id, info->id, info->size);
 			if (entFuture->callback != nullptr)
 			{
 				entFuture->callback(i, ecs->getComponent(entity, info->id));
@@ -157,6 +123,134 @@ void World::tick()
 		}
 		entFuture->fulfill(entity);
 	}
+
+	MapCell cell;
+	while(mapGridUpdates.try_dequeue(cell))
+	{
+		int curId = floor(cell.position.y) * mapWidth + floor(cell.position.x);
+		int lastId = floor(cell.positionLast.y) * mapWidth + floor(cell.positionLast.x);
+		if (curId != lastId)
+		{
+			for (int i = 0; i < map[lastId].size(); i++)
+			{
+				MapCell c = map[lastId][i];
+				if (c.entity != 0 && c.entity->index == cell.entity->index)
+				{
+					map[lastId].erase(map[lastId].begin()+ i);
+				}
+			}
+		}
+
+		cell.positionLast = cell.position;
+
+		bool found = false;
+		for (int i = 0; i < map[curId].size(); i++)
+		{
+			MapCell c = map[curId][i];
+			if (c.entity != 0 && c.entity->index == cell.entity->index)
+			{
+				found = true;
+			}
+		}
+
+		if (!found)
+		{
+			map[curId].push_back(cell);
+		}
+	}
+
+	perfAccumulator += actualDeltaTime;
+	if (perfAccumulator >= 500.0)
+	{
+		perfAccumulator = 0.0;
+
+		//debugf("World: tps: %.2f, sps: %.2f, step ms: %.2f", 1000.0 / actualDeltaTime, 1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta), actualStepDelta);
+
+		if (v3->isModuleLoaded<Networking>())
+		{
+			nlohmann::json js;
+			js["call"] = 2;
+			js["sps"] = 1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta);
+			js["sms"] = actualStepDelta;
+			v3->getModule<Networking>()->send(js);
+		}
+	}
+
+	stepAccumulator += actualDeltaTime;
+	if (stepAccumulator >= targetDeltaTime)
+	{
+		//debugf("Step started after %.2f ms", timeSinceLastStep);
+
+		// TODO: a better way of doing this
+		bool canTick = true;
+		if (v3->isModuleLoaded<Networking>())
+		{
+			canTick = !(v3->getModule<Networking>()->clients.load() == 0);
+		}
+
+		if (canTick && !paused.load())
+		{
+			double jobsStart = tnow();
+			for (ECS::System* system : ecs->getSystems())
+			{
+				std::vector<uint32> activeWorkers;
+				for (auto kv : system->getTypes())
+				{
+					unsigned int elements = (unsigned int)((ecs->getHeap((&kv)->first).size() / (&kv)->second) - 1);
+
+					//debug("### STEP BEGIN");
+					if (elements >= (unsigned int)stepThreadCount)
+					{
+						unsigned int itemsPerWorker = elements / stepThreadCount;
+						//debugf("Items per worker: %d", itemsPerWorker);
+						unsigned int lastIndex = 0;
+						for (unsigned int i = 0; i < (unsigned int)stepThreadCount; i++)
+						{
+							int start = (int)(lastIndex + (&kv)->second);
+							int end = (i + 1 == stepThreadCount ? -1 : (itemsPerWorker == 1 ? start : (lastIndex + (itemsPerWorker * (unsigned int)(&kv)->second))));
+							lastIndex = end;
+							//debugf("Worker range: %d - %d", start, end);
+
+							workers[i]->queueJob({ system, (&kv)->first, start, end });
+							activeWorkers.push_back(i);
+						}
+					}
+					else
+					{
+						workers[0]->queueJob({ system, (&kv)->first, 0, -1 });
+						activeWorkers.push_back(0);
+						//debugf("Ticking all");
+					}
+
+					for (auto queue : queues)
+					{
+						queue->enqueue(true);
+					}
+
+					double jobWait = tnow();
+					for (uint32 w : activeWorkers)
+					{
+						bool result;
+						while (!workers[w]->finished.try_dequeue(result))
+						{
+
+						}
+						//workers[w]->sleep.enqueue(targetDeltaTime - actualStepDelta - 1);
+					}
+					//debugf("Job synchonization for system %d -> %d took %.2f ms", system->index, (&kv)->first, tnow() - jobWait);
+				}
+			}
+			//debugf("Jobs took %.2f ms", tnow() - jobsStart);	
+		}
+
+		double end = tnow();
+		lastStepEnd = end;
+		actualStepDelta = end - start;
+		//debugf("Step ended after %.2fms", tnow() - start);
+		stepAccumulator = 0.0;
+	}
+
+	double modificationStart = tnow();
 
 	ECS::Entity* entity;
 	while (entsToDelete.try_dequeue(entity))

@@ -1,5 +1,4 @@
 #pragma once
-#include <minwinbase.h>
 #include "../Threadable.h"
 #include "../Logger.h"
 #include "../util/FileUtils.h"
@@ -11,6 +10,8 @@ class TCPServer : public Threadable
 public:
 	moodycamel::ConcurrentQueue<nlohmann::json> outgoing;
 	moodycamel::ConcurrentQueue<nlohmann::json> incoming;
+	moodycamel::ConcurrentQueue<int> socketConnected;
+	moodycamel::ConcurrentQueue<int> socketDisconnected;
 
 	void onStart() override
 	{
@@ -54,9 +55,10 @@ public:
 				FD_SET(client, &master);
 				info("Initiated client connection");
 
-				nlohmann::json js = { { "call", 1 } };
-				auto str = js.dump();
-				send(client, str.c_str(), (int)str.size(), 0);
+				socketConnected.enqueue(client);
+
+				//nlohmann::json js = { { "socket", client }, { "call", 0 } };
+				//outgoing.enqueue(js);
 			}
 			else
 			{
@@ -67,6 +69,8 @@ public:
 				int bytesIn = recv(sock, buff, 4096, 0);
 				if (bytesIn <= 0)
 				{
+					socketDisconnected.enqueue(sock);
+
 					// Disconnected
 					closesocket(sock);
 					FD_CLR(sock, &master);
@@ -75,11 +79,55 @@ public:
 				else
 				{
 					std::string msg(buff);
-					if (msg.length() > 1)
+					boost::trim(msg);
+					if (msg.length() > 1 && msg.c_str()[0] != ' ')
 					{
-						nlohmann::json js = nlohmann::json::parse(msg);
+						boost::trim(msg);
+						debugf("-> %s", msg.c_str());
+						nlohmann::json js;
+						try
+						{
+							js = nlohmann::json::parse(msg);
+						}
+						catch(const std::exception& ex)
+						{
+							critf("JSON malformed");
+							break;
+						}
 						js["socket"] = sock;
 						incoming.enqueue(js);
+					}
+				}
+			}
+		}
+
+		nlohmann::json js;
+		while(outgoing.try_dequeue(js))
+		{
+			if (js["socket"].get<int>() == -1)
+			{
+				for (int i = 0; i < master.fd_count; i++)
+				{
+					SOCKET out = master.fd_array[i];
+					if (out != listening)
+					{
+						auto str = js.dump();
+						//debugf("<- %s", str.c_str());
+						send(out, str.c_str(), (int)str.size(), 0);
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < master.fd_count; i++)
+				{
+					SOCKET out = master.fd_array[i];
+					if (out == js["socket"].get<int>())
+					{
+						auto str = js.dump();
+						//debugf("<- %s", str.c_str());
+						send(out, str.c_str(), (int)str.size(), 0);
+						break;
 					}
 				}
 			}

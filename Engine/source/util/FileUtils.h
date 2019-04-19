@@ -5,8 +5,12 @@
 
 // This is bonkers. Why MS... Why?
 #ifdef V3_WIN64
+#ifndef V3_WINDOWS_INCLUDES
+#define V3_WINDOWS_INCLUDES
 #include <WS2tcpip.h>
 #include <windows.h>
+#include <minwinbase.h>
+#endif
 #endif
 
 namespace FileUtils

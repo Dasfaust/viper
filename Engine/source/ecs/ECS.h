@@ -169,7 +169,7 @@ namespace ECS
 		inline T* getComponent(Entity* entity)
 		{
 			auto type = resolveType<T>();
-			return reinterpret_cast<T*>(deref(type.id, entity->components[type.id]));
+			return reinterpret_cast<T*>(deref(type->id, entity->components[type->id]));
 		};
 
 		inline Component* getComponent(Entity* entity, uint8 type)
