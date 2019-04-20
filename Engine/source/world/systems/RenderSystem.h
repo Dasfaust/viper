@@ -3,11 +3,13 @@
 #include "Components.h"
 #include "../../networking/Networking.h"
 #include "../../V3.h"
+#include <glm/vec3.hpp>
 
 struct RenderInfo
 {
 	uint32 index;
 	glm::vec3 location;
+	std::string mesh;
 };
 
 class RenderSystem : public ECS::System
@@ -16,10 +18,12 @@ public:
 	std::shared_ptr<moodycamel::ConcurrentQueue<RenderInfo>> dirtyObjects;
 
 	std::shared_ptr<ECS::TypeInfo> loc_t;
+	std::shared_ptr<ECS::TypeInfo> mesh_t;
 
 	inline void init(ECS::Container* container, World* world) override
 	{
 		loc_t = container->resolveType<LocationComponent>();
+		mesh_t = container->resolveType<MeshComponent>();
 		dirtyObjects = std::make_shared<moodycamel::ConcurrentQueue<RenderInfo>>();
 
 		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world)
@@ -33,7 +37,17 @@ public:
 			if (entity->components.count(sys->loc_t->id))
 			{
 				loc = container->getComponent<LocationComponent>(entity);
-				while(!sys->dirtyObjects->try_enqueue({ entity->index, loc->location }));
+			}
+
+			MeshComponent* mesh = nullptr;
+			if (entity->components.count(sys->mesh_t->id))
+			{
+				mesh = container->getComponent<MeshComponent>(entity);
+			}
+
+			if (loc != 0 && mesh != 0)
+			{
+				while (!sys->dirtyObjects->try_enqueue({ entity->index, loc->location, mesh->mesh }));
 			}
 		});
 
@@ -46,12 +60,13 @@ public:
 				return;
 			}
 
-			nlohmann::json js;
+			rapidjson::Document js;
 			RenderInfo info;
 			while(sys->dirtyObjects->try_dequeue(info))
 			{
-				nlohmann::json item;
-				item["entity"] = info.index;
+				rapidjson::Document item;
+				item["entity"].SetInt(info.index);
+				item["mesh"].SetString(rapidjson::StringRef(info.mesh.c_str()));
 				item["location"]["x"] = info.location.x;
 				item["location"]["y"] = info.location.y;
 				item["location"]["z"] = info.location.z;

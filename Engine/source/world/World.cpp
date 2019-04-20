@@ -3,7 +3,6 @@
 #include "../config/ConfigLayer.h"
 #include "systems/MovementInputSystem.h"
 #include "../ecs/ECSCommands.h"
-#include "boost/lockfree/stack.hpp"
 #include "../networking/Networking.h"
 
 World::World()
@@ -45,13 +44,13 @@ void World::onStartup()
 
 	if (v3->isModuleLoaded<Networking>())
 	{
-		v3->getModule<Networking>()->callbacks[4] = [](Networking* net, NetworkPlayer& player, nlohmann::json data)
+		v3->getModule<Networking>()->callbacks[4] = [](Networking* net, NetworkPlayer& player, rapidjson::Document &data)
 		{
-			bool expected = data["speed"];
+			bool expected = data["speed"].GetBool();
 			debugf("World paused: %d", expected);
-			while (!net->v3->getModule<World>()->paused.compare_exchange_weak(expected, data["speed"]));
+			while (!net->v3->getModule<World>()->paused.compare_exchange_weak(expected, data["speed"].GetBool()));
 
-			net->send("{\"call\":4,\"success\":true}"_json);
+			net->send(rapidjson::Document().Parse("{\"call\":4,\"success\":true}"));
 		};
 	}
 
@@ -73,11 +72,28 @@ void World::tick()
 				int cell = y * mapWidth + x;
 				map[cell] = { };
 
+				glm::vec2 pos((float)x, (float)y);
+
+				createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+				{
+					if (index == 0)
+					{
+						auto c = reinterpret_cast<LocationComponent*>(comp);
+						c->location.x = boost::any_cast<glm::vec2>(vars[0]).x;
+						c->location.z = boost::any_cast<glm::vec2>(vars[0]).y;
+					}
+					else if (index == 1)
+					{
+						auto c = reinterpret_cast<MeshComponent*>(comp);
+						c->mesh = std::string("FlatMesh");
+					}
+				}, { pos });
+
 				cellsLoaded++;
 				progress = (float)cellsLoaded / (float)mapSize;
-				nlohmann::json js;
-				js["call"] = 0;
-				js["progress"] = progress;
+				rapidjson::Document js;
+				js["call"].SetInt(0);
+				js["progress"].SetFloat(progress);
 				v3->getModule<Networking>()->send(js);
 			}
 		}
@@ -118,7 +134,7 @@ void World::tick()
 			debugf("Created component: id %d, type %d, size %d", id, info->id, info->size);
 			if (entFuture->callback != nullptr)
 			{
-				entFuture->callback(i, ecs->getComponent(entity, info->id));
+				entFuture->callback(i, ecs->getComponent(entity, info->id), entFuture->callbackVars);
 			}
 		}
 		entFuture->fulfill(entity);
@@ -168,10 +184,11 @@ void World::tick()
 
 		if (v3->isModuleLoaded<Networking>())
 		{
-			nlohmann::json js;
-			js["call"] = 2;
-			js["sps"] = 1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta);
-			js["sms"] = actualStepDelta;
+			rapidjson::Document js;
+			js["call"].SetInt(2);
+			js["sps"].SetFloat(1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta));
+			js["sms"].SetFloat(actualStepDelta);
+			js["swm"].SetFloat(v3->getModule<Networking>()->worldUpdateMs.load());
 			v3->getModule<Networking>()->send(js);
 		}
 	}

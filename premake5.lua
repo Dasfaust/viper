@@ -10,10 +10,9 @@ workspace "V3"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-include "submodules/imgui"
-include "submodules/gladogl"
 include "submodules/MemoryPool"
 include "submodules/concurrentqueue"
+include "submodules/rapidjson"
 
 project "Engine"
     location "Engine"
@@ -35,10 +34,9 @@ project "Engine"
     includedirs
     {
         "vendor/include",
-        "submodules/imgui",
-		"submodules/gladogl/include",
 		"submodules/MemoryPool/C-11",
-		"submodules/concurrentqueue"
+		"submodules/concurrentqueue",
+        "submodules/rapidjson/include"
     }
 
     filter "system:linux"
@@ -60,14 +58,9 @@ project "Engine"
 		
 		flags { "StaticRuntime", "MultiProcessorCompile" }
 
-		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.97.0/Source/lib" }
+		libdirs { "vendor/lib/win64" }
 
-		includedirs
-		{
-			"C:/VulkanSDK/1.1.97.0/Include"
-		}
-
-		links { "vulkan-1", "glfw3dll", "glew32d", "opengl32", "imgui", "ws2_32" }
+		links { "ws2_32" }
 
         postbuildcommands
         {
@@ -113,17 +106,15 @@ project "Server"
     {
         "Engine/source",
         "vendor/include",
-        "submodules/imgui",
-		"submodules/gladogl/include",
 		"submodules/MemoryPool/C-11",
-		"submodules/concurrentqueue"
+		"submodules/concurrentqueue",
+        "submodules/rapidjson/include"
     }
 
     links
     {
         "Engine",
-        "tbb",
-        "imgui"
+        "tbb"
     }
 
 	postbuildcommands
@@ -165,15 +156,10 @@ project "Server"
 		
 		flags { "StaticRuntime", "MultiProcessorCompile" }
 		
-		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.97.0/Source/lib" }
+		libdirs { "vendor/lib/win64" }
 
         links
-        { "vulkan-1", "glfw3dll", "glew32d", "opengl32", "ws2_32" }
-
-		includedirs
-		{
-			"C:/VulkanSDK/1.1.97.0/Include"
-		}
+        { "ws2_32" }
 
         postbuildcommands
         {

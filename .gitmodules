@@ -4,3 +4,6 @@
 [submodule "submodules/concurrentqueue"]
 	path = submodules/concurrentqueue
 	url = https://github.com/Dasfaust/concurrentqueue.git
+[submodule "submodules/rapidjson"]
+	path = submodules/rapidjson
+	url = https://github.com/Dasfaust/rapidjson.git

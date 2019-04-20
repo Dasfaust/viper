@@ -28,26 +28,6 @@ struct LocationComponent : public ECS::Component
 struct MeshComponent : public ECS::Component
 {
 	std::string mesh;
-	std::string model;
-	std::string texture;
-	std::string shader;
-	unsigned int textureSlot;
-
-	size_t hash = 0;
-	void makeHash()
-	{
-		hash = std::hash<std::string>{}(mesh + model + texture + shader) + textureSlot;
-	};
-
-	bool operator=(const MeshComponent &c) const
-	{
-		return c.hash == hash;
-	};
-
-	bool operator<(const MeshComponent &c) const
-	{
-		return c.hash < hash;
-	};
 };
 
 /*

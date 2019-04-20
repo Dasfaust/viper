@@ -7,6 +7,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/lexical_cast.hpp>
 #include <atomic>
+#include "../util/Time.h"
 
 struct NetworkPlayer
 {
@@ -20,18 +21,20 @@ class Networking : public Module
 public:
 	std::atomic<unsigned int> clients = 0;
 	boost::container::flat_map<boost::uuids::uuid, NetworkPlayer> players;
-	boost::container::flat_map<unsigned int, void(*)(Networking*, NetworkPlayer&, nlohmann::json data)> callbacks;
+	boost::container::flat_map<unsigned int, void(*)(Networking*, NetworkPlayer&, rapidjson::Document &data)> callbacks;
+	std::atomic<double> worldUpdateMs;
+	double lastWorldUpdate;
 
 	Networking()
 	{
-		callbacks[1] = [](Networking* net, NetworkPlayer& player, nlohmann::json data)
+		callbacks[1] = [](Networking* net, NetworkPlayer& player, rapidjson::Document &data)
 		{
-			player.nickname = data["nickname"].get<std::string>();
+			player.nickname = std::string(data["nickname"].GetString());
 
-			nlohmann::json js;
-			js["socket"] = data["socket"].get<int>();
-			js["call"] = 1;
-			js["nickname"] = player.nickname;
+			rapidjson::Document js;
+			js["socket"].SetInt(data["socket"].GetInt());
+			js["call"].SetInt(1);
+			js["nickname"].SetString(rapidjson::StringRef(player.nickname.c_str()));
 
 			net->send(player, js);
 		};
@@ -72,38 +75,44 @@ public:
 			}
 		}
 
-		nlohmann::json js;
+		rapidjson::Document js;
 		while(server->incoming.try_dequeue(js))
 		{
-			if (callbacks.count(js["call"].get<int>()))
+			if (callbacks.count(js["call"].GetInt()))
 			{
 				NetworkPlayer player;
 				for (auto&& kv : players)
 				{
-					if ((&kv)->second.socket == js["socket"].get<int>())
+					if ((&kv)->second.socket == js["socket"].GetInt())
 					{
 						player = (&kv)->second;
 						break;
 					}
 				}
-				callbacks[js["call"].get<int>()](this, player, js);
+				callbacks[js["call"].GetInt()](this, player, js);
 			}
 			else
 			{
-				warnf("Packet asks for callback %d but it doesn't exist", js["call"].get<int>());
+				warnf("Packet asks for callback %d but it doesn't exist", js["call"].GetInt());
 			}
 		}
 	};
 
-	void send(NetworkPlayer& player, nlohmann::json js)
+	void send(NetworkPlayer& player, rapidjson::Document &js)
 	{
 		js["socket"] = player.socket;
 		server->outgoing.enqueue(js);
 	};
 
-	void send(nlohmann::json js)
+	void send(rapidjson::Document &js)
 	{
 		js["socket"] = -1;
+		if (js["call"].GetInt() == 3)
+		{
+			worldUpdateMs = tnow() - lastWorldUpdate;
+
+			lastWorldUpdate = tnow();
+		}
 		server->outgoing.enqueue(js);
 	};
 

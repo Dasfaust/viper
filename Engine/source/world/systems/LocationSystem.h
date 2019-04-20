@@ -20,7 +20,7 @@ public:
 			/*ECS::Changeset change = { comp->index, 0, loc };
 			world->changesets[comp->type_id].enqueue(change);*/
 
-			MapCell cell = { container->getEntity(comp->entity), glm::vec2(comp->location.x, comp->location.y) };
+			MapCell cell = { container->getEntity(comp->entity), glm::vec2(comp->location.x, comp->location.z) };
 			world->mapGridUpdates.enqueue(cell);
 		});
 

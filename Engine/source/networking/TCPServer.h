@@ -2,14 +2,20 @@
 #include "../Threadable.h"
 #include "../Logger.h"
 #include "../util/FileUtils.h"
-#include "../util/json.hpp"
 #include "concurrentqueue.h"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+#include "boost/container/flat_map.hpp"
+#include <iostream>
+
+typedef boost::container::flat_map<std::string, std::vector<boost::any>> packet;
 
 class TCPServer : public Threadable
 {
 public:
-	moodycamel::ConcurrentQueue<nlohmann::json> outgoing;
-	moodycamel::ConcurrentQueue<nlohmann::json> incoming;
+	moodycamel::ConcurrentQueue<packet> outgoing;
+	moodycamel::ConcurrentQueue<packet> incoming;
 	moodycamel::ConcurrentQueue<int> socketConnected;
 	moodycamel::ConcurrentQueue<int> socketDisconnected;
 
@@ -84,10 +90,10 @@ public:
 					{
 						boost::trim(msg);
 						debugf("-> %s", msg.c_str());
-						nlohmann::json js;
+						rapidjson::Document js;
 						try
 						{
-							js = nlohmann::json::parse(msg);
+							js.Parse(reinterpret_cast<const char*>(msg.c_str()));
 						}
 						catch(const std::exception& ex)
 						{
@@ -101,19 +107,22 @@ public:
 			}
 		}
 
-		nlohmann::json js;
+		rapidjson::Document js;
 		while(outgoing.try_dequeue(js))
 		{
-			if (js["socket"].get<int>() == -1)
+			if (js["socket"].GetInt() == -1)
 			{
 				for (int i = 0; i < master.fd_count; i++)
 				{
 					SOCKET out = master.fd_array[i];
 					if (out != listening)
 					{
-						auto str = js.dump();
+						rapidjson::StringBuffer buff;
+						rapidjson::Writer<rapidjson::StringBuffer> writer(buff);
+						js.Accept(writer);
+						auto str = buff.GetString();
 						//debugf("<- %s", str.c_str());
-						send(out, str.c_str(), (int)str.size(), 0);
+						send(out, str, buff.GetSize(), 0);
 					}
 				}
 			}
@@ -122,11 +131,14 @@ public:
 				for (int i = 0; i < master.fd_count; i++)
 				{
 					SOCKET out = master.fd_array[i];
-					if (out == js["socket"].get<int>())
+					if (out == js["socket"].GetInt())
 					{
-						auto str = js.dump();
+						rapidjson::StringBuffer buff;
+						rapidjson::Writer<rapidjson::StringBuffer> writer(buff);
+						js.Accept(writer);
+						auto str = buff.GetString();
 						//debugf("<- %s", str.c_str());
-						send(out, str.c_str(), (int)str.size(), 0);
+						send(out, str, buff.GetSize(), 0);
 						break;
 					}
 				}

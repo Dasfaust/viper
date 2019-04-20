@@ -8,6 +8,7 @@
 #include "tbb/concurrent_vector.h"
 #include <atomic>
 #include <glm/vec2.hpp>
+#include <boost/any.hpp>
 
 class Worker;
 
@@ -38,7 +39,8 @@ public:
 		};
 
 		std::vector<std::shared_ptr<ECS::TypeInfo>> components;
-		void(*callback)(uint32, ECS::Component*);
+		void(*callback)(uint32, ECS::Component*, std::vector<boost::any>);
+		std::vector<boost::any> callbackVars;
 
 		inline PromiseState<T> tryGet()
 		{
@@ -79,8 +81,8 @@ public:
 	std::atomic<bool> paused = false;
 	moodycamel::ConcurrentQueue<MapCell> mapGridUpdates;
 	boost::container::flat_map<int, std::vector<MapCell>> map;
-	int mapHeight = 128;
-	int mapWidth = 128;
+	int mapHeight = 8;
+	int mapWidth = 8;
 	std::atomic<bool> loaded = false;
 	std::atomic<float> loadProgress = 0.0f;
 	
@@ -97,38 +99,6 @@ public:
 	{
 		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>() };
 		debugf("System creation queued: %s -> %s", typeid(T).name(), typeid(A).name());
-		systemsToCreate.enqueue(std::make_pair(index, vec));
-	};
-
-	template<typename T, typename A, typename B>
-	inline void createSystem(uint32 index)
-	{
-		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>() };
-		debugf("System creation queued: %s -> %s, %s", typeid(T).name(), typeid(A).name(), typeid(B).name());
-		systemsToCreate.enqueue(std::make_pair(index, vec));
-	};
-
-	template<typename T, typename A, typename B, typename C>
-	inline void createSystem(uint32 index)
-	{
-		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>(), ecs->resolveType<C>() };
-		debugf("System creation queued: %s -> %s, %s, %s", typeid(T).name(), typeid(A).name(), typeid(B).name(), typeid(C).name());
-		systemsToCreate.enqueue(std::make_pair(index, vec));
-	};
-
-	template<typename T, typename A, typename B, typename C, typename E>
-	inline void createSystem(uint32 index)
-	{
-		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<E>() };
-		debugf("System creation queued: %s -> %s, %s, %s, %s", typeid(T).name(), typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(E).name());
-		systemsToCreate.enqueue(std::make_pair(index, vec));
-	};
-
-	template<typename T, typename A, typename B, typename C, typename E, typename F>
-	inline void createSystem(uint32 index)
-	{
-		std::vector<std::shared_ptr<ECS::TypeInfo>> vec{ ecs->resolveType<T>(), ecs->resolveType<A>(),  ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<E>(), ecs->resolveType<F>() };
-		debugf("System creation queued: %s -> %s, %s, %s, %s, %s", typeid(T).name(), typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(E).name(), typeid(F).name());
 		systemsToCreate.enqueue(std::make_pair(index, vec));
 	};
 
@@ -149,46 +119,51 @@ public:
 		return future;
 	};
 	template<typename A>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*) = nullptr)
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;
+		future->callbackVars = vars;
 		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>() };
 		//debugf("Component creation queued: %s", typeid(A).name());
 		return future;
 	};
 	template<typename A, typename B>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*) = nullptr)
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;
+		future->callbackVars = vars;
 		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>(), ecs->resolveType<B>() };
 		//debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name());
 		return future;
 	};
 	template<typename A, typename B, typename C>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*) = nullptr)
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;
+		future->callbackVars = vars;
 		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>(), ecs->resolveType<B>(), ecs->resolveType<C>() };
 		//debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name(), typeid(C).name());
 		return future;
 	};
 	template<typename A, typename B, typename C, typename D>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*) = nullptr)
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;
+		future->callbackVars = vars;
 		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>(), ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<D>() };
 		//debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(D).name());
 		return future;
 	};
 	template<typename A, typename B, typename C, typename D, typename E>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*) = nullptr)
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;
+		future->callbackVars = vars;
 		future->components = std::vector<std::shared_ptr<ECS::TypeInfo>>{ ecs->resolveType<A>(), ecs->resolveType<B>(), ecs->resolveType<C>(), ecs->resolveType<D>() , ecs->resolveType<E>() };
 		//debugf("Component creation queued: %s, %s", typeid(A).name(), typeid(B).name(), typeid(C).name(), typeid(D).name(), typeid(E).name());
 		return future;
