@@ -5,6 +5,7 @@
 #include "world/systems/LocationSystem.h"
 #include "networking/Networking.h"
 #include "console/ConsoleInput.h"
+#include "util/Profiler.h"
 
 struct VehicleMotionComponent : public ECS::Component { };
 
@@ -33,7 +34,7 @@ class VehicleMotionSystem : public ECS::System
 				int y = floor(loc->location.z);
 
 				bool canMove = true;
-				for (int i = y; i > y - 3; i--)
+				for (int i = y; i > y + 3; i++)
 				{
 					int cell = i * world->mapWidth + x;
 					for (auto c : world->map[cell])
@@ -125,6 +126,7 @@ public:
 int main()
 {
 	std::shared_ptr<V3> v3 = std::make_shared<V3>();
+	//v3->initModule<Profiler>(1000.0);
 	v3->initModule<ConsoleInput>();
 	v3->initModule<ConfigLayer>();
 	v3->initModule<Networking>();

@@ -29,14 +29,15 @@ public:
 	{
 		callbacks[1] = [](Networking* net, NetworkPlayer& player, rapidjson::Document &data)
 		{
-			player.nickname = std::string(data["nickname"].GetString());
+			/*player.nickname = std::string(data["nickname"].GetString());
 
 			rapidjson::Document js;
+			js.SetObject();
 			js["socket"].SetInt(data["socket"].GetInt());
 			js["call"].SetInt(1);
 			js["nickname"].SetString(rapidjson::StringRef(player.nickname.c_str()));
 
-			net->send(player, js);
+			net->send(player, js);*/
 		};
 	};
 
@@ -75,15 +76,27 @@ public:
 			}
 		}
 
-		rapidjson::Document js;
-		while(server->incoming.try_dequeue(js))
+		Packet packet;
+		while(server->incoming.try_dequeue(packet))
 		{
+
+			rapidjson::Document js;
+			try
+			{
+				js.Parse(reinterpret_cast<const char*>(packet.message.c_str()));
+			}
+			catch (const std::exception& ex)
+			{
+				critf("JSON malformed");
+				break;
+			}
+
 			if (callbacks.count(js["call"].GetInt()))
 			{
 				NetworkPlayer player;
 				for (auto&& kv : players)
 				{
-					if ((&kv)->second.socket == js["socket"].GetInt())
+					if ((&kv)->second.socket == packet.socket)
 					{
 						player = (&kv)->second;
 						break;
@@ -98,22 +111,25 @@ public:
 		}
 	};
 
-	void send(NetworkPlayer& player, rapidjson::Document &js)
+	void send(NetworkPlayer& player, js::JsonObj& obj)
 	{
-		js["socket"] = player.socket;
-		server->outgoing.enqueue(js);
+		server->outgoing.enqueue({ player.socket, js::stringify(obj) });
 	};
 
-	void send(rapidjson::Document &js)
+	void send(js::JsonObj& obj)
 	{
-		js["socket"] = -1;
-		if (js["call"].GetInt() == 3)
+		if (obj.fields["call"].int_val == 3)
 		{
 			worldUpdateMs = tnow() - lastWorldUpdate;
 
 			lastWorldUpdate = tnow();
 		}
-		server->outgoing.enqueue(js);
+
+		auto s = tnow();
+		std::string js = js::stringify(obj);
+		//debugf("Stringify took %.2f ms", tnow() - s);
+
+		server->outgoing.enqueue({ -1, js });
 	};
 
 	void onShutdown() override

@@ -4,6 +4,7 @@
 #include "systems/MovementInputSystem.h"
 #include "../ecs/ECSCommands.h"
 #include "../networking/Networking.h"
+#include "../util/Profiler.h"
 
 World::World()
 {
@@ -50,7 +51,10 @@ void World::onStartup()
 			debugf("World paused: %d", expected);
 			while (!net->v3->getModule<World>()->paused.compare_exchange_weak(expected, data["speed"].GetBool()));
 
-			net->send(rapidjson::Document().Parse("{\"call\":4,\"success\":true}"));
+			js::JsonObj rep;
+			js::set(rep, "call", js::i(4));
+			js::set(rep, "success", js::b(true));
+			net->send(player, rep);
 		};
 	}
 
@@ -60,7 +64,9 @@ void World::onStartup()
 
 void World::tick()
 {
-	if (!loaded)
+	profiler_begin("world_tick");
+
+	if (!loaded && !firstTick)
 	{
 		int mapSize = mapWidth * mapHeight;
 		float progress = 0.0f;
@@ -91,9 +97,14 @@ void World::tick()
 
 				cellsLoaded++;
 				progress = (float)cellsLoaded / (float)mapSize;
-				rapidjson::Document js;
-				js["call"].SetInt(0);
-				js["progress"].SetFloat(progress);
+
+				/*rapidjson::Document js;
+				js.SetObject();
+				js.AddMember("call", 0, js.GetAllocator());
+				js.AddMember("progress", 0, js.GetAllocator());*/
+				js::JsonObj js;
+				js::set(js, "call", js::i(0));
+				js::set(js, "progress", js::f(progress));
 				v3->getModule<Networking>()->send(js);
 			}
 		}
@@ -140,6 +151,7 @@ void World::tick()
 		entFuture->fulfill(entity);
 	}
 
+	profiler_begin("map_grid_update");
 	MapCell cell;
 	while(mapGridUpdates.try_dequeue(cell))
 	{
@@ -174,29 +186,48 @@ void World::tick()
 			map[curId].push_back(cell);
 		}
 	}
+	if (cell.entity != 0)
+	{
+		profiler_end("map_grid_update");
+	}
 
 	perfAccumulator += actualDeltaTime;
 	if (perfAccumulator >= 500.0)
 	{
+		profiler_begin("server_telemetry");
 		perfAccumulator = 0.0;
 
 		//debugf("World: tps: %.2f, sps: %.2f, step ms: %.2f", 1000.0 / actualDeltaTime, 1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta), actualStepDelta);
 
 		if (v3->isModuleLoaded<Networking>())
 		{
-			rapidjson::Document js;
-			js["call"].SetInt(2);
-			js["sps"].SetFloat(1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta));
-			js["sms"].SetFloat(actualStepDelta);
-			js["swm"].SetFloat(v3->getModule<Networking>()->worldUpdateMs.load());
-			v3->getModule<Networking>()->send(js);
+			auto net = v3->getModule<Networking>();
+			if (net->clients > 0)
+			{
+				/*rapidjson::Document js;
+				js.SetObject();
+				js.AddMember("call", 2, js.GetAllocator());
+				js.AddMember("sps", 1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta), js.GetAllocator());
+				js.AddMember("sms", actualStepDelta, js.GetAllocator());
+				js.AddMember("swm", net->worldUpdateMs.load(), js.GetAllocator());*/
+				js::JsonObj js;
+				js::set(js, "call", js::i(2));
+				js::set(js, "sps", js::d(1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta)));
+				js::set(js, "sms", js::d(actualStepDelta));
+				js::set(js, "swm", js::d(net->worldUpdateMs.load()));
+				net->send(js);
+			}
 		}
+		profiler_end("server_telemetry");
 	}
 
 	stepAccumulator += actualDeltaTime;
-	if (stepAccumulator >= targetDeltaTime)
+	auto stepBegin = tnow();
+	if (/*stepAccumulator >= targetDeltaTime*/ nextStep < stepBegin)
 	{
 		//debugf("Step started after %.2f ms", timeSinceLastStep);
+
+		profiler_begin("world_step");
 
 		// TODO: a better way of doing this
 		bool canTick = true;
@@ -204,6 +235,8 @@ void World::tick()
 		{
 			canTick = !(v3->getModule<Networking>()->clients.load() == 0);
 		}
+
+		auto t = std::chrono::high_resolution_clock::now();
 
 		if (canTick && !paused.load())
 		{
@@ -265,6 +298,10 @@ void World::tick()
 		actualStepDelta = end - start;
 		//debugf("Step ended after %.2fms", tnow() - start);
 		stepAccumulator = 0.0;
+
+		nextStep = stepBegin + 1000.0 / 30.0;
+
+		profiler_end("world_step");
 	}
 
 	double modificationStart = tnow();
@@ -305,6 +342,9 @@ void World::tick()
 	}
 
 	lastTickEnd = tnow();
+	firstTick = false;
+
+	profiler_end("world_tick");
 }
 
 void World::tickSystem(ECS::System* system, uint8 type, int start, int end)

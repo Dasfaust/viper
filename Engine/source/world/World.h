@@ -10,6 +10,8 @@
 #include <glm/vec2.hpp>
 #include <boost/any.hpp>
 
+using timeStep = std::chrono::duration<float, std::ratio<1, 30>>;
+
 class Worker;
 
 struct MapCell
@@ -179,6 +181,9 @@ private:
 	double lastStepEnd = 0.0;
 	double perfAccumulator = 0.0;
 	double stepAccumulator = 0.0;
+	bool firstTick = true;
+
+	double nextStep = 0.0;
  };
 
 class Worker : public Threadable

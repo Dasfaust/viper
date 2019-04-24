@@ -6,6 +6,7 @@
 #include "System.h"
 #include <boost/algorithm/string.hpp>
 #include <unordered_map>
+#include <tbb/concurrent_unordered_map.h>
 
 namespace ECS
 {
@@ -223,13 +224,13 @@ namespace ECS
 			return heap[type];
 		};
 
-		inline boost::container::flat_map<std::string, uint8> getTypes()
+		inline tbb::concurrent_unordered_map<std::string, uint8> getTypes()
 		{
 			return typeCache;
 		};
 	private:
-		boost::container::flat_map<std::string, uint8> typeCache;
-		boost::container::flat_map<uint8, std::shared_ptr<TypeInfo>> typeIndex;
+		tbb::concurrent_unordered_map<std::string, uint8> typeCache;
+		tbb::concurrent_unordered_map<uint8, std::shared_ptr<TypeInfo>> typeIndex;
 		std::unordered_map<uint8, std::vector<uint32>> heap;
 		std::vector<System*> systems;
 
