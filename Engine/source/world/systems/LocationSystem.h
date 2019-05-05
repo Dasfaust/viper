@@ -20,7 +20,19 @@ public:
 			/*ECS::Changeset change = { comp->index, 0, loc };
 			world->changesets[comp->type_id].enqueue(change);*/
 
-			MapCell cell = { container->getEntity(comp->entity), glm::vec2(comp->location.x, comp->location.z) };
+			// TODO: do this better
+			glm::vec2 last(0.0f, 4.0f);
+			for (auto&& kv : world->map)
+			{
+				for (auto c : kv.second)
+				{
+					if (c.entity != 0 && c.entity->index == component->entity)
+					{
+						last = c.position;
+					}
+				}
+			}
+			MapCell cell = { container->getEntity(comp->entity), glm::vec2(comp->location.x, comp->location.z), last };
 			world->mapGridUpdates.enqueue(cell);
 		});
 

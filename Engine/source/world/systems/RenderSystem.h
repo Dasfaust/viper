@@ -56,7 +56,7 @@ public:
 			//debugf("Render component tick took %.2f ms", tnow() - ts);
 		});
 
-		setWaitFunction([](ECS::System* system, World* world)
+		setTickEndFunction([](ECS::System* system, World* world)
 		{
 			auto sys = reinterpret_cast<RenderSystem*>(system);
 			// I don't even know how this would happen
@@ -93,6 +93,7 @@ public:
 				js::set(l, "y", js::f(info.location.y));
 				js::set(l, "z", js::f(info.location.z));
 				js::set(i, "location", l);
+				js::set(i, "time", js::d(tnow()));
 				instances.push_back(i);
 			}
 			//js.AddMember("instances", arr, js.GetAllocator());
@@ -100,12 +101,13 @@ public:
 
 			if (instances.size() > 0)
 			{
-				sys->updateMs = tnow() - sys->lastUpdate;
+				double end = tnow();
+				sys->updateMs = end - sys->lastUpdate;
 				//js.AddMember("call", 3, js.GetAllocator());
 				js::set(js, "call", js::i(3));
 				sys->v3->getModule<Networking>()->send(js);
-				sys->lastUpdate = tnow();
-				//debugf("Ms since last state update: %.2f", sys->updateMs);
+				sys->lastUpdate = end;
+				debugf("Ms since last state update: %.2f", sys->updateMs);
 			}
 		});
 	};

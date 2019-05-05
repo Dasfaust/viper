@@ -24,12 +24,17 @@ namespace ECS
 		inline void preinit(V3* v3)
 		{
 			this->v3 = v3;
+
+			tickFunc = [](double dt, Component* comp, System* sys, Container* cont, World* world) {};
+			tickEnd = [](System* sys, World* world) { };
+			tickWait = [](System* sys, World* world) { };
 		};
 
 		virtual void init(ECS::Container* container, World* world) { };
 
 		void(*tickFunc)(double, Component*, System*, Container*, World*);
 		void(*tickWait)(System*, World*);
+		void(*tickEnd)(System*, World*);
 		void(*applyChange)(std::string, Component*, Changeset);
 
 		inline void setTickFunction(void(*tickFunc)(double, Component*, System*, Container*, World*))
@@ -40,6 +45,11 @@ namespace ECS
 		inline void setWaitFunction(void(*tickWait)(System*, World*))
 		{
 			this->tickWait = tickWait;
+		};
+
+		inline void setTickEndFunction(void(*tickEnd)(System*, World*))
+		{
+			this->tickEnd = tickEnd;
 		};
 
 		inline void setApplyChangeFunction(void(*applyChange)(std::string, Component*, Changeset))

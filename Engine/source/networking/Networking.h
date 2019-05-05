@@ -44,13 +44,14 @@ public:
 	void onStartup() override
 	{
 		server = std::make_shared<TCPServer>();
-		server->start();
+		//server->start();
+		server->onStart();
 	};
 
-	void onTick() override
+	void _onTick()
 	{
 		int c;
-		while(server->socketConnected.try_dequeue(c))
+		while (server->socketConnected.try_dequeue(c))
 		{
 			auto uid = boost::uuids::random_generator()();
 			players[uid] = { c, "unknown", uid };
@@ -77,7 +78,7 @@ public:
 		}
 
 		Packet packet;
-		while(server->incoming.try_dequeue(packet))
+		while (server->incoming.try_dequeue(packet))
 		{
 
 			rapidjson::Document js;
@@ -109,11 +110,18 @@ public:
 				warnf("Packet asks for callback %d but it doesn't exist", js["call"].GetInt());
 			}
 		}
+
+		server->tick();
+	}
+
+	void onTick() override
+	{
+		
 	};
 
 	void send(NetworkPlayer& player, js::JsonObj& obj)
 	{
-		server->outgoing.enqueue({ player.socket, js::stringify(obj) });
+		server->outgoing.enqueue({ player.socket, js::stringify(obj), obj.fields["call"].int_val });
 	};
 
 	void send(js::JsonObj& obj)
@@ -121,20 +129,22 @@ public:
 		if (obj.fields["call"].int_val == 3)
 		{
 			worldUpdateMs = tnow() - lastWorldUpdate;
-
+			//debugf("World update: %.2fms", worldUpdateMs.load());
 			lastWorldUpdate = tnow();
+			js::set(obj, "time", js::d(tnow()));
 		}
 
 		auto s = tnow();
 		std::string js = js::stringify(obj);
 		//debugf("Stringify took %.2f ms", tnow() - s);
 
-		server->outgoing.enqueue({ -1, js });
+		server->outgoing.enqueue({ -1, js, obj.fields["call"].int_val });
 	};
 
 	void onShutdown() override
 	{
-		server->stop();
+		server->onStop();
+		//server->stop();
 	};
 private:
 	std::shared_ptr<TCPServer> server;

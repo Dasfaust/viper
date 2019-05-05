@@ -34,23 +34,23 @@ class VehicleMotionSystem : public ECS::System
 				int y = floor(loc->location.z);
 
 				bool canMove = true;
-				for (int i = y; i > y + 3; i++)
+				/*for (int i = y; i < y + 3; i++)
 				{
 					int cell = i * world->mapWidth + x;
 					for (auto c : world->map[cell])
 					{
-						if (c.entity != 0 && c.entity->index != entity->index && !entity->components.count(sys->veh_t->id))
+						if (c.entity != 0 && c.entity->index != entity->index && entity->components.count(sys->veh_t->id))
 						{
-							float dist = sqrt(pow(c.position.x - loc->location.z, 2) + pow(c.position.y - loc->location.x, 2) * 1.0f);
+							float dist = sqrt(pow(c.position.x - x, 2) + pow(c.position.y - y, 2) * 1.0f);
 							debugf("Distance is %.2f", dist);
-							debugf("e1 (%.2f, %.2f), e2 (%.2f, %.2f)", c.position.x, c.position.y, loc->location.z, loc->location.x);
+							debugf("e1 (%.2f, %.2f), e2 (%.2f, %.2f)", x, y, loc->location.x, loc->location.z);
 							if (dist <= 0.1f)
 							{
 								canMove = false;
 							}
 						}
 					}
-				}
+				}*/
 
 				if (canMove)
 				{
@@ -101,7 +101,7 @@ public:
 				}
 			})->get());
 
-			entities.push_back(world->createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+			entities.push_back(world->createEntity<LocationComponent, MeshComponent, RenderComponent, VehicleMotionComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
 			{
 				if (index == 0)
 				{

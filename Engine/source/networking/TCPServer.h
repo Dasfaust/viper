@@ -215,6 +215,7 @@ struct Packet
 {
 	int socket;
 	std::string message;
+	int call;
 };
 
 class TCPServer : public Threadable
@@ -224,6 +225,7 @@ public:
 	moodycamel::ConcurrentQueue<Packet> incoming;
 	moodycamel::ConcurrentQueue<int> socketConnected;
 	moodycamel::ConcurrentQueue<int> socketDisconnected;
+	double last = 0.0;
 
 	void onStart() override
 	{
@@ -251,7 +253,7 @@ public:
 		js::JsonObj obj3;
 		js::set(obj3, "dick", js::s("butt"));
 		js::set(obj2, "dragon", js::s("butts"));
-		js::set(obj, "field", js::i(69));
+		js::set(obj, "field", js::d(tnow()));
 		js::set(obj, "fieldArr", { js::i(42), js::i(69) });
 		js::set(obj, "obj", obj2);
 		js::set(obj, "objArr", { obj2, obj3 });
@@ -343,6 +345,12 @@ public:
 						//debugf("<- %s", packet.message.c_str());
 						send(out, packet.message.c_str(), packet.message.size(), 0);
 						//debugf("Packet dispatch took %.2f ms", tnow() - s);
+
+						if (packet.call == 3)
+						{
+							debugf("Call 3: %.2fms", tnow() - last);
+							last = tnow();
+						}
 					}
 				}
 			}
@@ -365,10 +373,10 @@ public:
 			}
 		}
 
-		if (sockets == 0)
+		/*if (sockets == 0)
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		}
+		}*/
 
 		//debugf("TCP tick took %.2f ms", tnow() - ts);
 	};

@@ -159,17 +159,32 @@ void World::tick()
 		int lastId = floor(cell.positionLast.y) * mapWidth + floor(cell.positionLast.x);
 		if (curId != lastId)
 		{
+			bool exists = false;
 			for (int i = 0; i < map[lastId].size(); i++)
 			{
 				MapCell c = map[lastId][i];
 				if (c.entity != 0 && c.entity->index == cell.entity->index)
 				{
-					map[lastId].erase(map[lastId].begin()+ i);
+					map[lastId].erase(map[lastId].begin() + i);
 				}
+				
+			}
+			for (int i = 0; i < map[curId].size(); i++)
+			{
+				MapCell c = map[curId][i];
+				if (c.entity != 0 && c.entity->index == cell.entity->index)
+				{
+					exists = true;
+				}
+
+			}
+			if (!exists)
+			{
+				map[curId].push_back(cell);
 			}
 		}
 
-		cell.positionLast = cell.position;
+		//cell.positionLast = cell.position;
 
 		bool found = false;
 		for (int i = 0; i < map[curId].size(); i++)
@@ -223,9 +238,9 @@ void World::tick()
 
 	stepAccumulator += actualDeltaTime;
 	auto stepBegin = tnow();
-	if (/*stepAccumulator >= targetDeltaTime*/ nextStep < stepBegin)
+	if (/*stepAccumulator >= targetDeltaTime*/ nextStep <= stepBegin)
 	{
-		//debugf("Step started after %.2f ms", timeSinceLastStep);
+		//debugf("Step started after %.2f ms", stepBegin - lastStepEnd);
 
 		profiler_begin("world_step");
 
@@ -293,13 +308,18 @@ void World::tick()
 			//debugf("Jobs took %.2f ms", tnow() - jobsStart);	
 		}
 
+		for (ECS::System* system : ecs->getSystems())
+		{
+			system->tickEnd(system, this);
+		}
+
 		double end = tnow();
 		lastStepEnd = end;
 		actualStepDelta = end - start;
 		//debugf("Step ended after %.2fms", tnow() - start);
 		stepAccumulator = 0.0;
 
-		nextStep = stepBegin + 1000.0 / 30.0;
+		nextStep = stepBegin + (1000.0 / 30.0);
 
 		profiler_end("world_step");
 	}
@@ -343,6 +363,8 @@ void World::tick()
 
 	lastTickEnd = tnow();
 	firstTick = false;
+
+	v3->getModule<Networking>()->_onTick();
 
 	profiler_end("world_tick");
 }
