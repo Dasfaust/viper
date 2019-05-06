@@ -48,6 +48,14 @@ struct CameraComponent : public ECS::Component
 	glm::vec3 location = glm::vec3(0.0f, 3.0f, 0.0f);
 };
 
+struct BoundingBox2D : public ECS::Component
+{
+	glm::vec3 size;
+};
+
+struct CollisionComponent : public ECS::Component
+{ };
+
 namespace Components
 {
 	static void registerTypes(ECS::Container* container)
@@ -57,5 +65,7 @@ namespace Components
 		container->resolveType<RenderComponent>();
 		container->resolveType<CameraComponent>();
 		container->resolveType<MeshComponent>();
+		container->resolveType<BoundingBox2D>();
+		container->resolveType<CollisionComponent>();
 	};
 }

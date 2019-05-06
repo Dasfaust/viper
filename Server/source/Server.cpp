@@ -7,7 +7,10 @@
 #include "console/ConsoleInput.h"
 #include "util/Profiler.h"
 
-struct VehicleMotionComponent : public ECS::Component { };
+struct VehicleMotionComponent : public ECS::Component
+{
+	bool stopped = false;
+};
 
 class VehicleMotionSystem : public ECS::System
 {
@@ -26,44 +29,89 @@ class VehicleMotionSystem : public ECS::System
 			auto comp = reinterpret_cast<VehicleMotionComponent*>(component);
 
 			LocationComponent* loc = nullptr;
-			if (entity->components.count(sys->loc_t->id))
+			if (!comp->stopped && entity->components.count(sys->loc_t->id))
 			{
 				loc = container->getComponent<LocationComponent>(entity);
 				// x is z, y is x
 				int x = floor(loc->location.x);
 				int y = floor(loc->location.z);
 
+				// TODO: get velocity movement direction
+
+				// Check positive y
 				bool canMove = true;
-				/*for (int i = y; i < y + 3; i++)
+				for (int i = y; i < y + 3; i++)
 				{
 					int cell = i * world->mapWidth + x;
 					for (auto c : world->map[cell])
 					{
-						if (c.entity != 0 && c.entity->index != entity->index && entity->components.count(sys->veh_t->id))
+						if (c.entity != 0 && c.entity->index != entity->index && c.entity->components.count(sys->veh_t->id))
 						{
 							float dist = sqrt(pow(c.position.x - x, 2) + pow(c.position.y - y, 2) * 1.0f);
+							debugf("Cell: %d e1 (%d, %d), Cell: %d e2 (%d, %d)", y * world->mapWidth + x, x, y, cell, c.position.x, c.position.y);
 							debugf("Distance is %.2f", dist);
-							debugf("e1 (%.2f, %.2f), e2 (%.2f, %.2f)", x, y, loc->location.x, loc->location.z);
-							if (dist <= 0.1f)
+							if (dist <= 1.0f)
 							{
 								canMove = false;
+								continue;
 							}
 						}
 					}
-				}*/
+
+					// Check negative y
+					if (canMove)
+					{
+						for (int i = y; i > y - 3; i--)
+						{
+							int cell = i * world->mapWidth + x;
+							for (auto c : world->map[cell])
+							{
+								if (c.entity != 0 && c.entity->index != entity->index && c.entity->components.count(sys->veh_t->id))
+								{
+									float dist = sqrt(pow(c.position.x - x, 2) + pow(c.position.y - y, 2) * 1.0f);
+									debugf("Cell: %d e1 (%d, %d), Cell: %d e2 (%d, %d)", y * world->mapWidth + x, x, y, cell, c.position.x, c.position.y);
+									debugf("Distance is %.2f", dist);
+									if (dist <= 1.0f)
+									{
+										canMove = false;
+										continue;
+									}
+								}
+							}
+						}
+					}
+				}
 
 				if (canMove)
 				{
+					if (comp->stopped)
+					{
+						ECS::Changeset change = { false };
+						world->changesets[comp->type_id].enqueue(change);
+					}
+
 					glm::vec3 velocity = loc->location;
-					velocity.z += 0.009;
+					velocity.z += 0.015;
 
 					ECS::Changeset change = { loc->index, 0, velocity };
 					world->changesets[loc->type_id].enqueue(change);
 				}
+				else
+				{
+					ECS::Changeset change = { true };
+					world->changesets[comp->type_id].enqueue(change);
+				}
 			}
 		});
 
-		setWaitFunction([](ECS::System* system, World* world) { });
+		setApplyChangeFunction([](std::string name, ECS::Component* comp, ECS::Changeset change)
+		{
+			auto c = reinterpret_cast<VehicleMotionComponent*>(comp);
+			if (change.field == 0)
+			{
+				c->stopped = boost::any_cast<bool>(change.value);
+			}
+		});
 	};
 };
 
@@ -112,6 +160,11 @@ public:
 				{
 					auto c = reinterpret_cast<MeshComponent*>(comp);
 					c->mesh = std::string("CubeMesh");
+				}
+				else if (index == 3)
+				{
+					auto c = reinterpret_cast<VehicleMotionComponent*>(comp);
+					c->stopped = true;
 				}
 			})->get());
 		}

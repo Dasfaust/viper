@@ -26,12 +26,8 @@ void World::onStartup()
 	}
 
 	auto config = v3->getModule<ConfigLayer>();
-	/*stepsPerSecondTarget = config->getInts("engine", "worldStepsPerSecond")[0];*/
 	stepThreadCount = config->getInts("engine", "worldStepThreads")[0];
 
-	/*debugf("World init: steps: %d, threads: %d", stepsPerSecondTarget, stepThreadCount);*/
-
-	/*lastStep = Time::now();*/
 	targetDeltaTime = 1000.0 / 30.0;
 	debugf("World delta target: %.2f", targetDeltaTime);
 
@@ -98,10 +94,6 @@ void World::tick()
 				cellsLoaded++;
 				progress = (float)cellsLoaded / (float)mapSize;
 
-				/*rapidjson::Document js;
-				js.SetObject();
-				js.AddMember("call", 0, js.GetAllocator());
-				js.AddMember("progress", 0, js.GetAllocator());*/
 				js::JsonObj js;
 				js::set(js, "call", js::i(0));
 				js::set(js, "progress", js::f(progress));
@@ -169,7 +161,7 @@ void World::tick()
 				}
 				
 			}
-			for (int i = 0; i < map[curId].size(); i++)
+			/*for (int i = 0; i < map[curId].size(); i++)
 			{
 				MapCell c = map[curId][i];
 				if (c.entity != 0 && c.entity->index == cell.entity->index)
@@ -181,10 +173,9 @@ void World::tick()
 			if (!exists)
 			{
 				map[curId].push_back(cell);
-			}
+			}*/
+			map[curId].push_back(cell);
 		}
-
-		//cell.positionLast = cell.position;
 
 		bool found = false;
 		for (int i = 0; i < map[curId].size(); i++)
@@ -212,19 +203,11 @@ void World::tick()
 		profiler_begin("server_telemetry");
 		perfAccumulator = 0.0;
 
-		//debugf("World: tps: %.2f, sps: %.2f, step ms: %.2f", 1000.0 / actualDeltaTime, 1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta), actualStepDelta);
-
 		if (v3->isModuleLoaded<Networking>())
 		{
 			auto net = v3->getModule<Networking>();
 			if (net->clients > 0)
 			{
-				/*rapidjson::Document js;
-				js.SetObject();
-				js.AddMember("call", 2, js.GetAllocator());
-				js.AddMember("sps", 1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta), js.GetAllocator());
-				js.AddMember("sms", actualStepDelta, js.GetAllocator());
-				js.AddMember("swm", net->worldUpdateMs.load(), js.GetAllocator());*/
 				js::JsonObj js;
 				js::set(js, "call", js::i(2));
 				js::set(js, "sps", js::d(1000.0 / (actualStepDelta <= targetDeltaTime ? targetDeltaTime : actualStepDelta)));
@@ -238,10 +221,8 @@ void World::tick()
 
 	stepAccumulator += actualDeltaTime;
 	auto stepBegin = tnow();
-	if (/*stepAccumulator >= targetDeltaTime*/ nextStep <= stepBegin)
+	if (nextStep <= stepBegin)
 	{
-		//debugf("Step started after %.2f ms", stepBegin - lastStepEnd);
-
 		profiler_begin("world_step");
 
 		// TODO: a better way of doing this
@@ -263,18 +244,15 @@ void World::tick()
 				{
 					unsigned int elements = (unsigned int)((ecs->getHeap((&kv)->first).size() / (&kv)->second) - 1);
 
-					//debug("### STEP BEGIN");
 					if (elements >= (unsigned int)stepThreadCount)
 					{
 						unsigned int itemsPerWorker = elements / stepThreadCount;
-						//debugf("Items per worker: %d", itemsPerWorker);
 						unsigned int lastIndex = 0;
 						for (unsigned int i = 0; i < (unsigned int)stepThreadCount; i++)
 						{
 							int start = (int)(lastIndex + (&kv)->second);
 							int end = (i + 1 == stepThreadCount ? -1 : (itemsPerWorker == 1 ? start : (lastIndex + (itemsPerWorker * (unsigned int)(&kv)->second))));
 							lastIndex = end;
-							//debugf("Worker range: %d - %d", start, end);
 
 							workers[i]->queueJob({ system, (&kv)->first, start, end });
 							activeWorkers.push_back(i);
@@ -284,7 +262,6 @@ void World::tick()
 					{
 						workers[0]->queueJob({ system, (&kv)->first, 0, -1 });
 						activeWorkers.push_back(0);
-						//debugf("Ticking all");
 					}
 
 					for (auto queue : queues)
@@ -300,12 +277,9 @@ void World::tick()
 						{
 
 						}
-						//workers[w]->sleep.enqueue(targetDeltaTime - actualStepDelta - 1);
 					}
-					//debugf("Job synchonization for system %d -> %d took %.2f ms", system->index, (&kv)->first, tnow() - jobWait);
 				}
 			}
-			//debugf("Jobs took %.2f ms", tnow() - jobsStart);	
 		}
 
 		for (ECS::System* system : ecs->getSystems())
@@ -316,7 +290,6 @@ void World::tick()
 		double end = tnow();
 		lastStepEnd = end;
 		actualStepDelta = end - start;
-		//debugf("Step ended after %.2fms", tnow() - start);
 		stepAccumulator = 0.0;
 
 		nextStep = stepBegin + (1000.0 / 30.0);
@@ -343,6 +316,7 @@ void World::tick()
 		ECS::Changeset change;
 		while((&kv)->second.try_dequeue(change))
 		{
+			// TODO: actually set the proper component, ya dingus
 			auto comp = reinterpret_cast<ECS::Component*>(&ecs->getHeap((&kv)->first)[change.index]);
 			for (ECS::System* system : ecs->getSystems())
 			{
@@ -353,8 +327,6 @@ void World::tick()
 			}
 		}
 	}
-
-	//debugf("Modifications took %.2f ms", tnow() - modificationStart);
 
 	for (ECS::System* system : ecs->getSystems())
 	{

@@ -8,25 +8,19 @@ class LocationSystem : public ECS::System
 public:
 	inline void init(ECS::Container* container, World* world) override
 	{
-		
-
-		//debug("Location init");
 		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world)
 		{
 			LocationComponent* comp = reinterpret_cast<LocationComponent*>(component);
 
 			glm::vec3 loc = comp->location;
 
-			/*ECS::Changeset change = { comp->index, 0, loc };
-			world->changesets[comp->type_id].enqueue(change);*/
-
 			// TODO: do this better
-			glm::vec2 last(0.0f, 4.0f);
+			glm::vec2 last(0.0f, 0.0f);
 			for (auto&& kv : world->map)
 			{
 				for (auto c : kv.second)
 				{
-					if (c.entity != 0 && c.entity->index == component->entity)
+					if (c.entity != 0 && c.entity->index == comp->entity)
 					{
 						last = c.position;
 					}
