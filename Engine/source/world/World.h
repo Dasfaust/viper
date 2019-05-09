@@ -86,8 +86,8 @@ public:
 	std::atomic<bool> paused = false;
 	moodycamel::ConcurrentQueue<MapCell> mapGridUpdates;
 	std::unordered_map<int, std::vector<MapCell>> map;
-	int mapHeight = 8;
-	int mapWidth = 8;
+	int mapHeight = 5;
+	int mapWidth = 5;
 	std::atomic<bool> loaded = false;
 	std::atomic<float> loadProgress = 0.0f;
 	
@@ -177,6 +177,7 @@ public:
 	V3API void tickSystem(ECS::System* system, uint8 type, int start = 0, int end = -1);
 
 	std::shared_ptr<ECS::TypeInfo> loc_t;
+	std::shared_ptr<ECS::TypeInfo> bb_t;
 	V3API std::unordered_map<std::string, std::vector<MapCell>> getNearbyEntities2D(ECS::Entity* ent, unsigned int radius);
 	V3API std::string getDirection2D(glm::vec2 pos1, glm::vec2 pos2);
 private:

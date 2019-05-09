@@ -56,6 +56,7 @@ void World::onStartup()
 	}
 
 	loc_t = ecs->resolveType<LocationComponent>();
+	bb_t = ecs->resolveType<BoundingBox2D>();
 
 	this->start();
 	debug("World startup complete");
@@ -132,17 +133,17 @@ void World::tick()
 
 	if (!loaded && !firstTick)
 	{
-		int mapSize = mapWidth * mapHeight;
+		int mapSize = (mapWidth * mapHeight) * 2;
 		float progress = 0.0f;
 		int cellsLoaded = 1;
-		for (int x = 0; x < mapWidth; x++)
+		for (int x = -mapWidth; x < mapWidth; x++)
 		{
-			for (int y = 0; y < mapHeight; y++)
+			for (int y = -mapHeight; y < mapHeight; y++)
 			{
 				int cell = y * mapWidth + x;
 				map[cell] = { };
 
-				/*glm::vec2 pos((float)x, (float)y);
+				glm::vec2 pos((float)x, (float)y);
 
 				createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
 				{
@@ -157,7 +158,7 @@ void World::tick()
 						auto c = reinterpret_cast<MeshComponent*>(comp);
 						c->mesh = std::string("FlatMesh");
 					}
-				}, { pos });*/
+				}, { pos });
 
 				cellsLoaded++;
 				progress = (float)cellsLoaded / (float)mapSize;
@@ -236,11 +237,42 @@ void World::tick()
 		while (mapGridUpdates.try_dequeue(cell))
 		{
 			auto entity = ecs->getEntity(cell.entity);
-			assert(entity != nullptr);
-			assert(entity->index > 0);
-			//assert(entity->type_size == ecs->resolveType<ECS::Entity>()->size);
 
-			glm::vec2 bounds(0.5f); // <= 1m x 1m
+			glm::vec2 bounds(0.0f);
+			if (entity->components.count(bb_t->id))
+			{
+				auto bb = reinterpret_cast<BoundingBox2D*>(ecs->getComponent(entity, bb_t->id));
+				bounds = bb->bounds;
+			}
+
+			// Clear old positions
+			if (cell.position != cell.positionLast)
+			{
+				glm::vec2 sw(floor(cell.positionLast.x - bounds.x), floor(cell.positionLast.y - bounds.y));
+				glm::vec2 ne(ceil(cell.positionLast.x + bounds.x), ceil(cell.positionLast.y + bounds.y));
+
+				for (float i = sw.x; i <= ne.x; i++)
+				{
+					for (float j = sw.y; j <= ne.y; j++)
+					{
+						int id = j * mapWidth + i;
+
+						if (map.count(id))
+						{
+							for (int k = 0; k < map[id].size(); k++)
+							{
+								MapCell c = map[id][k];
+								if (c.entity == entity->index)
+								{
+									map[id].erase(map[id].begin() + i);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// Update new positions
 			glm::vec2 sw(floor(cell.position.x - bounds.x), floor(cell.position.y - bounds.y));
 			glm::vec2 ne(ceil(cell.position.x + bounds.x), ceil(cell.position.y + bounds.y));
 			
@@ -250,61 +282,27 @@ void World::tick()
 				{
 					int id = j * mapWidth + i;
 
-					// Insert into new id if it doesn't exist
-					bool found = false;
-					for (int k = 0; k < map[id].size(); k++)
+					if (map.count(id))
 					{
-						MapCell c = map[id][k];
-						if (c.entity == entity->index)
+						// Insert into new id if it doesn't exist
+						bool found = false;
+						for (int k = 0; k < map[id].size(); k++)
 						{
-							found = true;
+							MapCell c = map[id][k];
+							if (c.entity == entity->index)
+							{
+								found = true;
+							}
+						}
+
+						if (!found)
+						{
+							debugf("Map grid: updating e%d at (%.2f, %.2f) -> grid id: %d", cell.entity, i, j, id);
+							map[id].push_back(cell);
 						}
 					}
-
-					if (!found)
-					{
-						debugf("Map grid: updating e%d at (%.2f, %.2f) -> grid id: %d", cell.entity, i, j, id);
-						map[id].push_back(cell);
-					}
 				}
 			}
-
-			/*int curId = floor(cell.position.y) * mapWidth + floor(cell.position.x);
-			int lastId = floor(cell.positionLast.y) * mapWidth + floor(cell.positionLast.x);
-
-			// Clear last id
-			if (curId != lastId)
-			{
-				bool exists = false;
-				for (int i = 0; i < map[lastId].size(); i++)
-				{
-					MapCell c = map[lastId][i];
-					auto e = ecs->getEntity(c.entity);
-					if (e != nullptr && entity->index == e->index)
-					{
-						map[lastId].erase(map[lastId].begin() + i);
-					}
-
-				}
-			}
-
-			// Insert into new id if it doesn't exist
-			bool found = false;
-			for (int i = 0; i < map[curId].size(); i++)
-			{
-				MapCell c = map[curId][i];
-				auto e = ecs->getEntity(c.entity);
-				if (e != nullptr && e->index == entity->index)
-				{
-					found = true;
-				}
-			}
-
-			if (!found)
-			{
-				debugf("Map grid: updating e%d at (%.2f, %.2f) -> grid id: %d", cell.entity, floor(cell.position.x), floor(cell.position.y), curId);
-				map[curId].push_back(cell);
-			}*/
 		}
 		profiler_end("map_grid_update");
 	}
