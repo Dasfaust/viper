@@ -35,7 +35,7 @@ namespace ECS
 		void(*tickFunc)(double, Component*, System*, Container*, World*);
 		void(*tickWait)(System*, World*);
 		void(*tickEnd)(System*, World*);
-		void(*applyChange)(std::string, Component*, Changeset);
+		void(*applyChange)(std::string, Component*, Changeset, World* world);
 
 		inline void setTickFunction(void(*tickFunc)(double, Component*, System*, Container*, World*))
 		{
@@ -52,7 +52,7 @@ namespace ECS
 			this->tickEnd = tickEnd;
 		};
 
-		inline void setApplyChangeFunction(void(*applyChange)(std::string, Component*, Changeset))
+		inline void setApplyChangeFunction(void(*applyChange)(std::string, Component*, Changeset, World* world))
 		{
 			this->applyChange = applyChange;
 		};

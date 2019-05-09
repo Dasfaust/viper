@@ -69,6 +69,7 @@ std::string World::getDirection2D(glm::vec2 pos1, glm::vec2 pos2)
 	return headings[octant];
 }
 
+// TODO: this doesn't do negative values
 std::unordered_map<std::string, std::vector<MapCell>> World::getNearbyEntities2D(ECS::Entity* ent, unsigned int radius)
 {
 	profiler_begin("nearby_2d");
@@ -81,14 +82,14 @@ std::unordered_map<std::string, std::vector<MapCell>> World::getNearbyEntities2D
 		int x = (int)floor(loc->location.x);
 		int y = (int)floor(loc->location.z);
 
-		//debugf("Searching around e%d with radius: %d", ent->index, radius);
+		debugf("Searching around e%d with radius: %d", ent->index, radius);
 		int swx = x - radius;
 		int swy = y - radius;
 		for (int i = swx; i <= x + radius; i++)
 		{
 			for (int j = swy; j <= y + radius; j++)
 			{
-				int id = j * mapWidth + i;
+				int id = (j < 0 ? 0 : j) * mapWidth + (i < 0 ? 0 : i);
 				if (!map.count(id))
 				{
 					debugf("Out of bounds (%d, %d)", i, j);
@@ -100,7 +101,7 @@ std::unordered_map<std::string, std::vector<MapCell>> World::getNearbyEntities2D
 					if (cell.entity != ent->index)
 					{
 						std::string heading = getDirection2D(glm::vec2(loc->location.x, loc->location.z), glm::vec2(cell.position.x, cell.position.y));
-						debugf("e%d direction: %s", cell.entity, heading.c_str());
+						//debugf("e%d direction: %s", cell.entity, heading.c_str());
 
 						bool found = false;
 						for (auto c : _map[heading])
@@ -127,25 +128,30 @@ std::unordered_map<std::string, std::vector<MapCell>> World::getNearbyEntities2D
 	return _map;
 }
 
+void World::queueMapUpdate(glm::vec2 now, glm::vec2 last, unsigned int entity)
+{
+	mapGridUpdates.enqueue({ entity, now, last });
+}
+
 void World::tick()
 {
 	profiler_begin("world_tick");
 
 	if (!loaded && !firstTick)
 	{
-		int mapSize = (mapWidth * mapHeight) * 2;
+		int mapSize = (mapWidth * mapHeight);
 		float progress = 0.0f;
 		int cellsLoaded = 1;
-		for (int x = -mapWidth; x < mapWidth; x++)
+		for (int x = 0; x < mapWidth; x++)
 		{
-			for (int y = -mapHeight; y < mapHeight; y++)
+			for (int y = 0; y < mapHeight; y++)
 			{
 				int cell = y * mapWidth + x;
 				map[cell] = { };
 
 				glm::vec2 pos((float)x, (float)y);
 
-				createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+				/*createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
 				{
 					if (index == 0)
 					{
@@ -158,7 +164,7 @@ void World::tick()
 						auto c = reinterpret_cast<MeshComponent*>(comp);
 						c->mesh = std::string("FlatMesh");
 					}
-				}, { pos });
+				}, { pos });*/
 
 				cellsLoaded++;
 				progress = (float)cellsLoaded / (float)mapSize;
@@ -211,8 +217,10 @@ void World::tick()
 				entFuture->callback(i, ecs->getComponent(entity, info->id), entFuture->callbackVars);
 			}
 		}
+		//assert(entity->type_size == ecs->resolveType<ECS::Entity>()->size);
+		entFuture->fulfill(entity);
 
-		if (entity->components.count(loc_t->id))
+		/*if (entity->components.count(loc_t->id))
 		{
 			auto loc = reinterpret_cast<LocationComponent*>(ecs->getComponent(entity, loc_t->id));
 
@@ -224,10 +232,7 @@ void World::tick()
 			cell.positionLast = cell.position;
 
 			mapGridUpdates.enqueue(cell);
-		}
-
-		assert(entity->type_size == ecs->resolveType<ECS::Entity>()->size);
-		entFuture->fulfill(entity);
+		}*/
 	}
 
 	if (loaded)
@@ -264,7 +269,7 @@ void World::tick()
 								MapCell c = map[id][k];
 								if (c.entity == entity->index)
 								{
-									map[id].erase(map[id].begin() + i);
+									map[id].erase(map[id].begin() + k);
 								}
 							}
 						}
@@ -426,13 +431,12 @@ void World::tick()
 		ECS::Changeset change;
 		while((&kv)->second.try_dequeue(change))
 		{
-			// TODO: actually set the proper component, ya dingus
 			auto comp = reinterpret_cast<ECS::Component*>(&ecs->getHeap((&kv)->first)[change.index]);
 			for (ECS::System* system : ecs->getSystems())
 			{
 				if (system->getTypes().count(comp->type_id))
 				{
-					system->applyChange(ecs->resolveType(comp->type_id)->name, comp, change);
+					system->applyChange(ecs->resolveType(comp->type_id)->name, comp, change, this);
 				}
 			}
 		}

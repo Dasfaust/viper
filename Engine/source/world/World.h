@@ -86,8 +86,8 @@ public:
 	std::atomic<bool> paused = false;
 	moodycamel::ConcurrentQueue<MapCell> mapGridUpdates;
 	std::unordered_map<int, std::vector<MapCell>> map;
-	int mapHeight = 5;
-	int mapWidth = 5;
+	int mapHeight = 9;
+	int mapWidth = 9;
 	std::atomic<bool> loaded = false;
 	std::atomic<float> loadProgress = 0.0f;
 	
@@ -180,6 +180,8 @@ public:
 	std::shared_ptr<ECS::TypeInfo> bb_t;
 	V3API std::unordered_map<std::string, std::vector<MapCell>> getNearbyEntities2D(ECS::Entity* ent, unsigned int radius);
 	V3API std::string getDirection2D(glm::vec2 pos1, glm::vec2 pos2);
+
+	V3API void queueMapUpdate(glm::vec2 now, glm::vec2 last, unsigned int entity);
 private:
     int stepThreadCount = 1;
 	double targetDeltaTime = 0.0;
