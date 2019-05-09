@@ -122,7 +122,7 @@ namespace ECS
 		// entity is created. I can't even, Becky
 		inline uint32 createEntity()
 		{
-			auto ent = instantiate<Entity>(resolveType<Entity>());
+			auto ent = instantiate<Entity>(resolveType<Entity>(), true);
 			return ent->index;
 		};
 

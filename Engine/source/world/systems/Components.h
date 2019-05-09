@@ -50,7 +50,7 @@ struct CameraComponent : public ECS::Component
 
 struct BoundingBox2D : public ECS::Component
 {
-	glm::vec3 size;
+	glm::vec2 bounds;
 };
 
 struct CollisionComponent : public ECS::Component

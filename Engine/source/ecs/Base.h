@@ -8,9 +8,9 @@ namespace ECS
 {
 	struct ObjectBase
 	{
-		uint8 type_id;
-		size_t type_size;
-		uint32 index;
+		uint8 type_id = 0;
+		size_t type_size = 0;
+		uint32 index = 0;
 
 		ObjectBase* clone(std::vector<uint32>& heap, uint32 index)
 		{

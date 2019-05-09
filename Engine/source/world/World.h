@@ -9,6 +9,7 @@
 #include <atomic>
 #include <glm/vec2.hpp>
 #include <boost/any.hpp>
+#include "../util/Profiler.h"
 
 using timeStep = std::chrono::duration<float, std::ratio<1, 30>>;
 
@@ -16,7 +17,7 @@ class Worker;
 
 struct MapCell
 {
-	ECS::Entity* entity;
+	uint32 entity;
 	glm::vec2 position;
 	glm::vec2 positionLast;
 };
@@ -72,6 +73,8 @@ public:
 		moodycamel::ConcurrentQueue<T> queue;
 	};
 
+	const std::vector<std::string> headings = { "E", "NE", "N", "NW", "W", "SW", "S", "SE" };
+
 	std::vector<std::shared_ptr<Worker>> workers;
 	tbb::concurrent_vector<std::shared_ptr<moodycamel::ConcurrentQueue<bool>>> queues;
 	moodycamel::ConcurrentQueue<std::pair<uint32, std::vector<std::shared_ptr<ECS::TypeInfo>>>> systemsToCreate;
@@ -82,7 +85,7 @@ public:
 	ECS::Container* ecs;
 	std::atomic<bool> paused = false;
 	moodycamel::ConcurrentQueue<MapCell> mapGridUpdates;
-	boost::container::flat_map<int, std::vector<MapCell>> map;
+	std::unordered_map<int, std::vector<MapCell>> map;
 	int mapHeight = 8;
 	int mapWidth = 8;
 	std::atomic<bool> loaded = false;
@@ -172,6 +175,10 @@ public:
 	};
 
 	V3API void tickSystem(ECS::System* system, uint8 type, int start = 0, int end = -1);
+
+	std::shared_ptr<ECS::TypeInfo> loc_t;
+	V3API std::unordered_map<std::string, std::vector<MapCell>> getNearbyEntities2D(ECS::Entity* ent, unsigned int radius);
+	V3API std::string getDirection2D(glm::vec2 pos1, glm::vec2 pos2);
 private:
     int stepThreadCount = 1;
 	double targetDeltaTime = 0.0;
@@ -216,30 +223,6 @@ public:
 
 	void tick() override
 	{
-		/*bool ready = false;
-		double waitForReady = tnow();
-		if (world->queues.size() >= id && world->queues[id]->try_dequeue(ready))
-		{
-			//debugf("Worker %d wait for ready completed in %.2f ms", id, tnow() - waitForReady);
-
-			Job job;
-			double jobStart = tnow();
-			while (jobs.try_dequeue(job))
-			{
-				//debugf("Worker %d tick...", id);
-				double start = tnow();
-				world->tickSystem(job.system, job.type, job.start, job.end);
-				//debugf("Job tickSystem for type %d took %.2f ms", job.type, tnow() - start);
-			}
-			finished.enqueue(true);
-			//debugf("Worker %d jobs completed in %.2f ms", id, tnow() - jobStart);
-		}
-		double ms = 0.0;
-		if (sleep.try_dequeue(ms))
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds((int)ms));
-		}*/
-
 		if (world->queues.size() >= id)
 		{
 			bool ready = false;
@@ -256,6 +239,7 @@ public:
 				double jobStart = tnow();
 				while (jobs.try_dequeue(job))
 				{
+					//profiler_begin("component_" + std::to_string(job.type), world);
 					//debugf("Worker %d tick...", id);
 					double start = tnow();
 					world->tickSystem(job.system, job.type, job.start, job.end);

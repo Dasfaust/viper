@@ -20,13 +20,13 @@ public:
 			{
 				for (auto c : kv.second)
 				{
-					if (c.entity != 0 && c.entity->index == comp->entity)
+					if (c.entity != 0 && c.entity == comp->entity)
 					{
 						last = c.position;
 					}
 				}
 			}
-			MapCell cell = { container->getEntity(comp->entity), glm::vec2(comp->location.x, comp->location.z), last };
+			MapCell cell = { comp->entity, glm::vec2(comp->location.x, comp->location.z), last };
 			world->mapGridUpdates.enqueue(cell);
 		});
 

@@ -29,55 +29,25 @@ class VehicleMotionSystem : public ECS::System
 			auto comp = reinterpret_cast<VehicleMotionComponent*>(component);
 
 			LocationComponent* loc = nullptr;
-			if (!comp->stopped && entity->components.count(sys->loc_t->id))
+			if (/*!comp->stopped &&*/ entity->components.count(sys->loc_t->id))
 			{
-				loc = container->getComponent<LocationComponent>(entity);
-				// x is z, y is x
+				/*loc = container->getComponent<LocationComponent>(entity);
+
 				int x = floor(loc->location.x);
 				int y = floor(loc->location.z);
 
-				// TODO: get velocity movement direction
+				// TODO: get movement direction
 
-				// Check positive y
 				bool canMove = true;
-				for (int i = y; i < y + 3; i++)
-				{
-					int cell = i * world->mapWidth + x;
-					for (auto c : world->map[cell])
-					{
-						if (c.entity != 0 && c.entity->index != entity->index && c.entity->components.count(sys->veh_t->id))
-						{
-							float dist = sqrt(pow(c.position.x - x, 2) + pow(c.position.y - y, 2) * 1.0f);
-							debugf("Cell: %d e1 (%d, %d), Cell: %d e2 (%d, %d)", y * world->mapWidth + x, x, y, cell, c.position.x, c.position.y);
-							debugf("Distance is %.2f", dist);
-							if (dist <= 1.0f)
-							{
-								canMove = false;
-								continue;
-							}
-						}
-					}
 
-					// Check negative y
-					if (canMove)
+				for (auto&& kv : world->getNearbyEntities2D(entity, 5))
+				{
+					for (auto e : kv.second)
 					{
-						for (int i = y; i > y - 3; i--)
+						if (kv.first == DIRECTION::WEST && e->components.count(sys->veh_t->id))
 						{
-							int cell = i * world->mapWidth + x;
-							for (auto c : world->map[cell])
-							{
-								if (c.entity != 0 && c.entity->index != entity->index && c.entity->components.count(sys->veh_t->id))
-								{
-									float dist = sqrt(pow(c.position.x - x, 2) + pow(c.position.y - y, 2) * 1.0f);
-									debugf("Cell: %d e1 (%d, %d), Cell: %d e2 (%d, %d)", y * world->mapWidth + x, x, y, cell, c.position.x, c.position.y);
-									debugf("Distance is %.2f", dist);
-									if (dist <= 1.0f)
-									{
-										canMove = false;
-										continue;
-									}
-								}
-							}
+							debugf("Collision at %d", kv.first);
+							canMove = false;
 						}
 					}
 				}
@@ -91,7 +61,7 @@ class VehicleMotionSystem : public ECS::System
 					}
 
 					glm::vec3 velocity = loc->location;
-					velocity.z += 0.015;
+					velocity.z -= 0.015;
 
 					ECS::Changeset change = { loc->index, 0, velocity };
 					world->changesets[loc->type_id].enqueue(change);
@@ -100,6 +70,21 @@ class VehicleMotionSystem : public ECS::System
 				{
 					ECS::Changeset change = { true };
 					world->changesets[comp->type_id].enqueue(change);
+				}*/
+
+				auto map = world->getNearbyEntities2D(entity, 1);
+				for (auto&& kv : map)
+				{
+					for (auto c : kv.second)
+					{
+						auto e = container->getEntity(c.entity);
+						//assert(e != NULL);
+						//assert(e->type_size == container->resolveType<ECS::Entity>()->size);
+						//assert(e->index > 0);
+						//assert(e->components.count(sys->loc_t->id));
+						auto _loc = reinterpret_cast<LocationComponent*>(container->getComponent(e, sys->loc_t->id));
+						debugf("Nearby: (%.2f, %.2f): %d, dir: %s", floor(_loc->location.x), floor(_loc->location.z), e->index, kv.first.c_str());
+					}
 				}
 			}
 		});
@@ -136,35 +121,124 @@ public:
 	{
 		if (entities.size() == 0)
 		{
+			/*for (int i = 0; i < 8; i++)
+			{
+				entities.push_back(world->createEntity<LocationComponent, VehicleMotionComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+				{
+					if (index == 0)
+					{
+						auto c = reinterpret_cast<LocationComponent*>(comp);
+						c->location.x = (float)boost::any_cast<int>(vars[0]);
+					}
+					else if (index == 2)
+					{
+						auto c = reinterpret_cast<MeshComponent*>(comp);
+						c->mesh = std::string("CubeMesh");
+					}
+					else if (index == 1)
+					{
+						auto c = reinterpret_cast<VehicleMotionComponent*>(comp);
+						c->stopped = true;
+					}
+				}, { i })->get());
+
+				entities.push_back(world->createEntity<LocationComponent, MeshComponent, RenderComponent, VehicleMotionComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+				{
+					if (index == 0)
+					{
+						auto c = reinterpret_cast<LocationComponent*>(comp);
+						c->location.x = (float)boost::any_cast<int>(vars[0]);
+						c->location.z = 7.0f;
+					}
+					else if (index == 1)
+					{
+						auto c = reinterpret_cast<MeshComponent*>(comp);
+						c->mesh = std::string("CubeMesh");
+					}
+				}, { i })->get());
+			}*/
+
 			entities.push_back(world->createEntity<LocationComponent, VehicleMotionComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
 			{
 				if (index == 0)
 				{
-
+					auto c = reinterpret_cast<LocationComponent*>(comp);
+					c->location.x = 3.0f;
+					c->location.z = 3.0f;
 				}
 				else if (index == 2)
 				{
 					auto c = reinterpret_cast<MeshComponent*>(comp);
 					c->mesh = std::string("CubeMesh");
 				}
+				else if (index == 1)
+				{
+					auto c = reinterpret_cast<VehicleMotionComponent*>(comp);
+					c->stopped = true;
+				}
 			})->get());
 
-			entities.push_back(world->createEntity<LocationComponent, MeshComponent, RenderComponent, VehicleMotionComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+			// north
+			entities.push_back(world->createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
 			{
 				if (index == 0)
 				{
 					auto c = reinterpret_cast<LocationComponent*>(comp);
-					c->location.z = 7.0f;
+					c->location.x = 5.0f;
+					c->location.z = 3.0f;
 				}
 				else if (index == 1)
 				{
 					auto c = reinterpret_cast<MeshComponent*>(comp);
 					c->mesh = std::string("CubeMesh");
 				}
-				else if (index == 3)
+			})->get());
+
+			// south
+			entities.push_back(world->createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+			{
+				if (index == 0)
 				{
-					auto c = reinterpret_cast<VehicleMotionComponent*>(comp);
-					c->stopped = true;
+					auto c = reinterpret_cast<LocationComponent*>(comp);
+					c->location.x = 1.0f;
+					c->location.z = 3.0f;
+				}
+				else if (index == 1)
+				{
+					auto c = reinterpret_cast<MeshComponent*>(comp);
+					c->mesh = std::string("CubeMesh");
+				}
+			})->get());
+
+			// east
+			entities.push_back(world->createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+			{
+				if (index == 0)
+				{
+					auto c = reinterpret_cast<LocationComponent*>(comp);
+					c->location.x = 3.0f;
+					c->location.z = 5.0f;
+				}
+				else if (index == 1)
+				{
+					auto c = reinterpret_cast<MeshComponent*>(comp);
+					c->mesh = std::string("CubeMesh");
+				}
+			})->get());
+
+			// west
+			entities.push_back(world->createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+			{
+				if (index == 0)
+				{
+					auto c = reinterpret_cast<LocationComponent*>(comp);
+					c->location.x = 3.0f;
+					c->location.z = 1.0f;
+				}
+				else if (index == 1)
+				{
+					auto c = reinterpret_cast<MeshComponent*>(comp);
+					c->mesh = std::string("CubeMesh");
 				}
 			})->get());
 		}

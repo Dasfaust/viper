@@ -5,6 +5,6 @@ namespace ECS
 {
 	struct Component : ObjectBase
 	{
-		uint32 entity;
+		uint32 entity = 0;
 	};
 };

@@ -4,7 +4,8 @@
 #include "systems/MovementInputSystem.h"
 #include "../ecs/ECSCommands.h"
 #include "../networking/Networking.h"
-#include "../util/Profiler.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/vector_angle.hpp"
 
 World::World()
 {
@@ -54,8 +55,75 @@ void World::onStartup()
 		};
 	}
 
+	loc_t = ecs->resolveType<LocationComponent>();
+
 	this->start();
 	debug("World startup complete");
+}
+
+std::string World::getDirection2D(glm::vec2 pos1, glm::vec2 pos2)
+{
+	float angle = atan2(pos1.y - pos2.y, pos1.x - pos2.x);
+	int octant = (int)round(8.0f * angle / (2.0f * glm::pi<float>()) + 8.0f) % 8;
+	return headings[octant];
+}
+
+std::unordered_map<std::string, std::vector<MapCell>> World::getNearbyEntities2D(ECS::Entity* ent, unsigned int radius)
+{
+	profiler_begin("nearby_2d");
+
+	std::unordered_map<std::string, std::vector<MapCell>> _map;
+
+	if (ent->components.count(loc_t->id))
+	{
+		LocationComponent* loc = reinterpret_cast<LocationComponent*>(ecs->getComponent(ent, loc_t->id));
+		int x = (int)floor(loc->location.x);
+		int y = (int)floor(loc->location.z);
+
+		//debugf("Searching around e%d with radius: %d", ent->index, radius);
+		int swx = x - radius;
+		int swy = y - radius;
+		for (int i = swx; i <= x + radius; i++)
+		{
+			for (int j = swy; j <= y + radius; j++)
+			{
+				int id = j * mapWidth + i;
+				if (!map.count(id))
+				{
+					debugf("Out of bounds (%d, %d)", i, j);
+					continue;
+				}
+				//debugf("Looking at (%d, %d): %d ents", i, j, map[id].size());
+				for (auto cell : map[id])
+				{
+					if (cell.entity != ent->index)
+					{
+						std::string heading = getDirection2D(glm::vec2(loc->location.x, loc->location.z), glm::vec2(cell.position.x, cell.position.y));
+						debugf("e%d direction: %s", cell.entity, heading.c_str());
+
+						bool found = false;
+						for (auto c : _map[heading])
+						{
+							if (c.entity == cell.entity)
+							{
+								found = true;
+								break;
+							}
+						}
+
+						if (!found)
+						{
+							_map[heading].push_back(cell);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	profiler_end("nearby_2d");
+
+	return _map;
 }
 
 void World::tick()
@@ -74,7 +142,7 @@ void World::tick()
 				int cell = y * mapWidth + x;
 				map[cell] = { };
 
-				glm::vec2 pos((float)x, (float)y);
+				/*glm::vec2 pos((float)x, (float)y);
 
 				createEntity<LocationComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
 				{
@@ -89,7 +157,7 @@ void World::tick()
 						auto c = reinterpret_cast<MeshComponent*>(comp);
 						c->mesh = std::string("FlatMesh");
 					}
-				}, { pos });
+				}, { pos });*/
 
 				cellsLoaded++;
 				progress = (float)cellsLoaded / (float)mapSize;
@@ -98,6 +166,8 @@ void World::tick()
 				js::set(js, "call", js::i(0));
 				js::set(js, "progress", js::f(progress));
 				v3->getModule<Networking>()->send(js);
+
+				v3->getModule<Networking>()->_onTick();
 			}
 		}
 
@@ -140,60 +210,102 @@ void World::tick()
 				entFuture->callback(i, ecs->getComponent(entity, info->id), entFuture->callbackVars);
 			}
 		}
+
+		if (entity->components.count(loc_t->id))
+		{
+			auto loc = reinterpret_cast<LocationComponent*>(ecs->getComponent(entity, loc_t->id));
+
+			debugf("Entity creation: actual position is (%.2f, %.2f)", loc->location.x, loc->location.z);
+
+			MapCell cell;
+			cell.entity = entity->index;
+			cell.position = glm::vec2(loc->location.x, loc->location.z);
+			cell.positionLast = cell.position;
+
+			mapGridUpdates.enqueue(cell);
+		}
+
+		assert(entity->type_size == ecs->resolveType<ECS::Entity>()->size);
 		entFuture->fulfill(entity);
 	}
 
-	profiler_begin("map_grid_update");
-	MapCell cell;
-	while(mapGridUpdates.try_dequeue(cell))
+	if (loaded)
 	{
-		int curId = floor(cell.position.y) * mapWidth + floor(cell.position.x);
-		int lastId = floor(cell.positionLast.y) * mapWidth + floor(cell.positionLast.x);
-		if (curId != lastId)
+		profiler_begin("map_grid_update");
+		MapCell cell;
+		while (mapGridUpdates.try_dequeue(cell))
 		{
-			bool exists = false;
-			for (int i = 0; i < map[lastId].size(); i++)
+			auto entity = ecs->getEntity(cell.entity);
+			assert(entity != nullptr);
+			assert(entity->index > 0);
+			//assert(entity->type_size == ecs->resolveType<ECS::Entity>()->size);
+
+			glm::vec2 bounds(0.5f); // <= 1m x 1m
+			glm::vec2 sw(floor(cell.position.x - bounds.x), floor(cell.position.y - bounds.y));
+			glm::vec2 ne(ceil(cell.position.x + bounds.x), ceil(cell.position.y + bounds.y));
+			
+			for (float i = sw.x; i <= ne.x; i++)
 			{
-				MapCell c = map[lastId][i];
-				if (c.entity != 0 && c.entity->index == cell.entity->index)
+				for (float j = sw.y; j <= ne.y; j++)
 				{
-					map[lastId].erase(map[lastId].begin() + i);
+					int id = j * mapWidth + i;
+
+					// Insert into new id if it doesn't exist
+					bool found = false;
+					for (int k = 0; k < map[id].size(); k++)
+					{
+						MapCell c = map[id][k];
+						if (c.entity == entity->index)
+						{
+							found = true;
+						}
+					}
+
+					if (!found)
+					{
+						debugf("Map grid: updating e%d at (%.2f, %.2f) -> grid id: %d", cell.entity, i, j, id);
+						map[id].push_back(cell);
+					}
 				}
-				
 			}
-			/*for (int i = 0; i < map[curId].size(); i++)
+
+			/*int curId = floor(cell.position.y) * mapWidth + floor(cell.position.x);
+			int lastId = floor(cell.positionLast.y) * mapWidth + floor(cell.positionLast.x);
+
+			// Clear last id
+			if (curId != lastId)
+			{
+				bool exists = false;
+				for (int i = 0; i < map[lastId].size(); i++)
+				{
+					MapCell c = map[lastId][i];
+					auto e = ecs->getEntity(c.entity);
+					if (e != nullptr && entity->index == e->index)
+					{
+						map[lastId].erase(map[lastId].begin() + i);
+					}
+
+				}
+			}
+
+			// Insert into new id if it doesn't exist
+			bool found = false;
+			for (int i = 0; i < map[curId].size(); i++)
 			{
 				MapCell c = map[curId][i];
-				if (c.entity != 0 && c.entity->index == cell.entity->index)
+				auto e = ecs->getEntity(c.entity);
+				if (e != nullptr && e->index == entity->index)
 				{
-					exists = true;
+					found = true;
 				}
-
 			}
-			if (!exists)
+
+			if (!found)
 			{
+				debugf("Map grid: updating e%d at (%.2f, %.2f) -> grid id: %d", cell.entity, floor(cell.position.x), floor(cell.position.y), curId);
 				map[curId].push_back(cell);
 			}*/
-			map[curId].push_back(cell);
 		}
-
-		bool found = false;
-		for (int i = 0; i < map[curId].size(); i++)
-		{
-			MapCell c = map[curId][i];
-			if (c.entity != 0 && c.entity->index == cell.entity->index)
-			{
-				found = true;
-			}
-		}
-
-		if (!found)
-		{
-			map[curId].push_back(cell);
-		}
-	}
-	if (cell.entity != 0)
-	{
 		profiler_end("map_grid_update");
 	}
 
