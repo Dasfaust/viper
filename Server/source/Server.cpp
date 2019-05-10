@@ -51,19 +51,19 @@ class VehicleMotionSystem : public ECS::System
 				{
 					if (comp->stopped)
 					{
-						ECS::Changeset change = { false };
+						ECS::Changeset change = { comp->index, 0, any::make(false) };
 						world->changesets[comp->type_id].enqueue(change);
 					}
 
 					glm::vec3 velocity = loc->location;
 					velocity.z += 0.015;
 
-					ECS::Changeset change = { loc->index, 0, velocity };
+					ECS::Changeset change = { loc->index, 0, any::make(velocity) };
 					world->changesets[loc->type_id].enqueue(change);
 				}
 				else
 				{
-					ECS::Changeset change = { true };
+					ECS::Changeset change = { comp->index, 0, any::make(true) };
 					world->changesets[comp->type_id].enqueue(change);
 				}
 			}
@@ -80,12 +80,12 @@ class VehicleMotionSystem : public ECS::System
 			}*/
 		});
 
-		setApplyChangeFunction([](std::string name, ECS::Component* comp, ECS::Changeset change, World* world)
+		setApplyChangeFunction([](std::string name, ECS::Component* comp, ECS::Changeset change, World* world, System* system)
 		{
 			auto c = reinterpret_cast<VehicleMotionComponent*>(comp);
 			if (change.field == 0)
 			{
-				c->stopped = boost::any_cast<bool>(change.value);
+				c->stopped = any::b(change.value);
 			}
 		});
 	};

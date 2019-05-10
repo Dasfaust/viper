@@ -1,6 +1,15 @@
 #pragma once
 #include "../../ecs/ECS.h"
 #include "glm/glm.hpp"
+#include "boost/uuid/uuid.hpp"
+#include <boost/functional/hash.hpp>
+
+struct RenderState
+{
+	bool isDirty = true;
+	bool hidden = false;
+	int ticks = 0;
+};
 
 /*
 	MovementInputSystem
@@ -36,16 +45,7 @@ struct MeshComponent : public ECS::Component
 */
 struct RenderComponent : public ECS::Component
 {
-	bool dirty = true;
-};
-
-/*
-	RenderSystem
-	Get LocationComponent from entity, update camera accordingly
-*/
-struct CameraComponent : public ECS::Component
-{
-	glm::vec3 location = glm::vec3(0.0f, 3.0f, 0.0f);
+	boost::container::flat_map<boost::uuids::uuid, RenderState> states;
 };
 
 struct BoundingBox2D : public ECS::Component
@@ -63,7 +63,6 @@ namespace Components
 		container->resolveType<MovementInputComponent>();
 		container->resolveType<LocationComponent>();
 		container->resolveType<RenderComponent>();
-		container->resolveType<CameraComponent>();
 		container->resolveType<MeshComponent>();
 		container->resolveType<BoundingBox2D>();
 		container->resolveType<CollisionComponent>();

@@ -282,9 +282,6 @@ public:
 				info("Initiated client connection");
 
 				socketConnected.enqueue(client);
-
-				//nlohmann::json js = { { "socket", client }, { "call", 0 } };
-				//outgoing.enqueue(js);
 			}
 			else
 			{
@@ -337,10 +334,6 @@ public:
 					SOCKET out = master.fd_array[i];
 					if (out != listening)
 					{
-						/*rapidjson::StringBuffer buff;
-						rapidjson::Writer<rapidjson::StringBuffer> writer(buff);
-						js.Accept(writer);
-						auto str = buff.GetString();*/
 						auto s = tnow();
 						//debugf("<- %s", packet.message.c_str());
 						send(out, packet.message.c_str(), packet.message.size(), 0);
@@ -361,12 +354,13 @@ public:
 					SOCKET out = master.fd_array[i];
 					if (out == packet.socket)
 					{
-						/*rapidjson::StringBuffer buff;
-						rapidjson::Writer<rapidjson::StringBuffer> writer(buff);
-						js.Accept(writer);
-						auto str = buff.GetString();*/
-						//debugf("<- %s", packet.message.c_str());
 						send(out, packet.message.c_str(), packet.message.size(), 0);
+
+						if (packet.call == 3)
+						{
+							debugf("Call 3: %.2fms", tnow() - last);
+							last = tnow();
+						}
 						break;
 					}
 				}

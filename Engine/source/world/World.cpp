@@ -334,9 +334,36 @@ void World::tick()
 		profiler_end("server_telemetry");
 	}
 
+	for (auto&& kv : v3->getModule<Networking>()->players)
+	{
+		if (!players.count(kv.first))
+		{
+			players[kv.first] = { kv.second };
+		}
+	}
+
+	profiler_begin("changesets");
+	for (auto &&kv : changesets)
+	{
+		ECS::Changeset change;
+		while ((&kv)->second.try_dequeue(change))
+		{
+			auto comp = reinterpret_cast<ECS::Component*>(&ecs->getHeap((&kv)->first)[change.index]);
+			for (ECS::System* system : ecs->getSystems())
+			{
+				if (system->getTypes().count(comp->type_id))
+				{
+					system->applyChange("", comp, change, this, system);
+					comp->lastChange = tnow();
+				}
+			}
+		}
+	}
+	profiler_end("changesets");
+
 	stepAccumulator += actualDeltaTime;
 	auto stepBegin = tnow();
-	if (nextStep <= stepBegin)
+	if (!firstTick && nextStep <= stepBegin)
 	{
 		profiler_begin("world_step");
 
@@ -384,6 +411,7 @@ void World::tick()
 						queue->enqueue(true);
 					}
 
+					profiler_begin("job_wait");
 					double jobWait = tnow();
 					for (uint32 w : activeWorkers)
 					{
@@ -393,6 +421,7 @@ void World::tick()
 
 						}
 					}
+					profiler_end("job_wait");
 				}
 			}
 		}
@@ -426,6 +455,7 @@ void World::tick()
 		ecs->deleteComponent(component);
 	}
 
+	/*profiler_begin("changesets");
 	for (auto &&kv : changesets)
 	{
 		ECS::Changeset change;
@@ -436,16 +466,19 @@ void World::tick()
 			{
 				if (system->getTypes().count(comp->type_id))
 				{
-					system->applyChange(ecs->resolveType(comp->type_id)->name, comp, change, this);
+					system->applyChange("", comp, change, this, system);
 				}
 			}
 		}
 	}
+	profiler_end("changesets");*/
 
+	profiler_begin("systems_tickwait");
 	for (ECS::System* system : ecs->getSystems())
 	{
 		system->tickWait(system, this);
 	}
+	profiler_end("systems_tickwait");
 
 	lastTickEnd = tnow();
 	firstTick = false;

@@ -1,5 +1,6 @@
 #pragma once
 #include "glm/glm.hpp"
+#include "boost/uuid/uuid.hpp"
 
 struct Any
 {
@@ -9,6 +10,7 @@ struct Any
 	bool bool_val;
 	glm::vec2 vec2_val;
 	glm::vec3 vec3_val;
+	boost::uuids::uuid uuid_val;
 };
 
 namespace any
@@ -28,7 +30,7 @@ namespace any
 		return a.float_val;
 	};
 
-	double b(Any& a)
+	bool b(Any& a)
 	{
 		return a.bool_val;
 	};
@@ -36,6 +38,16 @@ namespace any
 	glm::vec2 vec2(Any& a)
 	{
 		return a.vec2_val;
+	};
+
+	glm::vec3 vec3(Any& a)
+	{
+		return a.vec3_val;
+	};
+
+	boost::uuids::uuid uid(Any& a)
+	{
+		return a.uuid_val;
 	};
 
 	Any make(int i)
@@ -77,6 +89,13 @@ namespace any
 	{
 		Any a = { };
 		a.vec3_val = v;
+		return a;
+	};
+
+	Any make(boost::uuids::uuid u)
+	{
+		Any a = { };
+		a.uuid_val = u;
 		return a;
 	};
 }

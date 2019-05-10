@@ -8,6 +8,7 @@
 #include <boost/lexical_cast.hpp>
 #include <atomic>
 #include "../util/Time.h"
+#include "../V3.h"
 
 struct NetworkPlayer
 {
@@ -22,6 +23,7 @@ public:
 	std::atomic<unsigned int> clients = 0;
 	boost::container::flat_map<boost::uuids::uuid, NetworkPlayer> players;
 	boost::container::flat_map<unsigned int, void(*)(Networking*, NetworkPlayer&, rapidjson::Document &data)> callbacks;
+	moodycamel::ConcurrentQueue<NetworkPlayer> newPlayers;
 	std::atomic<double> worldUpdateMs;
 	double lastWorldUpdate;
 
@@ -50,6 +52,8 @@ public:
 
 	void _onTick()
 	{
+		profiler_begin("network_tick");
+
 		int c;
 		while (server->socketConnected.try_dequeue(c))
 		{
@@ -57,6 +61,7 @@ public:
 			players[uid] = { c, "unknown", uid };
 			debugf("NetworkPlayer created: %s", boost::lexical_cast<std::string>(uid).c_str());
 			clients = clients + 1;
+			newPlayers.enqueue(players[uid]);
 		}
 		while (server->socketDisconnected.try_dequeue(c))
 		{
@@ -112,6 +117,8 @@ public:
 		}
 
 		server->tick();
+
+		profiler_end("network_tick");
 	}
 
 	void onTick() override
@@ -120,11 +127,6 @@ public:
 	};
 
 	void send(NetworkPlayer& player, js::JsonObj& obj)
-	{
-		server->outgoing.enqueue({ player.socket, js::stringify(obj), obj.fields["call"].int_val });
-	};
-
-	void send(js::JsonObj& obj)
 	{
 		if (obj.fields["call"].int_val == 3)
 		{
@@ -135,6 +137,23 @@ public:
 		}
 
 		auto s = tnow();
+		std::string js = js::stringify(obj);
+		//debugf("Stringify took %.2f ms", tnow() - s);
+
+		server->outgoing.enqueue({ player.socket, js, obj.fields["call"].int_val });
+	};
+
+	void send(js::JsonObj& obj)
+	{
+		/*if (obj.fields["call"].int_val == 3)
+		{
+			worldUpdateMs = tnow() - lastWorldUpdate;
+			//debugf("World update: %.2fms", worldUpdateMs.load());
+			lastWorldUpdate = tnow();
+			js::set(obj, "time", js::d(tnow()));
+		}
+
+		auto s = tnow();*/
 		std::string js = js::stringify(obj);
 		//debugf("Stringify took %.2f ms", tnow() - s);
 

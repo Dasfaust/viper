@@ -10,6 +10,8 @@
 #include <glm/vec2.hpp>
 #include "../util/Any.h"
 #include "../util/Profiler.h"
+#include "../networking/Networking.h"
+#include <boost/functional/hash.hpp>
 
 using timeStep = std::chrono::duration<float, std::ratio<1, 30>>;
 
@@ -20,6 +22,12 @@ struct MapCell
 	uint32 entity;
 	glm::vec2 position;
 	glm::vec2 positionLast;
+};
+
+struct Player
+{
+	NetworkPlayer netPlayer;
+	glm::vec3 pos;
 };
 
 class World : public Module, Threadable
@@ -90,6 +98,7 @@ public:
 	int mapWidth = 9;
 	std::atomic<bool> loaded = false;
 	std::atomic<float> loadProgress = 0.0f;
+	boost::container::flat_map<boost::uuids::uuid, Player> players;
 	
 
 	V3API World();
@@ -182,8 +191,13 @@ public:
 	V3API std::string getDirection2D(glm::vec2 pos1, glm::vec2 pos2);
 
 	V3API void queueMapUpdate(glm::vec2 now, glm::vec2 last, unsigned int entity);
+
+	inline void queueChangeset(std::shared_ptr<ECS::TypeInfo> type, ECS::Changeset change)
+	{
+		changesets[type->id].enqueue(change);
+	};
 private:
-    int stepThreadCount = 1;
+    int stepThreadCount = 2;
 	double targetDeltaTime = 0.0;
 	double actualDeltaTime = 0.0;
 	double actualStepDelta = 0.0;

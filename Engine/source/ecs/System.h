@@ -1,6 +1,6 @@
 #pragma once
 #include <boost/container/flat_map.hpp>
-#include <boost/any.hpp>
+#include "../util/Any.h"
 
 class World;
 class V3;
@@ -13,7 +13,7 @@ namespace ECS
 	{
 		uint32 index;
 		uint32 field;
-		boost::any value;
+		Any value;
 	};
 
 	class System : public ObjectBase
@@ -35,7 +35,7 @@ namespace ECS
 		void(*tickFunc)(double, Component*, System*, Container*, World*);
 		void(*tickWait)(System*, World*);
 		void(*tickEnd)(System*, World*);
-		void(*applyChange)(std::string, Component*, Changeset, World* world);
+		void(*applyChange)(std::string, Component*, Changeset, World* world, System* system);
 
 		inline void setTickFunction(void(*tickFunc)(double, Component*, System*, Container*, World*))
 		{
@@ -52,7 +52,7 @@ namespace ECS
 			this->tickEnd = tickEnd;
 		};
 
-		inline void setApplyChangeFunction(void(*applyChange)(std::string, Component*, Changeset, World* world))
+		inline void setApplyChangeFunction(void(*applyChange)(std::string, Component*, Changeset, World* world, System* system))
 		{
 			this->applyChange = applyChange;
 		};
