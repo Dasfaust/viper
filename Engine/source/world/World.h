@@ -8,7 +8,7 @@
 #include "tbb/concurrent_vector.h"
 #include <atomic>
 #include <glm/vec2.hpp>
-#include <boost/any.hpp>
+#include "../util/Any.h"
 #include "../util/Profiler.h"
 
 using timeStep = std::chrono::duration<float, std::ratio<1, 30>>;
@@ -42,8 +42,8 @@ public:
 		};
 
 		std::vector<std::shared_ptr<ECS::TypeInfo>> components;
-		void(*callback)(uint32, ECS::Component*, std::vector<boost::any>);
-		std::vector<boost::any> callbackVars;
+		void(*callback)(uint32, ECS::Component*, std::vector<Any>);
+		std::vector<Any> callbackVars;
 
 		inline PromiseState<T> tryGet()
 		{
@@ -124,7 +124,7 @@ public:
 		return future;
 	};
 	template<typename A>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<Any>) = nullptr, std::vector<Any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;
@@ -134,7 +134,7 @@ public:
 		return future;
 	};
 	template<typename A, typename B>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<Any>) = nullptr, std::vector<Any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;
@@ -144,7 +144,7 @@ public:
 		return future;
 	};
 	template<typename A, typename B, typename C>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<Any>) = nullptr, std::vector<Any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;
@@ -154,7 +154,7 @@ public:
 		return future;
 	};
 	template<typename A, typename B, typename C, typename D>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<Any>) = nullptr, std::vector<Any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;
@@ -164,7 +164,7 @@ public:
 		return future;
 	};
 	template<typename A, typename B, typename C, typename D, typename E>
-	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<boost::any>) = nullptr, std::vector<boost::any> vars = { })
+	inline std::shared_ptr<Future<ECS::Entity*>> createEntity(void(*callback)(uint32, ECS::Component*, std::vector<Any>) = nullptr, std::vector<Any> vars = { })
 	{
 		auto future = createEntity();
 		future->callback = callback;

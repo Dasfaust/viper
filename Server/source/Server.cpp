@@ -112,12 +112,12 @@ public:
 	{
 		if (entities.size() == 0)
 		{
-			entities.push_back(world->createEntity<LocationComponent, VehicleMotionComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+			entities.push_back(world->createEntity<LocationComponent, VehicleMotionComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<Any> vars)
 			{
 				if (index == 0)
 				{
 					auto c = reinterpret_cast<LocationComponent*>(comp);
-					c->location.x = 3.5f;
+					c->location.x = 0.0f;
 					c->location.z = 1.0f;
 				}
 				else if (index == 1)
@@ -132,14 +132,14 @@ public:
 				}
 			})->get());
 
-			world->queueMapUpdate(glm::vec2(3.5f, 1.0f), glm::vec2(), entities[0]->index);
+			world->queueMapUpdate(glm::vec2(0.0f, 1.0f), glm::vec2(), entities[0]->index);
 
-			entities.push_back(world->createEntity<LocationComponent, VehicleMotionComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<boost::any> vars)
+			entities.push_back(world->createEntity<LocationComponent, VehicleMotionComponent, MeshComponent, RenderComponent>([](uint32 index, ECS::Component *comp, std::vector<Any> vars)
 			{
 				if (index == 0)
 				{
 					auto c = reinterpret_cast<LocationComponent*>(comp);
-					c->location.x = 3.0f;
+					c->location.x = 0.0f;
 					c->location.z = 6.0f;
 				}
 				else if (index == 1)
@@ -154,7 +154,7 @@ public:
 				}
 			})->get());
 
-			world->queueMapUpdate(glm::vec2(3.0f, 6.0f), glm::vec2(), entities[1]->index);
+			world->queueMapUpdate(glm::vec2(0.0f, 6.0f), glm::vec2(), entities[1]->index);
 		}
 	};
 

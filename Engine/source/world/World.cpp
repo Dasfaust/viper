@@ -85,9 +85,9 @@ std::unordered_map<std::string, std::vector<MapCell>> World::getNearbyEntities2D
 		debugf("Searching around e%d with radius: %d", ent->index, radius);
 		int swx = x - radius;
 		int swy = y - radius;
-		for (int i = swx; i <= x + radius; i++)
+		for (int i = (swx >= 0 ? swx : 0); i <= (x + radius >= 0 ? x + radius : 0); i++)
 		{
-			for (int j = swy; j <= y + radius; j++)
+			for (int j = (swy >= 0 ? swy : 0); j <= (y + radius >= 0 ? y + radius : 0); j++)
 			{
 				int id = (j < 0 ? 0 : j) * mapWidth + (i < 0 ? 0 : i);
 				if (!map.count(id))
@@ -256,9 +256,9 @@ void World::tick()
 				glm::vec2 sw(floor(cell.positionLast.x - bounds.x), floor(cell.positionLast.y - bounds.y));
 				glm::vec2 ne(ceil(cell.positionLast.x + bounds.x), ceil(cell.positionLast.y + bounds.y));
 
-				for (float i = sw.x; i <= ne.x; i++)
+				for (float i = (sw.x >= 0.0f ? sw.x : 0); i <= (ne.x >= 0.0f ? ne.x : 0.0f); i++)
 				{
-					for (float j = sw.y; j <= ne.y; j++)
+					for (float j = (sw.y >= 0.0f ? sw.y : 0.0f); j <= (ne.y >= 0 ? ne.y : 0.0f); j++)
 					{
 						int id = j * mapWidth + i;
 
@@ -281,9 +281,9 @@ void World::tick()
 			glm::vec2 sw(floor(cell.position.x - bounds.x), floor(cell.position.y - bounds.y));
 			glm::vec2 ne(ceil(cell.position.x + bounds.x), ceil(cell.position.y + bounds.y));
 			
-			for (float i = sw.x; i <= ne.x; i++)
+			for (float i = (sw.x >= 0.0f ? sw.x : 0); i <= (ne.x >= 0.0f ? ne.x : 0.0f); i++)
 			{
-				for (float j = sw.y; j <= ne.y; j++)
+				for (float j = (sw.y >= 0.0f ? sw.y : 0.0f); j <= (ne.y >= 0 ? ne.y : 0.0f); j++)
 				{
 					int id = j * mapWidth + i;
 
