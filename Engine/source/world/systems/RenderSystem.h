@@ -35,11 +35,6 @@ public:
 
 		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world)
 		{
-			// It happens. Idk
-			if (system == nullptr)
-			{
-				return;
-			}
 			auto ts = tnow();
 			auto sys = reinterpret_cast<RenderSystem*>(system);
 			auto comp = reinterpret_cast<RenderComponent*>(component);

@@ -381,6 +381,11 @@ void World::tick()
 			double jobsStart = tnow();
 			for (ECS::System* system : ecs->getSystems())
 			{
+				if (system == nullptr || system == 0)
+				{
+					continue;
+				}
+
 				std::vector<uint32> activeWorkers;
 				for (auto kv : system->getTypes())
 				{

@@ -10,6 +10,7 @@
 struct VehicleMotionComponent : public ECS::Component
 {
 	bool stopped = false;
+	std::string direction;
 };
 
 class VehicleMotionSystem : public ECS::System
@@ -56,7 +57,8 @@ class VehicleMotionSystem : public ECS::System
 					}
 
 					glm::vec3 velocity = loc->location;
-					velocity.z += 0.015;
+					debugf("Moving %s", comp->direction);
+					velocity.z += comp->direction == "S" ? 0.015 : -0.015;
 
 					ECS::Changeset change = { loc->index, 0, any::make(velocity) };
 					world->changesets[loc->type_id].enqueue(change);
@@ -124,6 +126,7 @@ public:
 				{
 					auto c = reinterpret_cast<VehicleMotionComponent*>(comp);
 					c->stopped = false;
+					c->direction = std::string("S");
 				}
 				else if (index == 2)
 				{
@@ -145,7 +148,8 @@ public:
 				else if (index == 1)
 				{
 					auto c = reinterpret_cast<VehicleMotionComponent*>(comp);
-					c->stopped = true;
+					c->stopped = false;
+					c->direction = std::string("N");
 				}
 				else if (index == 2)
 				{

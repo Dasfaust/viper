@@ -1,5 +1,6 @@
 #include "V3.h"
 #include <memory>
+#include "memory/Pool.h"
 
 V3::V3()
 {
@@ -22,6 +23,9 @@ void V3::start()
 	{
 		element.second->onStartup();
 	}
+
+	Pool pool;
+	pool.test();
 
 	debug("Starting main loop");
 	while (running)
