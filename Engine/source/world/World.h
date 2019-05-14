@@ -89,7 +89,7 @@ public:
 	moodycamel::ConcurrentQueue<std::shared_ptr<Future<ECS::Entity*>>> entsToCreate;
 	moodycamel::ConcurrentQueue<ECS::Entity*> entsToDelete;
 	moodycamel::ConcurrentQueue<ECS::Component*> compsToDelete;
-	boost::container::flat_map<uint8, moodycamel::ConcurrentQueue<ECS::Changeset>> changesets;
+	boost::container::flat_map<uint8, moodycamel::ConcurrentQueue<ECS::Changeset*>> changesetQueue;
 	ECS::Container* ecs;
 	std::atomic<bool> paused = false;
 	moodycamel::ConcurrentQueue<MapCell> mapGridUpdates;
@@ -99,6 +99,7 @@ public:
 	std::atomic<bool> loaded = false;
 	std::atomic<float> loadProgress = 0.0f;
 	boost::container::flat_map<boost::uuids::uuid, Player> players;
+	boost::container::flat_map<unsigned int, std::shared_ptr<Pool>> changesets;
 	
 
 	V3API World();
@@ -183,7 +184,7 @@ public:
 		return future;
 	};
 
-	V3API void tickSystem(ECS::System* system, uint8 type, int start = 0, int end = -1);
+	V3API void tickSystem(ECS::System* system, uint8 type, unsigned int worker, int start = 0, int end = -1);
 
 	std::shared_ptr<ECS::TypeInfo> loc_t;
 	std::shared_ptr<ECS::TypeInfo> bb_t;
@@ -192,9 +193,27 @@ public:
 
 	V3API void queueMapUpdate(glm::vec2 now, glm::vec2 last, unsigned int entity);
 
-	inline void queueChangeset(std::shared_ptr<ECS::TypeInfo> type, ECS::Changeset change)
+	inline void queueChangeset(std::shared_ptr<ECS::TypeInfo> type, ECS::Changeset* change)
 	{
-		changesets[type->id].enqueue(change);
+		changesetQueue[type->id].enqueue(change);
+	};
+
+	template<typename T>
+	inline void registerChangeset()
+	{
+		for (unsigned int i = 1; i < stepThreadCount; i++)
+		{
+			changesets[i]->resolve<T>();
+		}
+	};
+
+	template<typename T>
+	inline T* makeChangeset(unsigned int worker, unsigned int component)
+	{
+		auto change = changesets[worker]->create<T>();
+		change->worker = worker;
+		change->index = component;
+		return change;
 	};
 private:
     int stepThreadCount = 2;
@@ -259,7 +278,7 @@ public:
 					//profiler_begin("component_" + std::to_string(job.type), world);
 					//debugf("Worker %d tick...", id);
 					double start = tnow();
-					world->tickSystem(job.system, job.type, job.start, job.end);
+					world->tickSystem(job.system, job.type, id, job.start, job.end);
 					//debugf("Job tickSystem for type %d took %.2f ms", job.type, tnow() - start);
 				}
 				finished.enqueue(true);

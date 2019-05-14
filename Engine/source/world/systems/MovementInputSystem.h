@@ -15,7 +15,7 @@ public:
 	inline void init(ECS::Container* container, World* world) override
 	{
 		//debug("Movement init");
-		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world)
+		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world, unsigned int worker)
 		{
 			//auto comp = reinterpret_cast<MovementInputComponent*>(component);
 			//comp->forward = lastForward;

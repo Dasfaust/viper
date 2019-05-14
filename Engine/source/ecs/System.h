@@ -1,6 +1,8 @@
 #pragma once
 #include <boost/container/flat_map.hpp>
 #include "../util/Any.h"
+#include <typeindex>
+#include "../memory/Pool.h"
 
 class World;
 class V3;
@@ -9,11 +11,11 @@ namespace ECS
 {
 	class Container;
 
-	struct Changeset
+	struct Changeset : public object
 	{
 		uint32 index;
-		uint32 field;
-		Any value;
+		uint32 field = 0;
+		uint32 worker;
 	};
 
 	class System : public ObjectBase
@@ -25,19 +27,19 @@ namespace ECS
 		{
 			this->v3 = v3;
 
-			tickFunc = [](double dt, Component* comp, System* sys, Container* cont, World* world) {};
+			tickFunc = [](double dt, Component* comp, System* sys, Container* cont, World* world, unsigned int worker) { };
 			tickEnd = [](System* sys, World* world) { };
 			tickWait = [](System* sys, World* world) { };
 		};
 
 		virtual void init(ECS::Container* container, World* world) { };
 
-		void(*tickFunc)(double, Component*, System*, Container*, World*);
+		void(*tickFunc)(double, Component*, System*, Container*, World*, unsigned int);
 		void(*tickWait)(System*, World*);
 		void(*tickEnd)(System*, World*);
-		void(*applyChange)(std::string, Component*, Changeset, World* world, System* system);
+		void(*applyChange)(std::string, Component*, Changeset*, World* world, System* system);
 
-		inline void setTickFunction(void(*tickFunc)(double, Component*, System*, Container*, World*))
+		inline void setTickFunction(void(*tickFunc)(double, Component*, System*, Container*, World*, unsigned int))
 		{
 			this->tickFunc = tickFunc;
 		};
@@ -52,7 +54,7 @@ namespace ECS
 			this->tickEnd = tickEnd;
 		};
 
-		inline void setApplyChangeFunction(void(*applyChange)(std::string, Component*, Changeset, World* world, System* system))
+		inline void setApplyChangeFunction(void(*applyChange)(std::string, Component*, Changeset*, World* world, System* system))
 		{
 			this->applyChange = applyChange;
 		};

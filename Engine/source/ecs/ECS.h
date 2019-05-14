@@ -204,7 +204,7 @@ namespace ECS
 			return reinterpret_cast<System*>(deref(system->type_id, system->index));
 		};
 
-		template<typename T>
+		/*template<typename T>
 		inline T* createSystem(V3* v3, int position = -1)
 		{
 			T* system = instantiate<T>(resolveType<T>(), false);
@@ -212,9 +212,9 @@ namespace ECS
 			system->init();
 			systems.push_back(static_cast<T*>(deref<T>(system->index)));
 			return static_cast<T*>(deref<T>(system->index));
-		};
+		};*/
 
-		inline std::vector<System*>& getSystems()
+		inline std::vector<System*> getSystems()
 		{
 			return systems;
 		};

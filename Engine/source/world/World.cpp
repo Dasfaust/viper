@@ -40,6 +40,11 @@ void World::onStartup()
 		debugf("Worker %d started", i + 1);
 	}
 
+	for (unsigned int i = 0; i < stepThreadCount; i++)
+	{
+		changesets[i] = std::make_shared<Pool>();
+	}
+
 	if (v3->isModuleLoaded<Networking>())
 	{
 		v3->getModule<Networking>()->callbacks[4] = [](Networking* net, NetworkPlayer& player, rapidjson::Document &data)
@@ -194,9 +199,9 @@ void World::tick()
 			if (type->id != sys.second[0]->id)
 			{
 				s->addType(type->id, type->size);
-				if (!changesets.count(type->id))
+				if (!changesetQueue.count(type->id))
 				{
-					changesets[type->id] = moodycamel::ConcurrentQueue<ECS::Changeset>();
+					changesetQueue[type->id] = moodycamel::ConcurrentQueue<ECS::Changeset*>();
 				}
 			}
 		}
@@ -343,12 +348,12 @@ void World::tick()
 	}
 
 	profiler_begin("changesets");
-	for (auto &&kv : changesets)
+	for (auto &&kv : changesetQueue)
 	{
-		ECS::Changeset change;
+		ECS::Changeset* change;
 		while ((&kv)->second.try_dequeue(change))
 		{
-			auto comp = reinterpret_cast<ECS::Component*>(&ecs->getHeap((&kv)->first)[change.index]);
+			auto comp = reinterpret_cast<ECS::Component*>(&ecs->getHeap((&kv)->first)[change->index]);
 			for (ECS::System* system : ecs->getSystems())
 			{
 				if (system->getTypes().count(comp->type_id))
@@ -493,14 +498,14 @@ void World::tick()
 	profiler_end("world_tick");
 }
 
-void World::tickSystem(ECS::System* system, uint8 type, int start, int end)
+void World::tickSystem(ECS::System* system, uint8 type, unsigned int worker, int start, int end)
 {
 	auto& heap = ecs->getHeap(type);
 	size_t size = system->getTypes()[type];
 	for (unsigned int i = start; i < (end > -1 ? end + size : (uint32)heap.size()); i += (unsigned int)size)
 	{
 		if (i == 0) continue;
-		system->tickFunc(targetDeltaTime, reinterpret_cast<ECS::Component*>(&heap[i]), system, ecs, this);
+		system->tickFunc(targetDeltaTime, reinterpret_cast<ECS::Component*>(&heap[i]), system, ecs, this, worker);
 	}
 }
 

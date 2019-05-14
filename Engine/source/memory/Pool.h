@@ -22,9 +22,9 @@ struct object
 class Pool
 {
 public:
-	std::unordered_map<std::type_index, t_info*> types;
-	std::unordered_map<unsigned int, std::vector<unsigned int>> heaps;
-	std::unordered_map<unsigned int, std::vector<unsigned int>> freeSlots;
+	std::unordered_map<std::type_index, t_info*> types = std::unordered_map<std::type_index, t_info*>();
+	std::unordered_map<unsigned int, std::vector<unsigned int>> heaps = std::unordered_map<unsigned int, std::vector<unsigned int>>();
+	std::unordered_map<unsigned int, std::vector<unsigned int>> freeSlots = std::unordered_map<unsigned int, std::vector<unsigned int>>();
 
 	template<typename T>
 	inline t_info* resolve()
@@ -128,6 +128,22 @@ public:
 		return vec;
 	};
 
+	inline void purge()
+	{
+		for (auto&& kv : heaps)
+		{
+			kv.second.clear();
+			kv.second.shrink_to_fit();
+		}
+		heaps.clear();
+		freeSlots.clear();
+		for (auto&& kv : types)
+		{
+			delete kv.second;
+		}
+		heaps.clear();
+	};
+
 	struct TestObject : public object
 	{
 		bool testBool;
@@ -136,6 +152,23 @@ public:
 
 	inline void test()
 	{
+		double t = tnowns();
+		TestObject* ob1 = new TestObject();
+		debugf("New: %.2f", tnowns() - t);
+		delete ob1;
+
+		t = tnowns();
+		auto ob2 = std::make_shared<TestObject>();
+		debugf("Shared: %.2f", tnowns() - t);
+
+		t = tnowns();
+		std::vector<char> vec;
+		vec.resize(sizeof(TestObject));
+		object* ob3 = new(&vec[0]) TestObject();
+		debugf("Static: %.2f", tnowns() - t);
+		vec.clear();
+		vec.shrink_to_fit();
+
 		debug("### Memory pool test");
 		TestObject* test = create<TestObject>();
 		test->testBool = false;

@@ -12,6 +12,12 @@ struct RenderInfo
 	std::string mesh;
 };
 
+struct RenderChangeset : public ECS::Changeset
+{
+	boost::uuids::uuid player;
+	bool dirty;
+};
+
 class RenderSystem : public ECS::System
 {
 public:
@@ -31,9 +37,10 @@ public:
 		loc_t = container->resolveType<LocationComponent>();
 		mesh_t = container->resolveType<MeshComponent>();
 		rend_t = container->resolveType<RenderComponent>();
+		world->registerChangeset<RenderChangeset>();
 		//dirtyObjects = std::make_shared<moodycamel::ConcurrentQueue<RenderInfo>>();
 
-		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world)
+		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world, unsigned int worker)
 		{
 			auto ts = tnow();
 			auto sys = reinterpret_cast<RenderSystem*>(system);
@@ -95,9 +102,13 @@ public:
 						while (!sys->playerQueues[kv.first].try_enqueue({ entity->index, loc->location, mesh->mesh }));
 						if (loc->lastChange == 0.0 || tnow() - loc->lastChange >= (1000.0 / 30.0) * 4.0)
 						{
-							Any a = any::make(false);
-							a.uuid_val = kv.first;
-							world->queueChangeset(sys->rend_t, { comp->index, 0, a });
+							//Any a = any::make(false);
+							//a.uuid_val = kv.first;
+							//world->queueChangeset(sys->rend_t, { comp->index, 0, a });
+							auto change = world->makeChangeset<RenderChangeset>(worker, comp->index);
+							change->player = kv.first;
+							change->dirty = false;
+							world->queueChangeset(sys->rend_t, change);
 						}
 					}
 				}
@@ -143,10 +154,10 @@ public:
 			}
 		});
 
-		setApplyChangeFunction([](std::string name, ECS::Component* comp, ECS::Changeset change, World* world, System* system)
+		setApplyChangeFunction([](std::string name, ECS::Component* comp, ECS::Changeset* change, World* world, System* system)
 		{
 			RenderComponent* c = reinterpret_cast<RenderComponent*>(comp);
-			if (!c->states.count(any::uid(change.value)))
+			/*if (!c->states.count(any::uid(change.value)))
 			{
 				c->states[any::uid(change.value)] = { };
 			}
@@ -155,7 +166,20 @@ public:
 				c->states[any::uid(change.value)].isDirty = any::b(change.value);
 				c->states[any::uid(change.value)].ticks = 0;
 				debugf("Dirty %d: %d", c->entity, any::b(change.value));
+			}*/
+			RenderChangeset* ch = reinterpret_cast<RenderChangeset*>(change);
+			if (!c->states.count(ch->player))
+			{
+				c->states[ch->player] = { };
 			}
+			if (change->field == 0)
+			{
+				c->states[ch->player].isDirty = ch->dirty;
+				c->states[ch->player].ticks = 0;
+				//debugf("Dirty %d: %d", c->entity, any::b(change.value));
+			}
+			auto pool = world->changesets[change->worker];
+			pool->del<RenderChangeset>(ch->id);
 		});
 	};
 private:

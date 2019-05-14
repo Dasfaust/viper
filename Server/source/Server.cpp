@@ -13,6 +13,11 @@ struct VehicleMotionComponent : public ECS::Component
 	std::string direction;
 };
 
+struct VehicleMotionChangeset : public ECS::Changeset
+{
+	bool stopped;
+};
+
 class VehicleMotionSystem : public ECS::System
 {
 	std::shared_ptr<ECS::TypeInfo> loc_t;
@@ -22,8 +27,9 @@ class VehicleMotionSystem : public ECS::System
 	{
 		loc_t = container->resolveType<LocationComponent>();
 		veh_t = container->resolveType<VehicleMotionComponent>();
+		world->registerChangeset<VehicleMotionChangeset>();
 
-		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world)
+		setTickFunction([](double dt, ECS::Component* component, ECS::System* system, ECS::Container* container, World* world, unsigned int worker)
 		{
 			auto sys = reinterpret_cast<VehicleMotionSystem*>(system);
 			ECS::Entity* entity = container->getEntity(component->entity);
@@ -52,21 +58,30 @@ class VehicleMotionSystem : public ECS::System
 				{
 					if (comp->stopped)
 					{
-						ECS::Changeset change = { comp->index, 0, any::make(false) };
-						world->changesets[comp->type_id].enqueue(change);
+						/*ECS::Changeset change = { comp->index, 0, any::make(false) };
+						world->changesets[comp->type_id].enqueue(change);*/
+						auto change = world->makeChangeset<VehicleMotionChangeset>(worker, comp->index);
+						change->stopped = false;
+						world->queueChangeset(sys->veh_t, change);
 					}
 
 					glm::vec3 velocity = loc->location;
 					debugf("Moving %s", comp->direction);
 					velocity.z += comp->direction == "S" ? 0.015 : -0.015;
 
-					ECS::Changeset change = { loc->index, 0, any::make(velocity) };
-					world->changesets[loc->type_id].enqueue(change);
+					/*ECS::Changeset change = { loc->index, 0, any::make(velocity) };
+					world->changesets[loc->type_id].enqueue(change);*/
+					auto change = world->makeChangeset<LocationChangeset>(worker, loc->index);
+					change->location = velocity;
+					world->queueChangeset(sys->loc_t, change);
 				}
 				else
 				{
-					ECS::Changeset change = { comp->index, 0, any::make(true) };
-					world->changesets[comp->type_id].enqueue(change);
+					/*ECS::Changeset change = { comp->index, 0, any::make(true) };
+					world->changesets[comp->type_id].enqueue(change);*/
+					auto change = world->makeChangeset<VehicleMotionChangeset>(worker, comp->index);
+					change->stopped = true;
+					world->queueChangeset(sys->veh_t, change);
 				}
 			}
 
@@ -82,13 +97,15 @@ class VehicleMotionSystem : public ECS::System
 			}*/
 		});
 
-		setApplyChangeFunction([](std::string name, ECS::Component* comp, ECS::Changeset change, World* world, System* system)
+		setApplyChangeFunction([](std::string name, ECS::Component* comp, ECS::Changeset* change, World* world, System* system)
 		{
 			auto c = reinterpret_cast<VehicleMotionComponent*>(comp);
-			if (change.field == 0)
+			if (change->field == 0)
 			{
-				c->stopped = any::b(change.value);
+				c->stopped = reinterpret_cast<VehicleMotionChangeset*>(change)->stopped;
 			}
+			auto pool = world->changesets[change->worker];
+			pool->del<VehicleMotionChangeset>(change->id);
 		});
 	};
 };
