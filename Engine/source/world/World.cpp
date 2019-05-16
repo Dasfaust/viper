@@ -63,6 +63,9 @@ void World::onStartup()
 	loc_t = ecs->resolveType<LocationComponent>();
 	bb_t = ecs->resolveType<BoundingBox2D>();
 
+	pool = std::make_shared<Pool>();
+	unsigned int ent = makeEntity();
+
 	this->start();
 	debug("World startup complete");
 }
@@ -222,22 +225,7 @@ void World::tick()
 				entFuture->callback(i, ecs->getComponent(entity, info->id), entFuture->callbackVars);
 			}
 		}
-		//assert(entity->type_size == ecs->resolveType<ECS::Entity>()->size);
 		entFuture->fulfill(entity);
-
-		/*if (entity->components.count(loc_t->id))
-		{
-			auto loc = reinterpret_cast<LocationComponent*>(ecs->getComponent(entity, loc_t->id));
-
-			debugf("Entity creation: actual position is (%.2f, %.2f)", loc->location.x, loc->location.z);
-
-			MapCell cell;
-			cell.entity = entity->index;
-			cell.position = glm::vec2(loc->location.x, loc->location.z);
-			cell.positionLast = cell.position;
-
-			mapGridUpdates.enqueue(cell);
-		}*/
 	}
 
 	if (loaded)
@@ -464,24 +452,6 @@ void World::tick()
 	{
 		ecs->deleteComponent(component);
 	}
-
-	/*profiler_begin("changesets");
-	for (auto &&kv : changesets)
-	{
-		ECS::Changeset change;
-		while((&kv)->second.try_dequeue(change))
-		{
-			auto comp = reinterpret_cast<ECS::Component*>(&ecs->getHeap((&kv)->first)[change.index]);
-			for (ECS::System* system : ecs->getSystems())
-			{
-				if (system->getTypes().count(comp->type_id))
-				{
-					system->applyChange("", comp, change, this, system);
-				}
-			}
-		}
-	}
-	profiler_end("changesets");*/
 
 	profiler_begin("systems_tickwait");
 	for (ECS::System* system : ecs->getSystems())

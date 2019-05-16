@@ -50,7 +50,10 @@ class VehicleMotionSystem : public ECS::System
 
 						auto _loc = reinterpret_cast<LocationComponent*>(container->getComponent(e, sys->loc_t->id));
 						debugf("Nearby: (%.2f, %.2f): %d, dir: %s", _loc->location.x, _loc->location.z, e->index, kv.first.c_str());
-						canMove = false;
+						if (world->getDistance2D(glm::vec2(loc->location.x, loc->location.z), glm::vec2(_loc->location.x, _loc->location.z)) <= 1.0f)
+						{
+							canMove = false;
+						}
 					}
 				}
 

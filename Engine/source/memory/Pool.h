@@ -49,6 +49,24 @@ public:
 		return types[index];
 	};
 
+	inline t_info* getType(unsigned int id)
+	{
+		t_info* type;
+		for (auto&& kv : types)
+		{
+			if (kv.second->id == id)
+			{
+				type = kv.second;
+			}
+		}
+		return type;
+	};
+
+	inline t_info* getType(std::type_index index)
+	{
+		return types[index];
+	};
+
 	inline unsigned int allocate(t_info* type)
 	{
 		unsigned int free;
@@ -70,6 +88,7 @@ public:
 		unsigned int id = allocate(type);
 		auto instance = new(&heaps[type->id][id]) object(*reinterpret_cast<object*>(&heaps[type->id][0]));
 		instance->id = id;
+		instance->type = type;
 		return id;
 	};
 

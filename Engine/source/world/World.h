@@ -69,7 +69,7 @@ public:
 		inline T get()
 		{
 			T obj;
-			while (!queue.try_dequeue(obj)) { }
+			while (!queue.try_dequeue(obj)) {}
 			return obj;
 		};
 
@@ -100,7 +100,7 @@ public:
 	std::atomic<float> loadProgress = 0.0f;
 	boost::container::flat_map<boost::uuids::uuid, Player> players;
 	boost::container::flat_map<unsigned int, std::shared_ptr<Pool>> changesets;
-	
+
 
 	V3API World();
 	V3API ~World();
@@ -215,6 +215,29 @@ public:
 		change->index = component;
 		return change;
 	};
+
+	struct Component : public object
+	{
+		unsigned int entity;
+	};
+
+	class System
+	{
+	public:
+		std::type_index componentType;
+	private:
+	};
+
+	inline float getDistance2D(glm::vec2 first, glm::vec2 second)
+	{
+		return sqrt(pow(second.x - first.x, 2) + pow(second.y - first.y, 2) * 1.0f);
+	};
+
+	template<typename T>
+	inline T* getComponent()
+	{
+		
+	};
 private:
     int stepThreadCount = 2;
 	double targetDeltaTime = 0.0;
@@ -225,8 +248,41 @@ private:
 	double perfAccumulator = 0.0;
 	double stepAccumulator = 0.0;
 	bool firstTick = true;
-
 	double nextStep = 0.0;
+
+	std::shared_ptr<Pool> pool;
+	std::unordered_map<unsigned int, std::unordered_map<unsigned int, unsigned int>> entities;
+
+	inline unsigned int makeEntity()
+	{
+		return entities.size();
+	};
+
+	inline unsigned int makeComponent(unsigned int entity, std::type_index typeIndex)
+	{
+		auto type = pool->getType(typeIndex);
+		auto comp = reinterpret_cast<Component*>(pool->create(type));
+		entities[entity][type->id] = comp->id;
+		comp->entity = entity;
+		return comp->id;
+	};
+
+	inline void delComponent(unsigned int entity, unsigned int component, std::type_index typeIndex)
+	{
+		auto type = pool->getType(typeIndex);
+		pool->del(type, component);
+		entities[entity].erase(type->id);
+	};
+
+	inline void delEntity(unsigned int entity)
+	{
+		for (auto&& kv : entities[entity])
+		{
+			auto type = pool->getType(kv.first);
+			pool->del(type, kv.second);
+		}
+		entities.erase(entity);
+	};
  };
 
 class Worker : public Threadable

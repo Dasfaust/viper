@@ -30,55 +30,12 @@ namespace ECS
 		std::string name;
 	};
 
-	// Contains, handles all ECS functions
 	class Container
 	{
 	public:
 		Container()
 		{
 			resolveType<Entity>();
-
-			/*debug("Creating entities...");
-			std::vector<unsigned int> ents;
-			for (unsigned int i = 0; i < 1000000; i++)
-			{
-				ents.push_back(createEntity());
-			}
-
-			debugf("Heap size: %d", heap[0].size());
-
-			debug("Deleting entities...");
-			for (unsigned int i = 0; i < 1000000; i++)
-			{
-				deleteEntity(getEntity(ents[i]));
-			}
-
-			heap[0].shrink_to_fit();
-			debugf("Heap size: %d", heap[0].size());*/
-
-			/*std::vector<uint32> ents;
-			for (unsigned int i = 0; i < 10; i++)
-			{
-				ents.push_back(createEntity());
-				uint32 c1 = createComponent<TestComponent>(getEntity(ents[i]));
-				debugf("Component: %d", c1);
-			}
-
-			debugf("Entities: %d", heap[0].size() / resolveType<Entity>().size);
-			debugf("Components: %d", heap[1].size() / resolveType<TestComponent>().size);
-
-			uint32 e = createEntity();
-			auto ei = getEntity(e);
-			auto info = resolveType<TestComponent>();
-			uint32 c = createComponent(ei, info.id, info.size);
-			debugf("Component: %d", getComponent<TestComponent>(ei)->index);
-
-			System* sys = createSystem([](double dt, Component* component, System* system, Container* container)
-			{
-				//debugf("Ticking component: %d", component->index);
-				TestComponent* comp = reinterpret_cast<TestComponent*>(component);
-				comp->val1 = rand();
-			}, { resolveType<TestComponent>().id });*/
 		};
 
 		~Container()
@@ -203,16 +160,6 @@ namespace ECS
 			systems[index] = reinterpret_cast<System*>(deref(system->type_id, system->index));
 			return reinterpret_cast<System*>(deref(system->type_id, system->index));
 		};
-
-		/*template<typename T>
-		inline T* createSystem(V3* v3, int position = -1)
-		{
-			T* system = instantiate<T>(resolveType<T>(), false);
-			system->preinit(v3);
-			system->init();
-			systems.push_back(static_cast<T*>(deref<T>(system->index)));
-			return static_cast<T*>(deref<T>(system->index));
-		};*/
 
 		inline std::vector<System*> getSystems()
 		{
