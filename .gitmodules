@@ -1,3 +1,5 @@
 [submodule "submodules/concurrentqueue"]
 	path = submodules/concurrentqueue
 	url = https://github.com/Dasfaust/concurrentqueue.git
+[submodule "greatheights"]
+	url = https://github.com/Dasfaust/greatheights
