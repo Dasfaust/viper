@@ -268,4 +268,4 @@ vendor/
 *.vcxproj.*
 *.vcxproj
 
-Client/
+godot/
