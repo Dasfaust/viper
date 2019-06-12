@@ -34,8 +34,6 @@ void Viper::onShutdown()
 	}
 
 	viper::pollLogger();
-
-	viper::platform::pauseSystem();
 };
 
 void Viper::start()
@@ -48,5 +46,7 @@ void Viper::start()
 	}
 
 	onShutdown();
+
+	viper::platform::pauseSystem();
 };
 
