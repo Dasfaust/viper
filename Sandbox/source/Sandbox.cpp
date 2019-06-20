@@ -3,10 +3,17 @@
 #include "log/Logger.hpp"
 #include <boost/exception/all.hpp>
 #include "log/Logging.hpp"
+#include "Server.hpp"
 
 struct TestEvent : public Event
 {
 	float data;
+};
+
+struct TestPacket : Packet
+{
+	float someFloat;
+	bool someBool;
 };
 
 class TestThread : public Threadable
@@ -26,6 +33,13 @@ public:
 		});
 	};
 
+	void onStartAsync() override
+	{
+		TestPacket test;
+		test.name = "test_packet_2";
+		//viper->getModule<Server>("server")->getModule<Networking>("networking")->getBuilder<TestPacket>()->enqueue(test);
+	};
+
 	void onTickAsync() override
 	{
 		listener->poll();
@@ -37,6 +51,7 @@ class Sandbox : public Module
 public:
 	std::shared_ptr<EventHandler<TestEvent>> handler;
 	std::shared_ptr<Listener<TestEvent>> listener;
+	std::shared_ptr<PacketBuilder<TestPacket>> builder;
 
 	void onStart() override
 	{
@@ -48,16 +63,22 @@ public:
 			ev.data = 420.0;
 		});
 
+		mkpktbuilder(builder, TestPacket, getParent<Viper>(), pktfield(someFloat) pktfield(someBool));
+
 		auto thread = std::make_shared<TestThread>(getParent<Viper>());
 		getParent<Viper>()->getModule<Threads>("threads")->watch(thread);
 		thread->start();
 
 		handler->fire({ false, 3.14f });
+
+		TestPacket test;
+		test.name = "test_packet";
+		builder->enqueue(test);
+		builder->enqueue(test);
 	};
 
 	void onTick() override
 	{
-		//debug("Ticking");
 		listener->poll();
 	};
 };
@@ -70,6 +91,7 @@ int main()
 		vi->initModule<Threads>("threads");
 		vi->initModule<Logging>("logging");
 		vi->initModule<Events>("events");
+		vi->initModule<Server>("server");
 		vi->initModule<Sandbox>("game");
 		vi->start();
 	}

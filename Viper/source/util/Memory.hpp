@@ -20,9 +20,9 @@ struct object
 class StaticPool
 {
 public:
-	std::unordered_map<std::type_index, t_info*> types = std::unordered_map<std::type_index, t_info*>();
-	std::unordered_map<uint32, std::vector<uint32>> heaps = std::unordered_map<uint32, std::vector<uint32>>();
-	std::unordered_map<uint32, std::vector<uint32>> freeSlots = std::unordered_map<uint32, std::vector<uint32>>();
+	umap(std::type_index, t_info*) types = umap(std::type_index, t_info*)();
+	umap(uint32, std::vector<uint32>) heaps = umap(uint32, std::vector<uint32>)();
+	umap(uint32, std::vector<uint32>) freeSlots = umap(uint32, std::vector<uint32>)();
 
 	template<typename T>
 	inline t_info* resolve()
@@ -32,7 +32,7 @@ public:
 		{
 			return types[index];
 		}
-		uint32 id = types.size();
+		uint32 id = (uint32)types.size();
 		t_info* type = new t_info();
 		type->id = id;
 		type->size = sizeof(T);

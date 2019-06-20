@@ -18,8 +18,13 @@ void Viper::onStart()
 
 	for (auto&& kv : modules)
 	{
-		kv.second->onStart();
+		// TODO: dependencies on other modules, insertion order not working?
+		if (kv.first != "game")
+		{
+			kv.second->onStart();
+		}
 	}
+	modules["game"]->onStart();
 
 	info("Initialization complete");
 };

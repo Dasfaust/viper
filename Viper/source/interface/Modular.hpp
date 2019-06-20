@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "Module.hpp"
+#include <map>
 
 class Modular
 {
@@ -9,7 +10,7 @@ public:
 
 	time_val dt = 0.0;
 	time_val lastTickNs = 0.0;
-	flatmap(std::string, std::shared_ptr<Module>) modules;
+	std::map<std::string, std::shared_ptr<Module>> modules;
 
 	virtual void tickModules()
 	{
