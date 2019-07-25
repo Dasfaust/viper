@@ -5,7 +5,7 @@
 #include "log/Logging.hpp"
 #include "Server.hpp"
 
-struct TestEvent : public Event
+struct TestEvent : Event
 {
 	float data;
 };
@@ -14,6 +14,12 @@ struct TestPacket : Packet
 {
 	float someFloat;
 	bool someBool;
+
+	template<class A>
+	void serialize(A& ar)
+	{
+		ar(CEREAL_NVP(someFloat), CEREAL_NVP(someBool));
+	};
 };
 
 class TestThread : public Threadable
@@ -35,9 +41,7 @@ public:
 
 	void onStartAsync() override
 	{
-		TestPacket test;
-		test.name = "test_packet_2";
-		//viper->getModule<Server>("server")->getModule<Networking>("networking")->getBuilder<TestPacket>()->enqueue(test);
+		
 	};
 
 	void onTickAsync() override
@@ -51,7 +55,8 @@ class Sandbox : public Module
 public:
 	std::shared_ptr<EventHandler<TestEvent>> handler;
 	std::shared_ptr<Listener<TestEvent>> listener;
-	std::shared_ptr<PacketBuilder<TestPacket>> builder;
+	std::shared_ptr<PacketHandler<TestPacket>> packetHandler;
+	std::shared_ptr<Listener<TestPacket>> packetListener;
 
 	void onStart() override
 	{
@@ -63,23 +68,29 @@ public:
 			ev.data = 420.0;
 		});
 
-		mkpktbuilder(builder, TestPacket, getParent<Viper>(), pktfield(someFloat) pktfield(someBool));
-
 		auto thread = std::make_shared<TestThread>(getParent<Viper>());
 		getParent<Viper>()->getModule<Threads>("threads")->watch(thread);
 		thread->start();
 
 		handler->fire({ false, 3.14f });
 
-		TestPacket test;
-		test.name = "test_packet";
-		builder->enqueue(test);
-		builder->enqueue(test);
+		auto net = getParent<Viper>()->getModule<Server>("server")->getModule<Networking>("networking");
+		packetHandler = net->registerPacket<TestPacket>(100);
+		packetListener = packetHandler->listen(0, [](TestPacket& packet, Viper* viper)
+		{
+			debug("Packet event: TestPacket: %.2f, %d", packet.someFloat, packet.someBool);
+		}, getParent<Viper>());
+
+		TestPacket p;
+		p.someBool = false;
+		p.someFloat = 69.69f;
+		packetHandler->enqueue(p);
 	};
 
 	void onTick() override
 	{
 		listener->poll();
+		packetListener->poll();
 	};
 };
 

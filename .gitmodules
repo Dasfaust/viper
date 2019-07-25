@@ -1,3 +1,6 @@
 [submodule "submodules/concurrentqueue"]
 	path = submodules/concurrentqueue
 	url = https://github.com/Dasfaust/concurrentqueue.git
+[submodule "submodules/cereal"]
+	path = submodules/cereal
+	url = https://github.com/Dasfaust/cereal

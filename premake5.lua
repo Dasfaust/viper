@@ -11,6 +11,7 @@ workspace "Viper"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 include "submodules/concurrentqueue"
+include "submodules/cereal"
 
 project "Viper"
     location "Viper"
@@ -33,7 +34,8 @@ project "Viper"
     includedirs
     {
         "vendor/include",
-		"submodules/concurrentqueue"
+		"submodules/concurrentqueue",
+        "submodules/cereal/include"
     }
 
     filter "system:linux"
@@ -82,7 +84,8 @@ project "Server"
     {
         "Viper/source",
         "vendor/include",
-		"submodules/concurrentqueue"
+		"submodules/concurrentqueue",
+        "submodules/cereal/include"
     }
 
     links
@@ -137,7 +140,8 @@ project "Client"
         "Viper/source",
         "Server/source",
         "vendor/include",
-		"submodules/concurrentqueue"
+		"submodules/concurrentqueue",
+        "submodules/cereal/include"
     }
 
     links
@@ -194,7 +198,8 @@ project "Sandbox"
         "Server/source",
         "Client/source",
         "vendor/include",
-		"submodules/concurrentqueue"
+		"submodules/concurrentqueue",
+        "submodules/cereal/include"
     }
 
     links

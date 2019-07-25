@@ -57,7 +57,6 @@ namespace json
 		flatmap(std::string, std::vector<jsval>) aFields;
 		flatmap(std::string, jsobj) objects;
 		flatmap(std::string, std::vector<jsobj>) aObjects;
-
 	};
 
 	inline std::vector<std::string> splitStr(std::string string, char delimiter)
@@ -419,6 +418,12 @@ namespace json
 		end = tnowns();
 
 		debug("Parse: %.4f", (end - start) / 1000000.0);
+
+		start = tnowns();
+
+		end = tnowns();
+
+		debug("RapidJSON parse: %.4f", (end - start) / 1000000.0);
 
 		assert(getjsstring(p, "string") == "test");
 		assert(getjsint(p, "int") == 24);

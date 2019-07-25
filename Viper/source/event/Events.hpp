@@ -1,6 +1,7 @@
 #pragma once
 #include "../util/Memory.hpp"
 #include "../interface/Modular.hpp"
+#include "../util/Future.hpp"
 #include <map>
 #include <concurrentqueue.h>
 
@@ -54,9 +55,11 @@ class EventHandler : public Module
 public:
 	std::map<uint8, std::shared_ptr<Listener<T>>> listeners;
 
-	std::shared_ptr<Listener<T>> listen(uint8 position, void(*onEvent)(T&, Viper*))
+	std::shared_ptr<Listener<T>> listen(uint8 position, void(*onEvent)(T&, Viper*), Viper* viper = 0)
 	{
-		listeners[position] = std::make_shared<Listener<T>>(position, getParent<Events>()->getParent<Viper>(), onEvent);
+		if (viper == 0) viper = getParent<Events>()->getParent<Viper>();
+
+		listeners[position] = std::make_shared<Listener<T>>(position, viper, onEvent);
 
 		std::vector<std::shared_ptr<Listener<T>>> lis;
 		for (auto&& kv : listeners)
@@ -78,6 +81,9 @@ public:
 
 	void fire(T ev)
 	{
-		listeners.begin()->second->events.enqueue(ev);
+		if (!listeners.empty())
+		{
+			listeners.begin()->second->events.enqueue(ev);
+		}
 	};
 };

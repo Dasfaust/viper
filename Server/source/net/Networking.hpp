@@ -1,69 +1,69 @@
 #pragma once
 #include "interface/Threadable.hpp"
-#include "interface/TCPServer.hpp"
-#include "util/Memory.hpp"
+#include "interface/UDPServer.hpp"
 #include "log/Logger.hpp"
+#include "event/Events.hpp"
+#include <cereal/archives/json.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 #ifdef VIPER_WIN64
-#include "WinTCP.hpp"
+#include "WinUDP.hpp"
 #endif
 
-#define pktfield(a) hPacket->a = sPacket.a;
-
-#define mkpktbuilder(a, b, c, d) a = std::make_shared<PacketBuilder<TestPacket>>(); \
-		a->setBuildFunction([](std::shared_ptr<Networking> net, std::shared_ptr<BuilderBase> build) -> object* { \
-		auto& queue = std::reinterpret_pointer_cast<PacketBuilder<b>>(build)->queue; \
-		b sPacket; \
-		b* hPacket = nullptr; \
-		if (queue.try_dequeue(sPacket)) { \
-		hPacket = net->pool.create<b>(); \
-		hPacket->name = std::string(sPacket.name); \
-		d } \
-		return hPacket; \
-		}); \
-		c->getModule<Server>("server")->getModule<Networking>("networking")->registerBuilder<PacketBuilder<TestPacket>>(builder)
-
 class Networking;
+typedef boost::uuids::uuid clientid;
 
-struct Packet : object
+struct NetworkClient
 {
-	std::string name;
+	int socket;
 };
 
-class BuilderBase
+struct Packet : Event
 {
-public:
-	object*(*build)(std::shared_ptr<Networking>, std::shared_ptr<BuilderBase>);
-
-	void setBuildFunction(object*(*build)(std::shared_ptr<Networking>, std::shared_ptr<BuilderBase>))
-	{
-		this->build = build;
-	};
+	clientid client;
 };
 
 template<typename T>
-class PacketBuilder : public BuilderBase
+struct PacketWrapper
+{
+	T packet;
+	std::vector<clientid> clients;
+};
+
+class PacketHandlerBase
 {
 public:
-	moodycamel::ConcurrentQueue<T> queue;
+	uint32 id;
+	// grab from outgoing, serialize
+	PacketWrapper<std::string>(*pack)(std::shared_ptr<PacketHandlerBase>);
+	// deserialize, throw event
+	void(*unpack)(std::shared_ptr<PacketHandlerBase>, std::string, clientid);
+};
 
-	void enqueue(T& data)
+template<typename T>
+class PacketHandler : public PacketHandlerBase, public EventHandler<T>
+{
+public:
+	moodycamel::ConcurrentQueue<PacketWrapper<T>> outgoing;
+
+	void enqueue(T& packet, std::vector<clientid> clients = { })
 	{
-		queue.enqueue(data);
-	};
+		PacketWrapper<T> wrap = { packet, clients };
+		outgoing.enqueue(wrap);
+	}
 };
 
 class Networking : public Module, public Modular, public Threadable
 {
 public:
-	StaticPool pool;
-	flatmap(std::type_index, std::shared_ptr<BuilderBase>) builders;
-	std::shared_ptr<TCPServer> server;
+	flatmap(uint32, std::shared_ptr<PacketHandlerBase>) handlers;
+	std::shared_ptr<UDPServer> udp;
 
 	void onStart() override
 	{
 #ifdef VIPER_WIN64
-		initModule<WinTCP>("tcp");
+		initModule<WinUDP>("udp");
 #endif
 
 		for (auto&& kv : modules)
@@ -71,63 +71,69 @@ public:
 			kv.second->onStart();
 		}
 
-		server = getModule<TCPServer>("tcp");
-	};
-
-	void onShutdown() override
-	{
-		pool.purge();
+		udp = getModule<UDPServer>("udp");
 	};
 
 	void onTick() override
 	{
-		flatmap(uint32, std::vector<uint32>) created;
-
-		for (auto&& kv : builders)
+		for (auto&& kv : handlers)
 		{
-			// INTERESTINGLY ... creating an object on the pool invalidates previous pointers returned by create()
-			object* ob = kv.second->build(getParent<Modular>()->getModule<Networking>("networking"), kv.second);
-			while (ob != 0)
+			std::vector<PacketWrapper<std::string>> outgoing;
+			bool empty = false;
+			while(!empty)
 			{
-				created[ob->type->id].push_back(ob->id);
-
-				debug("Packet ID: %d, type: %d, size: %d, name: %s", ob->id, ob->type->id, ob->type->size, reinterpret_cast<Packet*>(ob)->name.c_str());
-
-				std::vector<uint32> raw;
-				std::string sraw;
-				for (uint32 i = ob->id; i < ob->id + (uint32)ob->type->size; i++)
+				auto wrapper = kv.second->pack(kv.second);
+				if (!wrapper.packet.empty())
 				{
-					raw.push_back(pool.heaps[ob->type->id][i]);
-					sraw += std::to_string(i);
-				}
-				debug("Raw: %s", sraw.c_str());
+					outgoing.push_back(wrapper);
 
-				ob = kv.second->build(getParent<Modular>()->getModule<Networking>("networking"), kv.second);
+					kv.second->unpack(kv.second, wrapper.packet, boost::uuids::random_generator()());
+				}
+				else
+				{
+					empty = true;
+				}
 			}
 		}
 
 		tickModules();
+	};
 
-		for (auto&& kv : created)
+	template<typename T>
+	std::shared_ptr<PacketHandler<T>> registerPacket(uint32 id)
+	{
+		std::shared_ptr<PacketHandler<T>> handler = std::make_shared<PacketHandler<T>>();
+		handler->parent = this;
+		handler->id = id;
+
+		handler->pack = [](std::shared_ptr<PacketHandlerBase> self) -> PacketWrapper<std::string>
 		{
-			for (uint32 id : kv.second)
+			PacketWrapper<std::string> wrap;
+			std::shared_ptr<PacketHandler<T>> inst = std::static_pointer_cast<PacketHandler<T>>(self);
+			PacketWrapper<T> out;
+			if (inst->outgoing.try_dequeue(out))
 			{
-				pool.del(pool.getType(kv.first), id);
+				std::stringstream ss;
+				cereal::JSONOutputArchive archive(ss);
+				out.packet.serialize(archive);
+				wrap.packet = ss.str() + "}"; // TODO: y tho?
+				wrap.clients = out.clients;
 			}
+			return wrap;
+		};
 
-			debug("%d", pool.freeSlots[kv.first].size());
-		}
-	};
+		handler->unpack = [](std::shared_ptr<PacketHandlerBase> self, std::string data, clientid client)
+		{
+			std::shared_ptr<PacketHandler<T>> inst = std::static_pointer_cast<PacketHandler<T>>(self);
+			std::stringstream ss(data);
+			cereal::JSONInputArchive archive(ss);
+			T packet;
+			packet.serialize(archive);
+			packet.client = client;
+			inst->fire(packet);
+		};
 
-	template<typename T>
-	void registerBuilder(std::shared_ptr<T> builder)
-	{
-		builders[std::type_index(typeid(T))] = builder;
-	};
-
-	template<typename T>
-	std::shared_ptr<PacketBuilder<T>> getBuilder()
-	{
-		return std::reinterpret_pointer_cast<PacketBuilder<T>>(builders[std::type_index(typeid(PacketBuilder<T>))]);
+		handlers[id] = handler;
+		return handler;
 	};
 };

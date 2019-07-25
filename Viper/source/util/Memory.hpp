@@ -106,6 +106,8 @@ public:
 		return get(type, instantiate(type));
 	};
 
+	// INTERESTINGLY ... creating an object on the pool invalidates previous pointers returned by create()
+	// TODO: figure that out
 	template<typename T>
 	inline T* create()
 	{

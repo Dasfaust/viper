@@ -4,7 +4,8 @@
 #include <chrono>
 
 typedef unsigned int uint32;
-typedef unsigned short uint8;
+typedef unsigned short uint16;
+typedef unsigned char uint8;
 typedef double time_val;
 
 #define flatmap(x, y) boost::container::flat_map<x, y>
