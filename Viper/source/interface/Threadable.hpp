@@ -2,6 +2,7 @@
 #include <atomic>
 #include <thread>
 #include "../Defines.hpp"
+#include "log/Logger.hpp"
 
 class Threadable
 {
@@ -9,7 +10,7 @@ public:
 	std::thread worker;
 	std::atomic_bool running = false;
 	bool sleep = true;
-	uint8 id;
+	uint8 id = 999;
 
 	Threadable() { }
 	virtual ~Threadable() { };
@@ -31,12 +32,30 @@ public:
 
 	virtual void start()
 	{
+		if (id == 999)
+		{
+			info("Spawning unwatched thread");
+		}
+		else
+		{
+			info("Spawning thread: %d", id);
+		}
+
 		set_atom(running, true, bool);
 		worker = std::thread(&Threadable::poll, this);
 	};
 
 	virtual void stop()
 	{
+		if (id == 999)
+		{
+			info("Stopping unwatched thread");
+		}
+		else
+		{
+			info("Stopping thread: %d", id);
+		}
+
 		set_atom(running, false, bool);
 		worker.join();
 	};

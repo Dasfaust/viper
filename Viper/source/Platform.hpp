@@ -36,7 +36,7 @@ namespace viper
 
 		inline void pauseSystem()
 		{
-			system("pause");
+			//system("pause");
 		};
 
 #endif

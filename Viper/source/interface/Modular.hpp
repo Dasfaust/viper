@@ -3,7 +3,7 @@
 #include "Module.hpp"
 #include <map>
 
-class Modular
+class Modular : public std::enable_shared_from_this<Modular>
 {
 public:
 	virtual ~Modular() = default;
@@ -53,7 +53,7 @@ public:
 	inline std::shared_ptr<T> initModule(const std::string& name, double interval = 0.0)
 	{
 		auto mod = std::make_shared<T>();
-		mod->parent = this;
+		mod->parent = shared_from_this();
 		mod->modInterval = interval;
 		modules[name] = mod;
 		return mod;
@@ -62,7 +62,7 @@ public:
 	template<typename T>
 	inline std::shared_ptr<T> getModule(const std::string& name)
 	{
-		return std::reinterpret_pointer_cast<T>(modules[name]);
+ 		return std::reinterpret_pointer_cast<T>(modules[name]);
 	};
 
 	inline std::shared_ptr<Module> getModule(const std::string& name)

@@ -2,11 +2,16 @@
 #include <unordered_map>
 #include <boost/container/flat_map.hpp>
 #include <chrono>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/lexical_cast.hpp>
 
 typedef unsigned int uint32;
 typedef unsigned short uint16;
 typedef unsigned char uint8;
 typedef double time_val;
+typedef boost::uuids::uuid uid;
 
 #define flatmap(x, y) boost::container::flat_map<x, y>
 #define umap(x, y) std::unordered_map<x, y>

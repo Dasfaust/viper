@@ -8,14 +8,14 @@ class Module
 public:
 	virtual ~Module() = default;
 
-	Modular* parent;
+	std::shared_ptr<Modular> parent;
 	time_val modInterval;
 	time_val modAccumulator;
 
 	template<typename T>
-	inline T* getParent()
+	std::shared_ptr<T> getParent()
 	{
-		return reinterpret_cast<T*>(parent);
+		return std::dynamic_pointer_cast<T>(parent);
 	};
 
 	virtual void onStart() { };

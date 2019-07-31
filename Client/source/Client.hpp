@@ -1,15 +1,13 @@
 #pragma once
 #include "interface/Modular.hpp"
-#include "world/World.hpp"
-#include "net/NetServer.hpp"
+#include "net/NetClient.hpp"
 
-class Server : public Module, public Modular
+class Client : public Module, public Modular
 {
 public:
 	void onStart() override
 	{
-		auto wo = initModule<World>("world");
-		auto ns = initModule<NetServer>("net");
+		auto nc = initModule<NetClient>("net");
 
 		for (auto&& kv : modules)
 		{

@@ -5,8 +5,6 @@
 #include <map>
 #include <concurrentqueue.h>
 
-class Viper;
-
 struct Event
 {
 	bool cancelled = false;
@@ -18,14 +16,14 @@ class Listener
 public:
 	uint8 position;
 	moodycamel::ConcurrentQueue<T> events;
-	Viper* viper;
-	void(*onEvent)(T&, Viper*);
+	std::vector<std::shared_ptr<Module>> mods;
+	void(*onEvent)(T&, std::vector<std::shared_ptr<Module>>);
 	std::shared_ptr<Listener<T>> next;
 
-	Listener(uint8 position, Viper* viper, void(*onEvent)(T&, Viper*))
+	Listener(uint8 position, std::vector<std::shared_ptr<Module>> mods, void(*onEvent)(T&, std::vector<std::shared_ptr<Module>>))
 	{
 		this->position = position;
-		this->viper = viper;
+		this->mods = mods;
 		this->onEvent = onEvent;
 	}
 
@@ -34,7 +32,7 @@ public:
 		T ev;
 		while(events.try_dequeue(ev))
 		{
-			onEvent(ev, viper);
+			onEvent(ev, mods);
 
 			if (!ev.cancelled && next != 0)
 			{
@@ -55,11 +53,9 @@ class EventHandler : public Module
 public:
 	std::map<uint8, std::shared_ptr<Listener<T>>> listeners;
 
-	std::shared_ptr<Listener<T>> listen(uint8 position, void(*onEvent)(T&, Viper*), Viper* viper = 0)
+	std::shared_ptr<Listener<T>> listen(uint8 position, void(*onEvent)(T&, std::vector<std::shared_ptr<Module>>), std::vector<std::shared_ptr<Module>> mods = { })
 	{
-		if (viper == 0) viper = getParent<Events>()->getParent<Viper>();
-
-		listeners[position] = std::make_shared<Listener<T>>(position, viper, onEvent);
+		listeners[position] = std::make_shared<Listener<T>>(position, mods, onEvent);
 
 		std::vector<std::shared_ptr<Listener<T>>> lis;
 		for (auto&& kv : listeners)
