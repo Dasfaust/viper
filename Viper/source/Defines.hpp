@@ -18,3 +18,4 @@ typedef boost::uuids::uuid uid;
 #define tnowms() static_cast<time_val>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count())
 #define tnowns() static_cast<time_val>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count())
 #define set_atom(x, y, z) z __expected = y; while (!x.compare_exchange_weak(__expected, y))
+#define timesince(x) (tnowns() - x) / 1000000.0

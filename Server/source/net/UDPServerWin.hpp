@@ -7,13 +7,11 @@ class UDPServerWin : public UDP
 {
 public:
 	SOCKET listen;
-	fd_set set;
 	char buffer[4096];
-	TIMEVAL timeout;
 
 	void onStartAsync() override
 	{
-		timeout = { 0, 1000 };
+		sleep = false;
 
 		WSAData wsData;
 		if (WSAStartup(0x202, &wsData))
@@ -28,6 +26,8 @@ public:
 			crit("Server: Socket could not be created: %d", WSAGetLastError());
 			return;
 		}
+		int timeout = 1;
+		setsockopt(listen, SOL_SOCKET, SO_RCVTIMEO, (const char*)& timeout, sizeof(timeout));
 
 		sockaddr_in addr;
 		addr.sin_family = AF_INET;
@@ -47,49 +47,48 @@ public:
 			return;
 		}
 
-		FD_ZERO(&set);
-		FD_SET(listen, &set);
-
 		info("UDP server listening on port %d", address.port);
 	};
 
 	void onTickAsync() override
 	{
-		for (int i = 0; i < select(listen + 1, &set, nullptr, nullptr, &timeout); i++)
+		if (!viper->isInitialized.load())
 		{
-			ZeroMemory(&buffer, 4096);
+			return;
+		}
 
-			sockaddr_in clientAddr;
-			int clientSize = (int)sizeof(clientAddr);
-			ZeroMemory(&clientAddr, clientSize);
+		ZeroMemory(&buffer, 4096);
 
-			if (recvfrom(listen, buffer, 4096, 0, (sockaddr*)&clientAddr, &clientSize))
+		sockaddr_in clientAddr;
+		int clientSize = (int)sizeof(clientAddr);
+		ZeroMemory(&clientAddr, clientSize);
+
+		if (recvfrom(listen, buffer, 4096, 0, (sockaddr*)& clientAddr, &clientSize) > 0)
+		{
+			char clientIp[256];
+			ZeroMemory(&clientIp, 256);
+			inet_ntop(AF_INET, &clientAddr.sin_addr, clientIp, 256);
+			uint32 clientPort = ntohs(clientAddr.sin_port);
+			InetAddress clientAddress = { clientIp, clientPort };
+
+			//debug("Server recv (%s:%d): %s", clientAddress.address.c_str(), clientAddress.port, buffer);
+
+			auto packet = extract(buffer);
+			if (packet.packet.empty())
 			{
-				char clientIp[256];
-				ZeroMemory(&clientIp, 256);
-				inet_ntop(AF_INET, &clientAddr.sin_addr, clientIp, 256);
-				uint32 clientPort = ntohs(clientAddr.sin_port);
-				InetAddress clientAddress = { clientIp, clientPort };
-
-				//debug("Server recv (%s:%d): %s", clientAddress.address.c_str(), clientAddress.port, buffer);
-
-				auto packet = extract(buffer);
-				if (packet.packet.empty())
-				{
-					warn("Invalid packet structure: %s", buffer);
-					return;
-				}
-
-				std::string ai = clientAddress.address + std::to_string(clientAddress.port);
-				if (!clientIds.count(ai))
-				{
-					clientIds[ai] = boost::uuids::random_generator()();
-					clients[clientIds[ai]] = clientAddress;
-				}
-				packet.clients.push_back(clientIds[ai]);
-
-				incoming.enqueue(packet);
+				warn("Invalid packet structure: %s", buffer);
+				return;
 			}
+
+			std::string ai = clientAddress.address + std::to_string(clientAddress.port);
+			if (!clientIds.count(ai))
+			{
+				clientIds[ai] = boost::uuids::random_generator()();
+				clients[clientIds[ai]] = clientAddress;
+			}
+			packet.clients.push_back(clientIds[ai]);
+
+			incoming.enqueue(packet);
 		}
 
 		PacketWrapper<std::string> wrapper;
@@ -113,7 +112,7 @@ public:
 
 						auto data = std::to_string(wrapper.id) + wrapper.packet;
 						int ok = sendto(listen, data.c_str(), (uint32)data.size() + 1, 0, (sockaddr*)&clientAddr, (int)sizeof(clientAddr));
-						debug("Server send (%s:%d): %d bytes, WSA: %d", addr.address.c_str(), addr.port, ok, WSAGetLastError());
+						//debug("Server send (%s:%d): %d bytes, WSA: %d", addr.address.c_str(), addr.port, ok, WSAGetLastError());
 					}
 					else
 					{

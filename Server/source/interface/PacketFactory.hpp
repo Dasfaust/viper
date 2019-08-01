@@ -3,10 +3,10 @@
 #include "event/Events.hpp"
 #include <cereal/archives/json.hpp>
 
-#define make_serializable(a) template<class A> \
+#define make_serializable(...) template<class A> \
 	void serialize(A& ar) \
 	{ \
-		ar(CEREAL_NVP(a)); \
+		ar(__VA_ARGS__); \
 	} \
 
 template<typename T>

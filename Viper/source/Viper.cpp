@@ -26,6 +26,7 @@ void Viper::onStart()
 	}
 	modules["game"]->onStart();
 
+	set_atom(isInitialized, true, bool);
 	info("Initialization complete");
 };
 

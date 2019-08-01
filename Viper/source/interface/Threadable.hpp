@@ -2,7 +2,7 @@
 #include <atomic>
 #include <thread>
 #include "../Defines.hpp"
-#include "log/Logger.hpp"
+#include "../log/Logger.hpp"
 
 class Threadable
 {
@@ -10,7 +10,7 @@ public:
 	std::thread worker;
 	std::atomic_bool running = false;
 	bool sleep = true;
-	uint8 id = 999;
+	uint32 id = 999;
 
 	Threadable() { }
 	virtual ~Threadable() { };

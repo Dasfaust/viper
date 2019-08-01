@@ -2,31 +2,39 @@
 #include "interface/Modular.hpp"
 #include "world/World.hpp"
 #include "net/NetServer.hpp"
+#include "net/Packets.hpp"
+
+struct NetworkClient
+{
+	uid id;
+	time_val lastSeen;
+};
+
+class Telemetry : public Module
+{
+public:
+	void onTick() override;
+};
+
+class KeepAlive : public Module
+{
+	void onTick() override;
+};
 
 class Server : public Module, public Modular
 {
 public:
-	void onStart() override
-	{
-		auto wo = initModule<World>("world");
-		auto ns = initModule<NetServer>("net");
+	std::shared_ptr<World> wo;
+	std::shared_ptr<NetServer> ns;
+	flatmap(uid, NetworkClient) clients;
+	std::shared_ptr<PacketHandler<P0Telemetry>> p0Handler;
+	std::shared_ptr<Listener<P0Telemetry>> p0Listener;
 
-		for (auto&& kv : modules)
-		{
-			kv.second->onStart();
-		}
-	};
+	void onStart() override;
 
-	void onTick() override
-	{
-		tickModules();
-	};
+	void onDisconnect(uid client);
 
-	void onShutdown() override
-	{
-		for (auto&& kv : modules)
-		{
-			kv.second->onShutdown();
-		}
-	};
+	void onTick() override;
+
+	void onShutdown() override;
 };

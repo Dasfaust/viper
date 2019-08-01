@@ -6,6 +6,7 @@ class Viper : public Modular
 {
 public:
 	static std::atomic_bool running;
+	std::atomic_bool isInitialized = false;
 
 	Viper();
 	~Viper() = default;

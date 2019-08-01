@@ -9,12 +9,11 @@ public:
 	SOCKET listen;
 	fd_set set;
 	char buffer[4096];
-	TIMEVAL timeout;
 	sockaddr_in serverAddr;
 
 	void onStartAsync() override
 	{
-		timeout = { 0, 1000 };
+		sleep = false;
 
 		WSAData wsData;
 		if (WSAStartup(0x202, &wsData))
@@ -44,6 +43,11 @@ public:
 
 	void onTickAsync() override
 	{
+		if (!viper->isInitialized.load())
+		{
+			return;
+		}
+
 		PacketWrapper<std::string> wrapper;
 		while (outgoing.try_dequeue(wrapper))
 		{
@@ -51,7 +55,7 @@ public:
 			{
 				auto data = std::to_string(wrapper.id) + wrapper.packet;
 				int ok = sendto(listen, data.c_str(), (uint32)data.size() + 1, 0, (sockaddr*)&serverAddr, (int)sizeof(serverAddr));
-				debug("Client send: %d bytes, WSA: %d", ok, WSAGetLastError());
+				//debug("Client send: %d bytes, WSA: %d", ok, WSAGetLastError());
 			}
 		}
 

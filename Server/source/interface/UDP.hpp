@@ -1,17 +1,10 @@
 #pragma once
 #include "Defines.hpp"
-#include "interface/Module.hpp"
+#include "Viper.hpp"
 #include "interface/Threadable.hpp"
 #include "event/Events.hpp"
 #include "PacketFactory.hpp"
 #include "util/String.hpp"
-
-struct NetworkClient
-{
-	std::string address;
-	uint8 port;
-	std::string combined;
-};
 
 struct Packet : Event
 {
@@ -30,10 +23,10 @@ public:
 	InetAddress address;
 	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> incoming;
 	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> outgoing;
+	std::shared_ptr<Viper> viper;
+
 	flatmap(std::string, uid) clientIds;
 	flatmap(uid, InetAddress) clients;
-	bool isClient = false;
-	bool isClientConnected = false;
 
 	PacketWrapper<std::string> extract(char buffer[4096])
 	{

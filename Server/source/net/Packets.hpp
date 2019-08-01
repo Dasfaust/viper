@@ -2,9 +2,10 @@
 #include "../interface/PacketFactory.hpp"
 #include "../interface/UDP.hpp"
 
-struct P0Handshake : Packet
+struct P0Telemetry : Packet
 {
-	std::string key;
+	uint32 serverStatus = 0;
+	uint32 clientStatus = 0;
 
-	make_serializable(key);
+	make_serializable(CEREAL_NVP(serverStatus), CEREAL_NVP(clientStatus));
 };

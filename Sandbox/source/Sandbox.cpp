@@ -25,7 +25,7 @@ int main()
 	auto th = vi->initModule<Threads>("threads");
 	auto lo = vi->initModule<Logging>("logging");
 	auto ev = vi->initModule<Events>("events");
-	auto sr = vi->initModule<Server>("server");
+	//auto sr = vi->initModule<Server>("server");
 	auto cl = vi->initModule<Client>("client");
 	auto ga = vi->initModule<Sandbox>("game");
 	vi->start();
