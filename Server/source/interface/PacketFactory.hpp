@@ -9,10 +9,17 @@
 		ar(__VA_ARGS__); \
 	} \
 
+enum PACKET_TYPE
+{
+	UDP = 0,
+	TCP = 1
+};
+
 template<typename T>
 struct PacketWrapper
 {
 	uint32 id;
+	PACKET_TYPE type;
 	T packet;
 	std::vector<uid> clients;
 };
@@ -31,9 +38,9 @@ class PacketHandler : public PacketHandlerBase, public EventHandler<T>
 public:
 	moodycamel::ConcurrentQueue<PacketWrapper<T>> outgoing;
 
-	void enqueue(T& packet, std::vector<uid> clients = { })
+	void enqueue(PACKET_TYPE type, T& packet, std::vector<uid> clients = { })
 	{
-		PacketWrapper<T> wrap = { id, packet, clients };
+		PacketWrapper<T> wrap = { id, type, packet, clients };
 		outgoing.enqueue(wrap);
 	}
 };
@@ -60,6 +67,7 @@ public:
 				cereal::JSONOutputArchive archive(ss);
 				out.packet.serialize(archive);
 				wrap.id = self->id;
+				wrap.type = out.type;
 				wrap.packet = ss.str() + "}"; // TODO: y tho?
 				wrap.clients = out.clients;
 			}
@@ -81,7 +89,7 @@ public:
 		return handler;
 	};
 
-	void packAll(moodycamel::ConcurrentQueue<PacketWrapper<std::string>>& queue)
+	void packAll(moodycamel::ConcurrentQueue<PacketWrapper<std::string>>& udp, moodycamel::ConcurrentQueue<PacketWrapper<std::string>>& tcp)
 	{
 		for (auto&& kv : handlers)
 		{
@@ -91,7 +99,14 @@ public:
 				auto wrapper = kv.second->pack(kv.second);
 				if (!wrapper.packet.empty())
 				{
-					queue.enqueue(wrapper);
+					if (wrapper.type == UDP)
+					{
+						udp.enqueue(wrapper);
+					}
+					else
+					{
+						tcp.enqueue(wrapper);
+					}
 				}
 				else
 				{

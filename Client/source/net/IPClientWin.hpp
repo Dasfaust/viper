@@ -1,9 +1,9 @@
 #pragma once
-#include "interface/UDP.hpp"
+#include "interface/IPHandler.hpp"
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 
-class UDPClientWin : public UDP
+class IPClientWin : public IPHandler
 {
 public:
 	SOCKET listen;
@@ -32,7 +32,7 @@ public:
 		setsockopt(listen, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 
 		serverAddr.sin_family = AF_INET;
-		serverAddr.sin_port = htons(address.port);
+		serverAddr.sin_port = htons(address.udpPort);
 		inet_pton(AF_INET, address.address.c_str(), &serverAddr.sin_addr);
 
 		FD_ZERO(&set);
@@ -49,7 +49,7 @@ public:
 		}
 
 		PacketWrapper<std::string> wrapper;
-		while (outgoing.try_dequeue(wrapper))
+		while (udpOutgoing  .try_dequeue(wrapper))
 		{
 			if (wrapper.clients.empty())
 			{

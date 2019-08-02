@@ -1,9 +1,9 @@
 #pragma once
-#include "../interface/IPManager.hpp"
+#include "../interface/IPHandler.hpp"
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 
-class WinIPManager : public IPManager
+class IPServerWin : public IPHandler
 {
 public:
 	SOCKET listen;
@@ -92,7 +92,7 @@ public:
 		}
 
 		PacketWrapper<std::string> wrapper;
-		while (outgoing.try_dequeue(wrapper))
+		while (udpOutgoing.try_dequeue(wrapper))
 		{
 			if (wrapper.clients.empty())
 			{

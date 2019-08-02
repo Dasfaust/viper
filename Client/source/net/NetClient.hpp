@@ -3,13 +3,13 @@
 #include "thread/Threads.hpp"
 
 #ifdef VIPER_WIN64
-#include "UDPClientWin.hpp"
+#include "IPClientWin.hpp"
 #endif
 
 class NetClient : public Module, public PacketFactory
 {
 public:
-	std::shared_ptr<UDP> udp;
+	std::shared_ptr<IPHandler> ip;
 	std::shared_ptr<PacketHandler<P0Telemetry>> p0Handler;
 	std::shared_ptr<Listener<P0Telemetry>> p0Listener;
 
@@ -22,27 +22,27 @@ public:
 			if (packet.serverStatus == 1)
 			{
 				packet.clientStatus = 1;
-				nc->p0Handler->enqueue(packet);
+				nc->p0Handler->enqueue(UDP, packet);
 			}
 		}, { getParent<Modular>()->getModule("net") });
 
 #ifdef VIPER_WIN64
-		udp = std::make_shared<UDPClientWin>();
+		ip = std::make_shared<IPClientWin>();
 #endif
-		udp->viper = getParent<Module>()->getParent<Viper>();
-		udp->address = { "127.0.0.1", 481516 };
-		getParent<Module>()->getParent<Modular>()->getModule<Threads>("threads")->watch(udp);
-		udp->start();
+		ip->viper = getParent<Module>()->getParent<Viper>();
+		ip->address = { "127.0.0.1", 481516 };
+		getParent<Module>()->getParent<Modular>()->getModule<Threads>("threads")->watch(ip);
+		ip->start();
 
 		P0Telemetry tel;
 		tel.clientStatus = 1;
-		p0Handler->enqueue(tel);
+		p0Handler->enqueue(UDP, tel);
 	};
 
 	void onTick() override
 	{
 		p0Listener->poll();
-		packAll(udp->outgoing);
-		unpackAll(udp->incoming);
+		packAll(ip->udpOutgoing, ip->tcpOutgoing);
+		unpackAll(ip->incoming);
 	};
 };

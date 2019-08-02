@@ -1,6 +1,11 @@
 #pragma once
 #include "../interface/PacketFactory.hpp"
-#include "../interface/UDP.hpp"
+#include "../interface/IPHandler.hpp"
+
+struct Packet : Event
+{
+	uid client;
+};
 
 struct P0Telemetry : Packet
 {

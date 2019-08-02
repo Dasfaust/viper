@@ -7,7 +7,7 @@ void Telemetry::onTick()
 	{
 		P0Telemetry tel;
 		tel.serverStatus = 1;
-		server->p0Handler->enqueue(tel, { kv.first });
+		server->p0Handler->enqueue(UDP, tel, { kv.first });
 	}
 }
 

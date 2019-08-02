@@ -6,23 +6,20 @@
 #include "PacketFactory.hpp"
 #include "util/String.hpp"
 
-struct Packet : Event
-{
-	uid client;
-};
-
 struct InetAddress
 {
 	std::string address;
-	uint32 port;
+	uint32 udpPort;
+	uint32 tcpPort;
 };
 
-class UDP : public Module, public Threadable
+class IPHandler : public Module, public Threadable
 {
 public:
 	InetAddress address;
 	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> incoming;
-	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> outgoing;
+	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> udpOutgoing;
+	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> tcpOutgoing;
 	std::shared_ptr<Viper> viper;
 
 	flatmap(std::string, uid) clientIds;
