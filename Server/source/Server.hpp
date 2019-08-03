@@ -7,18 +7,8 @@
 struct NetworkClient
 {
 	uid id;
-	time_val lastSeen;
-};
-
-class Telemetry : public Module
-{
-public:
-	void onTick() override;
-};
-
-class KeepAlive : public Module
-{
-	void onTick() override;
+	InetAddress address;
+	std::string nickname;
 };
 
 class Server : public Module, public Modular
@@ -26,13 +16,13 @@ class Server : public Module, public Modular
 public:
 	std::shared_ptr<World> wo;
 	std::shared_ptr<NetServer> ns;
+	std::shared_ptr<Listener<ClientConnectedEvent>> clientConnected;
+	std::shared_ptr<Listener<ClientDisconnectedEvent>> clientDisconnected;
 	flatmap(uid, NetworkClient) clients;
-	std::shared_ptr<PacketHandler<P0Telemetry>> p0Handler;
-	std::shared_ptr<Listener<P0Telemetry>> p0Listener;
+	std::shared_ptr<PacketHandler<P1Nickname>> p1Handler;
+	std::shared_ptr<Listener<P1Nickname>> p1Listener;
 
 	void onStart() override;
-
-	void onDisconnect(uid client);
 
 	void onTick() override;
 

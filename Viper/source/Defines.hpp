@@ -17,5 +17,5 @@ typedef boost::uuids::uuid uid;
 #define umap(x, y) std::unordered_map<x, y>
 #define tnowms() static_cast<time_val>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count())
 #define tnowns() static_cast<time_val>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count())
-#define set_atom(x, y, z) z __expected = y; while (!x.compare_exchange_weak(__expected, y))
+#define set_atom(x, y, z) z __x = y; while (!x.compare_exchange_strong(__x, y))
 #define timesince(x) (tnowns() - x) / 1000000.0

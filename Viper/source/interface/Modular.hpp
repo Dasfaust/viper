@@ -45,7 +45,7 @@ public:
 			kv.second->onTickEnd();
 		}
 
-		dt = (tnowns() - lastTickNs) / 1000000.0;
+		dt = timesince(lastTickNs);
 		lastTickNs = tnowns();
 	};
 

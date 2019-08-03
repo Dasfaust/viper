@@ -7,10 +7,17 @@ struct Packet : Event
 	uid client;
 };
 
-struct P0Telemetry : Packet
+struct P0Handshake : Packet
 {
-	uint32 serverStatus = 0;
-	uint32 clientStatus = 0;
+	uint32 token;
+	uint32 status;
 
-	make_serializable(CEREAL_NVP(serverStatus), CEREAL_NVP(clientStatus));
+	make_serializable(CEREAL_NVP(token), CEREAL_NVP(status));
+};
+
+struct P1Nickname : Packet
+{
+	std::string name;
+
+	make_serializable(CEREAL_NVP(name));
 };

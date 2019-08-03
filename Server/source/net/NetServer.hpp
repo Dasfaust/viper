@@ -16,14 +16,16 @@ public:
 		ip = std::make_shared<IPServerWin>();
 #endif
 		ip->viper = getParent<Module>()->getParent<Viper>();
-		ip->address = { "", 481516 };
+		ip->factory = shared_from_this();
+		ip->address = { "", 48151, 62342 };
 		getParent<Module>()->getParent<Modular>()->getModule<Threads>("threads")->watch(ip);
+		ip->onStart();
 		ip->start();
 	};
 
 	void onTick() override
 	{
-		packAll(ip->udpOutgoing, ip->tcpOutgoing);
+		packAll(ip->outgoing);
 		unpackAll(ip->incoming);
 	};
 };

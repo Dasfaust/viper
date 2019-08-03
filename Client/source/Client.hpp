@@ -5,26 +5,14 @@
 class Client : public Module, public Modular
 {
 public:
-	void onStart() override
-	{
-		auto nc = initModule<NetClient>("net");
+	std::shared_ptr<Listener<ClientConnectedEvent>> clientConnected;
+	std::shared_ptr<Listener<ClientDisconnectedEvent>> clientDisconnected;
+	std::shared_ptr<PacketHandler<P1Nickname>> p1Handler;
+	std::shared_ptr<Listener<P1Nickname>> p1Listener;
 
-		for (auto&& kv : modules)
-		{
-			kv.second->onStart();
-		}
-	};
+	void onStart() override;
 
-	void onTick() override
-	{
-		tickModules();
-	};
+	void onTick() override;
 
-	void onShutdown() override
-	{
-		for (auto&& kv : modules)
-		{
-			kv.second->onShutdown();
-		}
-	};
+	void onShutdown() override;
 };

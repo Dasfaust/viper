@@ -45,7 +45,7 @@ public:
 	}
 };
 
-class PacketFactory
+class PacketFactory : public std::enable_shared_from_this<PacketFactory>
 {
 public:
 	flatmap(uint32, std::shared_ptr<PacketHandlerBase>) handlers;
@@ -89,7 +89,7 @@ public:
 		return handler;
 	};
 
-	void packAll(moodycamel::ConcurrentQueue<PacketWrapper<std::string>>& udp, moodycamel::ConcurrentQueue<PacketWrapper<std::string>>& tcp)
+	void packAll(moodycamel::ConcurrentQueue<PacketWrapper<std::string>>& queue)
 	{
 		for (auto&& kv : handlers)
 		{
@@ -99,14 +99,7 @@ public:
 				auto wrapper = kv.second->pack(kv.second);
 				if (!wrapper.packet.empty())
 				{
-					if (wrapper.type == UDP)
-					{
-						udp.enqueue(wrapper);
-					}
-					else
-					{
-						tcp.enqueue(wrapper);
-					}
+					queue.enqueue(wrapper);
 				}
 				else
 				{

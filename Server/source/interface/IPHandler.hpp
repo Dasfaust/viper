@@ -5,25 +5,43 @@
 #include "event/Events.hpp"
 #include "PacketFactory.hpp"
 #include "util/String.hpp"
+#include "../net/Packets.hpp"
 
 struct InetAddress
 {
 	std::string address;
 	uint32 udpPort;
 	uint32 tcpPort;
+	uint32 socket;
+};
+
+struct ClientConnectedEvent : Event
+{
+	uid id;
+	InetAddress address;
+};
+
+struct ClientDisconnectedEvent : Event
+{
+	uid id;
+	std::string reason;
 };
 
 class IPHandler : public Module, public Threadable
 {
 public:
 	InetAddress address;
+	std::shared_ptr<PacketFactory> factory;
 	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> incoming;
-	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> udpOutgoing;
-	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> tcpOutgoing;
+	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> outgoing;
 	std::shared_ptr<Viper> viper;
 
-	flatmap(std::string, uid) clientIds;
+	flatmap(uint32, uid) tokens;
 	flatmap(uid, InetAddress) clients;
+
+	std::shared_ptr<PacketHandler<P0Handshake>> p0Handler;
+	std::shared_ptr<EventHandler<ClientConnectedEvent>> connectEvent;
+	std::shared_ptr<EventHandler<ClientDisconnectedEvent>> disconnectEvent;
 
 	PacketWrapper<std::string> extract(char buffer[4096])
 	{
