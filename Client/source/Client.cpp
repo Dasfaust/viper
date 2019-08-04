@@ -18,7 +18,7 @@ void Client::onStart()
 	auto ccHandler = getParent<Modular>()->getModule<Events>("events")->getModule<EventHandler<ClientConnectedEvent>>("client_clientconnectedevent");
 	clientConnected = ccHandler->listen(0, [](ClientConnectedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
 	{
-		debug("Connected to server");
+		info("Connected to server");
 		auto cl = std::dynamic_pointer_cast<Client>(mods[0]);
 		P1Nickname nick;
 		nick.name = "dasfaust";
@@ -28,7 +28,7 @@ void Client::onStart()
 	auto cdHandler = getParent<Modular>()->getModule<Events>("events")->getModule<EventHandler<ClientDisconnectedEvent>>("client_clientdisconnectedevent");
 	clientDisconnected = cdHandler->listen(0, [](ClientDisconnectedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
 	{
-		debug("Disconnected from server: %s", ev.reason.c_str());
+		warn("Disconnected from server: %s", ev.reason.c_str());
 	}, {});
 };
 

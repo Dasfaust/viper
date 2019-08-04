@@ -23,7 +23,7 @@ public:
 			auto ip = std::dynamic_pointer_cast<IPClientWin>(mods[0]);
 			if (packet.status == 0)
 			{
-				ip->p0Handler->enqueue(UDP, packet, { boost::uuids::nil_uuid() });
+				ip->p0Handler->enqueue(UDP, packet, { });
 			}
 			else
 			{

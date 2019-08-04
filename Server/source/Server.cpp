@@ -22,7 +22,7 @@ void Server::onStart()
 	auto ccHandler = getParent<Modular>()->getModule<Events>("events")->getModule<EventHandler<ClientConnectedEvent>>("server_clientconnectedevent");
 	clientConnected = ccHandler->listen(0, [](ClientConnectedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
 	{
-		debug("Client connected: %s", boost::lexical_cast<std::string>(ev.id).c_str());
+		info("Client connected: %s", boost::lexical_cast<std::string>(ev.id).c_str());
 		auto sr = std::dynamic_pointer_cast<Server>(mods[0]);
 		sr->clients[ev.id] = { ev.id, ev.address };
 	}, { getParent<Modular>()->getModule("server") });
@@ -30,7 +30,7 @@ void Server::onStart()
 	auto cdHandler = getParent<Modular>()->getModule<Events>("events")->getModule<EventHandler<ClientDisconnectedEvent>>("server_clientdisconnectedevent");
 	clientDisconnected = cdHandler->listen(0, [](ClientDisconnectedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
 	{
-		debug("%s disconnected: %s", boost::lexical_cast<std::string>(ev.id).c_str(), ev.reason.c_str());
+		info("%s disconnected: %s", boost::lexical_cast<std::string>(ev.id).c_str(), ev.reason.c_str());
 		auto sr = std::dynamic_pointer_cast<Server>(mods[0]);
 		sr->clients.erase(ev.id);
 	}, { getParent<Modular>()->getModule("server") });
