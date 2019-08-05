@@ -30,6 +30,7 @@ public:
 	static void _register_methods()
 	{
 		register_method("method", &SimpleClass::method);
+		register_method("test_void_method", &SimpleClass::test_void_method);
 
 		/**
 		 * How to register exports like gdscript

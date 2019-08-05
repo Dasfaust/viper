@@ -244,7 +244,7 @@ project "VGD"
     language "C++"
     cppdialect "C++17"
 
-    targetdir("bin/" .. outputdir .. "/%{prj.name}")
+    targetdir("%{prj.name}/vgd/bin/" .. outputdir)
     objdir("build/" .. outputdir .. "/%{prj.name}")
 
     files

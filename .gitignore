@@ -269,3 +269,4 @@ vendor/
 *.vcxproj
 
 godot/
+.import/
