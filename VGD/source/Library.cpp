@@ -1,63 +1,74 @@
 #include <Godot.hpp>
-#include <Reference.hpp>
+#include <MainLoop.hpp>
+#include <Node.hpp>
+#include <SceneTree.hpp>
+#include "Viper.hpp"
+#include "event/Events.hpp"
+#include "log/Logger.hpp"
+#include "log/Logging.hpp"
+#include "Server.hpp"
+#include "Client.hpp"
 
 using namespace godot;
 
-class SimpleClass : public Reference
+inline void pollViperLogger()
 {
-	GODOT_CLASS(SimpleClass, Reference);
+	viper::pollLogger([](std::string msg)
+	{
+		Godot::print(msg.c_str());
+	});
+};
+
+class Sandbox : public Module
+{
 public:
-	SimpleClass()
-	{ }
+};
 
-	/* _init must exist as it is called by Godot */
+class ViperNode : public Node
+{
+	GODOT_CLASS(ViperNode, Node);
+public:
+	std::shared_ptr<Viper> vi;
+
 	void _init()
-	{ }
-
-	void test_void_method()
 	{
-		Godot::print("This is test");
-	}
+		vi = std::make_shared<Viper>();
+		auto th = vi->initModule<Threads>("threads");
+		auto ev = vi->initModule<Events>("events");
+		auto sr = vi->initModule<Server>("server");
+		auto cl = vi->initModule<Client>("client");
+		auto ga = vi->initModule<Sandbox>("game");
+		vi->onStart();
+	};
 
-	Variant method(Variant arg)
+	void _ready()
 	{
-		Variant ret;
-		ret = arg;
+		//get_tree()->set_auto_accept_quit(false);
+	};
 
-		return ret;
-	}
+	void _process(float delta)
+	{
+		pollViperLogger();
+		vi->tickModules();
+	};
+
+	void _notification(int what)
+	{
+		// TODO: not sure if this works
+		if (what == MainLoop::NOTIFICATION_WM_QUIT_REQUEST || what == MainLoop::NOTIFICATION_WM_GO_BACK_REQUEST)
+		{
+			vi->onShutdown();
+			pollViperLogger();
+			get_tree()->quit();
+		}
+	};
 
 	static void _register_methods()
 	{
-		register_method("method", &SimpleClass::method);
-		register_method("test_void_method", &SimpleClass::test_void_method);
-
-		/**
-		 * How to register exports like gdscript
-		 * export var _name = "SimpleClass"
-		 **/
-		register_property<SimpleClass, String>("base/name", &SimpleClass::_name, String("SimpleClass"));
-
-		/* or alternatively with getter and setter methods */
-		register_property<SimpleClass, int>("base/value", &SimpleClass::set_value, &SimpleClass::get_value, 0);
-
-		/** For registering signal **/
-		// register_signal<SimpleClass>("signal_name");
-		// register_signal<SimpleClass>("signal_name", "string_argument", GODOT_VARIANT_TYPE_STRING)
-	}
-
-	String _name;
-	int _value;
-
-	void set_value(int p_value)
-	{
-		_value = p_value;
-	}
-
-	int get_value() const
-	{
-		return _value;
-	}
+		register_method("_ready", &ViperNode::_ready);
+		register_method("_notification", &ViperNode::_notification);
+		register_method("_process", &ViperNode::_process);
+	};
 };
 
 extern "C" void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options* o)
@@ -74,5 +85,5 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void* handle)
 {
 	godot::Godot::nativescript_init(handle);
 
-	godot::register_class<SimpleClass>();
+	godot::register_class<ViperNode>();
 }

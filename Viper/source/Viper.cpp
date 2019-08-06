@@ -38,8 +38,6 @@ void Viper::onShutdown()
 	{
 		kv.second->onShutdown();
 	}
-
-	viper::pollLogger();
 };
 
 void Viper::start()
@@ -52,6 +50,7 @@ void Viper::start()
 	}
 
 	onShutdown();
+	viper::pollLogger();
 
 	viper::platform::pauseSystem();
 };
