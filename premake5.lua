@@ -45,6 +45,7 @@ project "Viper"
 	filter "system:windows"
 		systemversion "latest"
 		flags { "MultiProcessorCompile" }
+        disablewarnings { "4996" }
 		libdirs { "vendor/lib/win64" }
 		links { "lua53" }
 		defines "VIPER_WIN64"
@@ -101,6 +102,7 @@ project "Server"
 	filter "system:windows"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
+        disablewarnings { "4996" }
 		libdirs { "vendor/lib/win64" }
         links { "ws2_32", "lua53" }
 		defines "VIPER_WIN64"
@@ -158,6 +160,7 @@ project "Client"
 	filter "system:windows"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
+        disablewarnings { "4996" }
 		libdirs { "vendor/lib/win64" }
         links { "ws2_32", "lua53" }
 		defines "VIPER_WIN64"
@@ -222,6 +225,7 @@ project "Sandbox"
 	filter "system:windows"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
+        disablewarnings { "4996" }
 		libdirs { "vendor/lib/win64" }
         links { "ws2_32", "lua53" }
 		defines "VIPER_WIN64"
@@ -237,73 +241,3 @@ project "Sandbox"
     filter "configurations:dist"
         defines "VIPER_DIST"
         optimize "on"
-
-project "VGD"
-    location "VGD"
-    kind "SharedLib"
-    language "C++"
-    cppdialect "C++17"
-
-    targetdir("%{prj.name}/vgd/bin/" .. outputdir)
-    objdir("build/" .. outputdir .. "/%{prj.name}")
-
-    files
-    {
-        "%{prj.name}/source/**.h",
-        "%{prj.name}/source/**.hpp",
-        "%{prj.name}/source/**.c",
-        "%{prj.name}/source/**.cpp"
-    }
-
-    includedirs
-    {
-        "Viper/source",
-        "Server/source",
-        "Client/source",
-        "vendor/include",
-		"submodules/concurrentqueue",
-        "submodules/cereal/include",
-        "submodules/godot-cpp/include",
-        "submodules/godot-cpp/include/core",
-        "submodules/godot-cpp/include/gen",
-        "submodules/godot-cpp/godot_headers"
-    }
-
-    libdirs
-    {
-        "submodules/godot-cpp/bin"
-    }
-
-    links
-    {
-        "Viper",
-        "Server",
-        "Client"
-    }
-
-    filter "system:linux"
-        libdirs { "vendor/lib/lin64" }
-        linkoptions { "-Wl,-rpath=\\$$ORIGIN/lin64" }
-        defines "VIPER_LIN64"
-
-	filter "system:windows"
-        systemversion "latest"
-		flags { "MultiProcessorCompile" }
-		libdirs { "vendor/lib/win64" }
-        links { "ws2_32", "lua53" }
-		defines "VIPER_WIN64"
-
-    filter "configurations:debug"
-        defines "VIPER_DEBUG"
-        symbols "on"
-        links { "libgodot-cpp.windows.debug.64" }
-
-    filter "configurations:release"
-        defines "VIPER_RELEASE"
-        optimize "on"
-        links { "libgodot-cpp.windows.release.64" }
-
-    filter "configurations:dist"
-        defines "VIPER_DIST"
-        optimize "on"
-        links { "libgodot-cpp.windows.release.64" }
