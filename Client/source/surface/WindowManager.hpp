@@ -52,10 +52,6 @@ class WindowManager : public Modular, public Module
 public:
 	int width = 1280;
 	int height = 720;
-	double mouseX = 0.0;
-	double mouseY = 0.0;
-	double scrollX = 0.0;
-	double scrollY = 0.0;
 	GLFWwindow* window;
 	std::shared_ptr<EventHandler<WindowCloseRequestedEvent>> closeEvent;
 	Future<WindowCloseRequestedEvent> closeFuture;

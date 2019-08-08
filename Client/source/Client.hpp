@@ -2,6 +2,7 @@
 #include "interface/Modular.hpp"
 #include "net/NetClient.hpp"
 #include "surface/WindowManager.hpp"
+#include "input/InputManager.hpp"
 
 class Client : public Module, public Modular
 {
@@ -13,6 +14,8 @@ public:
 	std::shared_ptr<PacketHandler<P1Nickname>> p1Handler;
 	std::shared_ptr<Listener<P1Nickname>> p1Listener;
 	std::shared_ptr<PacketHandler<P2ClientTelemetry>> p2Handler;
+
+	std::shared_ptr<InputManager> in;
 
 	void onStart() override;
 

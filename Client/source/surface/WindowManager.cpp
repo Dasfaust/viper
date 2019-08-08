@@ -102,8 +102,6 @@ void WindowManager::onStart()
 	glfwSetScrollCallback(window, [](GLFWwindow* win, double x, double y)
 	{
 		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
-		man->scrollX = x;
-		man->scrollY = y;
 		ScrollEvent ev;
 		ev.x = x;
 		ev.y = y;
@@ -113,8 +111,6 @@ void WindowManager::onStart()
 	glfwSetCursorPosCallback(window, [](GLFWwindow* win, double x, double y)
 	{
 		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
-		man->mouseX = x;
-		man->mouseY = y;
 		MouseMoveEvent ev;
 		ev.x = x;
 		ev.y = y;

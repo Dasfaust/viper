@@ -11,10 +11,10 @@ void Telemetry::onTick()
 	if (cl->isConnected.load())
 	{
 		P2ClientTelemetry packet;
-		packet.mouseX = (float)wm->mouseX;
-		packet.mouseY = (float)wm->mouseY;
-		packet.scrollX = (float)wm->scrollX;
-		packet.scrollY = (float)wm->scrollY;
+		packet.mouseX = cl->in->mousePos.x;
+		packet.mouseY = cl->in->mousePos.y;
+		packet.scrollX = cl->in->scrollPos.x;
+		packet.scrollY = cl->in->scrollPos.y;
 		cl->p2Handler->enqueue(UDP, packet);
 	}
 };
@@ -29,6 +29,8 @@ void Client::onStart()
 	{
 		kv.second->onStart();
 	}
+	in = initModule<InputManager>("input");
+	in->onStart();
 
 	p1Handler = nc->registerPacket<P1Nickname>(1);
 	p1Listener = p1Handler->listen(0, [](P1Nickname& packet, std::vector<std::shared_ptr<Module>> mods)
