@@ -5,14 +5,12 @@ template<typename T>
 class Future
 {
 public:
-	T& tryGet()
+	bool tryGet(T& get)
 	{
-		T get;
-		queue.try_dequeue(get);
-		return t;
+		return queue.try_dequeue(get);
 	}
 
-	T& get()
+	T get()
 	{
 		T get;
 		while(!queue.try_dequeue(get)) { }

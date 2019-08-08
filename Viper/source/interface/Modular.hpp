@@ -62,7 +62,7 @@ public:
 	template<typename T>
 	inline std::shared_ptr<T> getModule(const std::string& name)
 	{
- 		return std::reinterpret_pointer_cast<T>(modules[name]);
+ 		return std::dynamic_pointer_cast<T>(modules[name]);
 	};
 
 	inline std::shared_ptr<Module> getModule(const std::string& name)

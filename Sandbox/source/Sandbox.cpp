@@ -8,6 +8,11 @@
 class Sandbox : public Module
 {
 public:
+	Sandbox()
+	{
+		friendlyName = "Sandbox";
+	};
+
 	void onStart() override
 	{
 		

@@ -38,6 +38,7 @@ public:
 
 	flatmap(uint32, uid) tokens;
 	flatmap(uid, InetAddress) clients;
+	flatmap(std::string, uid) clientHosts;
 
 	std::shared_ptr<PacketHandler<P0Handshake>> p0Handler;
 	std::shared_ptr<EventHandler<ClientConnectedEvent>> connectEvent;

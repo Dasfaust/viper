@@ -34,6 +34,16 @@ void Server::onStart()
 		auto sr = std::dynamic_pointer_cast<Server>(mods[0]);
 		sr->clients.erase(ev.id);
 	}, { getParent<Modular>()->getModule("server") });
+
+	p2Handler = ns->registerPacket<P2ClientTelemetry>(2);
+	p2Listener = p2Handler->listen(0, [](P2ClientTelemetry& packet, std::vector<std::shared_ptr<Module>> mods)
+	{
+		auto sr = std::dynamic_pointer_cast<Server>(mods[0]);
+		sr->clients[packet.client].mouseX = packet.mouseX;
+		sr->clients[packet.client].mouseY = packet.mouseY;
+		sr->clients[packet.client].scrollX = packet.scrollX;
+		sr->clients[packet.client].scrollY = packet.scrollY;
+	}, { getParent<Modular>()->getModule("server") });
 };
 
 void Server::onTick()
@@ -41,6 +51,7 @@ void Server::onTick()
 	clientConnected->poll();
 	clientDisconnected->poll();
 	p1Listener->poll();
+	p2Listener->poll();
 	tickModules();
 };
 

@@ -21,3 +21,13 @@ struct P1Nickname : Packet
 
 	make_serializable(CEREAL_NVP(name));
 };
+
+struct P2ClientTelemetry : Packet
+{
+	float mouseX;
+	float mouseY;
+	float scrollX;
+	float scrollY;
+
+	make_serializable(CEREAL_NVP(mouseX), CEREAL_NVP(mouseY), CEREAL_NVP(scrollX), CEREAL_NVP(scrollY));
+};

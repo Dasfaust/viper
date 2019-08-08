@@ -12,6 +12,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 include "submodules/concurrentqueue"
 include "submodules/cereal"
+include "submodules/glfw"
 
 project "Viper"
     location "Viper"
@@ -46,8 +47,6 @@ project "Viper"
 		systemversion "latest"
 		flags { "MultiProcessorCompile" }
         disablewarnings { "4996" }
-		libdirs { "vendor/lib/win64" }
-		links { "lua53" }
 		defines "VIPER_WIN64"
 
     filter "configurations:debug"
@@ -89,11 +88,6 @@ project "Server"
         "submodules/cereal/include"
     }
 
-    links
-    {
-        "Viper"
-    }
-
     filter "system:linux"
         libdirs { "vendor/lib/lin64" }
         linkoptions { "-Wl,-rpath=\\$$ORIGIN/lin64" }
@@ -103,8 +97,6 @@ project "Server"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
         disablewarnings { "4996" }
-		libdirs { "vendor/lib/win64" }
-        links { "ws2_32", "lua53" }
 		defines "VIPER_WIN64"
 
     filter "configurations:debug"
@@ -143,13 +135,8 @@ project "Client"
         "Server/source",
         "vendor/include",
 		"submodules/concurrentqueue",
-        "submodules/cereal/include"
-    }
-
-    links
-    {
-        "Viper",
-        "Server"
+        "submodules/cereal/include",
+        "submodules/glfw/include"
     }
 
     filter "system:linux"
@@ -161,8 +148,7 @@ project "Client"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
         disablewarnings { "4996" }
-		libdirs { "vendor/lib/win64" }
-        links { "ws2_32", "lua53" }
+        includedirs { "C:/VulkanSDK/1.1.114.0/Include" }
 		defines "VIPER_WIN64"
 
     filter "configurations:debug"
@@ -202,14 +188,16 @@ project "Sandbox"
         "Client/source",
         "vendor/include",
 		"submodules/concurrentqueue",
-        "submodules/cereal/include"
+        "submodules/cereal/include",
+        "submodules/glfw/include"
     }
 
     links
     {
         "Viper",
         "Server",
-        "Client"
+        "Client",
+        "glfw"
     }
 
 	postbuildcommands
@@ -226,8 +214,9 @@ project "Sandbox"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
         disablewarnings { "4996" }
-		libdirs { "vendor/lib/win64" }
-        links { "ws2_32", "lua53" }
+		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.114.0/Lib" }
+        includedirs { "C:/VulkanSDK/1.1.114.0/Include" }
+        links { "vulkan-1", "ws2_32", "lua53" }
 		defines "VIPER_WIN64"
 
     filter "configurations:debug"

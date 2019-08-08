@@ -1,5 +1,6 @@
 #pragma once
 #include "thread/Threads.hpp"
+#include "Viper.hpp"
 
 #ifdef VIPER_WIN64
 #include "IPClientWin.hpp"

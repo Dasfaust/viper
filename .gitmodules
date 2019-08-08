@@ -7,3 +7,6 @@
 [submodule "submodules/godot-cpp"]
 	path = submodules/godot-cpp
 	url = https://github.com/Dasfaust/godot-cpp
+[submodule "submodules/glfw"]
+	path = submodules/glfw
+	url = https://github.com/Dasfaust/glfw

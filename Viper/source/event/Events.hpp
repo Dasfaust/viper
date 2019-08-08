@@ -11,11 +11,19 @@ struct Event
 };
 
 template<typename T>
+struct EventWrapper
+{
+	T event;
+	Future<T>* future;
+};
+
+template<typename T>
 class Listener
 {
 public:
 	uint8 position;
 	moodycamel::ConcurrentQueue<T> events;
+	moodycamel::ConcurrentQueue<EventWrapper<T>> eventFutures;
 	std::vector<std::shared_ptr<Module>> mods;
 	void(*onEvent)(T&, std::vector<std::shared_ptr<Module>>);
 	std::shared_ptr<Listener<T>> next;
@@ -37,6 +45,21 @@ public:
 			if (!ev.cancelled && next != 0)
 			{
 				next->events.enqueue(ev);
+			}
+		}
+
+		EventWrapper<T> ew;
+		while (eventFutures.try_dequeue(ew))
+		{
+			onEvent(ew.event, mods);
+
+			if (!ew.event.cancelled && next != 0)
+			{
+				next->eventFutures.enqueue(ew);
+			}
+			else
+			{
+				ew.future->post(ew.event);
 			}
 		}
 	};
@@ -80,6 +103,18 @@ public:
 		if (!listeners.empty())
 		{
 			listeners.begin()->second->events.enqueue(ev);
+		}
+	};
+
+	void fire(T ev, Future<T>* future)
+	{
+		if (!listeners.empty())
+		{
+			listeners.begin()->second->eventFutures.enqueue({ ev, future });
+		}
+		else
+		{
+			future->post(ev);
 		}
 	};
 };

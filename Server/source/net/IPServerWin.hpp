@@ -97,6 +97,7 @@ public:
 			ZeroMemory(&clientIp, 256);
 			inet_ntop(AF_INET, &clientAddr.sin_addr, clientIp, 256);
 			uint32 clientPort = ntohs(clientAddr.sin_port);
+			std::string host = std::string(clientIp) + ":" + std::to_string(clientPort);
 
 			//debug("Server recv UDP (%s:%d): %s", clientIp, clientPort, buffer);
 
@@ -127,6 +128,8 @@ public:
 
 					shake.status = 1;
 					p0Handler->enqueue(TCP, shake, { id });
+
+					clientHosts[host] = id;
 				}
 				else
 				{
@@ -135,7 +138,20 @@ public:
 			}
 			else
 			{
-				warn("Wrong packet ID recieved");
+				if (clientHosts.count(host))
+				{
+					if (packet.packet.empty())
+					{
+						warn("Invalid packet structure: %s", buffer);
+						return;
+					}
+					packet.clients.push_back(clientHosts[host]);
+					incoming.enqueue(packet);
+				}
+				else
+				{
+					warn("Wrong packet ID recieved");
+				}
 			}
 		}
 
@@ -187,6 +203,7 @@ public:
 					ev.id = id;
 					ev.reason = "CONNECTION_CLOSED";
 					disconnectEvent->fire(ev);
+					clientHosts.erase(addr.address + ":" + std::to_string(addr.udpPort));
 					clients.erase(id);
 					tokens.erase((uint32)sock);
 				}

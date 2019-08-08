@@ -11,6 +11,7 @@ public:
 	std::shared_ptr<Modular> parent;
 	time_val modInterval;
 	time_val modAccumulator;
+	std::string friendlyName;
 
 	template<typename T>
 	std::shared_ptr<T> getParent()

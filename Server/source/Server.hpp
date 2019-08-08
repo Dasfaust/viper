@@ -9,6 +9,10 @@ struct NetworkClient
 	uid id;
 	InetAddress address;
 	std::string nickname;
+	float mouseX;
+	float mouseY;
+	float scrollX;
+	float scrollY;
 };
 
 class Server : public Module, public Modular
@@ -21,6 +25,8 @@ public:
 	flatmap(uid, NetworkClient) clients;
 	std::shared_ptr<PacketHandler<P1Nickname>> p1Handler;
 	std::shared_ptr<Listener<P1Nickname>> p1Listener;
+	std::shared_ptr<PacketHandler<P2ClientTelemetry>> p2Handler;
+	std::shared_ptr<Listener<P2ClientTelemetry>> p2Listener;
 
 	void onStart() override;
 
