@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include <unordered_map>
 #include <boost/container/flat_map.hpp>
 #include <chrono>

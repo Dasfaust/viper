@@ -221,12 +221,15 @@ project "Sandbox"
 
     filter "configurations:debug"
         defines "VIPER_DEBUG"
+        links { "shaderc_combined_debug" }
         symbols "on"
 
     filter "configurations:release"
         defines "VIPER_RELEASE"
+        links { "shaderc_combined" }
         optimize "on"
 
     filter "configurations:dist"
         defines "VIPER_DIST"
+        links { "shaderc_combined" }
         optimize "on"
