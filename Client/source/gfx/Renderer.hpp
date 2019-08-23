@@ -7,36 +7,17 @@ class Renderer : public Modular, public Module
 public:
 	std::shared_ptr<WindowManager> wm;
 	std::shared_ptr<VkGfx> gfx;
+	uint32 fps = 0;
 
-	void onStart() override
-	{
-		wm = getParent<Modular>()->getModule<WindowManager>("wm");
-		gfx = initModule<VkGfx>("gfx");
+	void onStart() override;
 
-		for (auto&& kv : modules)
-		{
-			kv.second->onStart();
-		}
-	};
+	void onTick() override;
 
-	void onTick() override
-	{
-		if (wm->width > 0 && wm->height > 0)
-		{
-			if (wm->width != gfx->swapchain.extent.width || wm->height != gfx->swapchain.extent.height)
-			{
-				gfx->recreateSwapchain();
-				return;
-			}
-			gfx->draw();
-		}
-	};
+	void onShutdown() override;
+};
 
-	void onShutdown() override
-	{
-		for (auto&& kv : modules)
-		{
-			kv.second->onShutdown();
-		}
-	};
+class FPSReporter : public Module
+{
+public:
+	void onTick() override;
 };
