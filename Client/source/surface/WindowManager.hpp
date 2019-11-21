@@ -55,6 +55,8 @@ struct MouseMoveEvent : Event
 class WindowManager : public Modular, public Module
 {
 public:
+	static bool vsync;
+
 	int width = 1280;
 	int height = 720;
 	GLFWwindow* window;

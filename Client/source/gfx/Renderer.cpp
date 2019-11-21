@@ -1,5 +1,6 @@
 #include "Renderer.hpp"
 #include "glad/glad.h"
+#include "imgui.h"
 
 class FPSModule : public Module
 {
@@ -28,6 +29,18 @@ void Renderer::onStart()
 	{
 		kv.second->onStart();
 	}
+
+	ui->addCommand("client_telemetry", [](std::vector<std::shared_ptr<Module>> mods)
+	{
+		auto renderer = std::reinterpret_pointer_cast<Renderer>(mods[0]);
+		bool active = true;
+		ImGui::Begin("Client", &active);
+		ImGui::Text("Vsync: %d", renderer->wm->vsync);
+		ImGui::Text("FPS: %d", renderer->fps);
+		ImGui::Text("Frametime: %.4f", renderer->dt);
+		ImGui::Text("Entities: %d", renderer->scene->container->heap.size() / renderer->scene->container->entitySize);
+		ImGui::End();
+	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
 	glViewport(0, 0, (int)wm->height, (int)wm->width);
 };
@@ -72,6 +85,7 @@ void Renderer::onTick()
 
 	dt = timesince(lastTickNs);
 	lastTickNs = tnowns();
+	fpsAccumulator++;
 };
 
 void Renderer::onShutdown()

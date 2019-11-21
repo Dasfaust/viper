@@ -2,7 +2,7 @@
 #include "interface/Modular.hpp"
 #include "Scene.hpp"
 #include "../surface/WindowManager.hpp"
-#include "../ui/UIManager.h"
+#include "../ui/UIManager.hpp"
 
 class Renderer : public Modular, public Module
 {

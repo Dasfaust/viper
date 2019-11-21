@@ -4,6 +4,8 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+bool WindowManager::vsync = false;
+
 void WindowManager::onStart()
 {
 	auto events = getParent<Module>()->getParent<Viper>()->getModule<Events>("events");
@@ -24,6 +26,10 @@ void WindowManager::onStart()
 		return;
 	}
 
+	if (!vsync)
+	{
+		glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
+	}
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -157,7 +163,14 @@ void WindowManager::onTickBegin()
 
 void WindowManager::onTickEnd()
 {
-	glfwSwapBuffers(window);
+	if (vsync)
+	{
+		glfwSwapBuffers(window);
+	}
+	else
+	{
+		glFlush();
+	}
 	glfwPollEvents();
 };
 
