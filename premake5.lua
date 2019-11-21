@@ -10,12 +10,15 @@ workspace "Viper"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+group "ThirdParty"
 include "submodules/concurrentqueue"
 include "submodules/cereal"
 include "submodules/glfw"
 include "submodules/gladogl"
 include "submodules/imgui/"
+group ""
 
+group "Engine"
 project "Viper"
     location "Viper"
     kind "StaticLib"
@@ -166,6 +169,7 @@ project "Client"
     filter "configurations:dist"
         defines "VIPER_DIST"
         optimize "on"
+group ""
 
 project "Sandbox"
     location "Sandbox"
