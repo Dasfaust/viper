@@ -270,3 +270,5 @@ vendor/
 
 godot/
 .import/
+
+**/imgui.ini
