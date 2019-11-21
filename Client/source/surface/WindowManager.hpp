@@ -1,7 +1,8 @@
 #pragma once
 #include "Viper.hpp"
 #include "event/Events.hpp"
-#include <GLFW/glfw3.h>
+
+struct GLFWwindow;
 
 struct WindowCloseRequestedEvent : Event
 { };
@@ -23,6 +24,11 @@ struct KeyPressedEvent : KeyEvent
 };
 struct KeyReleasedEvent : KeyEvent
 { };
+
+struct KeyTypedEvent : Event
+{
+	uint32 key;
+};
 
 struct ButtonEvent : Event
 {
@@ -57,6 +63,7 @@ public:
 	std::shared_ptr<EventHandler<WindowSizeChangedEvent>> sizeEvent;
 	std::shared_ptr<EventHandler<KeyPressedEvent>> keyPressedEvent;
 	std::shared_ptr<EventHandler<KeyReleasedEvent>> keyReleaseEvent;
+	std::shared_ptr<EventHandler<KeyTypedEvent>> keyTypedEvent;
 	std::shared_ptr<EventHandler<ButtonPressedEvent>> buttonPressedEvent;
 	std::shared_ptr<EventHandler<ButtonReleasedEvent>> buttonReleasedEvent;
 	std::shared_ptr<EventHandler<ScrollEvent>> scrollEvent;
@@ -65,6 +72,8 @@ public:
 	void onStart() override;
 
 	void onTickBegin() override;
+
+	void onTickEnd() override;
 
 	void onShutdown() override;
 };

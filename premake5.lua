@@ -13,6 +13,8 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 include "submodules/concurrentqueue"
 include "submodules/cereal"
 include "submodules/glfw"
+include "submodules/gladogl"
+include "submodules/imgui/"
 
 project "Viper"
     location "Viper"
@@ -136,7 +138,9 @@ project "Client"
         "vendor/include",
 		"submodules/concurrentqueue",
         "submodules/cereal/include",
-        "submodules/glfw/include"
+        "submodules/glfw/include",
+        "submodules/gladogl/include",
+        "submodules/imgui"
     }
 
     filter "system:linux"
@@ -189,7 +193,9 @@ project "Sandbox"
         "vendor/include",
 		"submodules/concurrentqueue",
         "submodules/cereal/include",
-        "submodules/glfw/include"
+        "submodules/glfw/include",
+        "submodules/gladogl/include",
+        "submodules/imgui"
     }
 
     links
@@ -197,7 +203,9 @@ project "Sandbox"
         "Viper",
         "Server",
         "Client",
-        "glfw"
+        "glfw",
+        "gladogl",
+        "imgui"
     }
 
 	postbuildcommands
@@ -216,7 +224,7 @@ project "Sandbox"
         disablewarnings { "4996" }
 		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.114.0/Lib" }
         includedirs { "C:/VulkanSDK/1.1.114.0/Include" }
-        links { "vulkan-1", "ws2_32", "lua53" }
+        links { "vulkan-1", "ws2_32", "lua53", "opengl32" }
 		defines "VIPER_WIN64"
 
     filter "configurations:debug"

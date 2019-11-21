@@ -1,5 +1,8 @@
 #include "WindowManager.hpp"
 #include "log/Logger.hpp"
+#include "glad/glad.h"
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 void WindowManager::onStart()
 {
@@ -8,6 +11,7 @@ void WindowManager::onStart()
 	sizeEvent = events->initModule<EventHandler<WindowSizeChangedEvent>>("wm_windowsizechangedevent");
 	keyPressedEvent = events->initModule<EventHandler<KeyPressedEvent>>("wm_keypressedevent");
 	keyReleaseEvent = events->initModule<EventHandler<KeyReleasedEvent>>("wm_keyreleasedevent");
+	keyTypedEvent = events->initModule<EventHandler<KeyTypedEvent>>("wm_keytypedevent");
 	buttonPressedEvent = events->initModule<EventHandler<ButtonPressedEvent>>("wm_buttonpressevent");
 	buttonReleasedEvent = events->initModule<EventHandler<ButtonReleasedEvent>>("wm_buttonreleasedevent");
 	scrollEvent = events->initModule<EventHandler<ScrollEvent>>("wm_scrollevent");
@@ -20,14 +24,21 @@ void WindowManager::onStart()
 		return;
 	}
 
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 	glfwSetErrorCallback([](int code, const char* msg)
 	{
 		warn("GLFW error (%d): %s", code, msg);
 	});
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
 	window = glfwCreateWindow(width, height, getParent<Module>()->getParent<Viper>()->getModule("game")->friendlyName.c_str(), nullptr, nullptr);
+	glfwMakeContextCurrent(window);
+
+	int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+	if (!status) throw std::runtime_error("Failed to initialize GLAD");
+
 	glfwSetWindowUserPointer(window, this);
 
 	glfwSetWindowSizeCallback(window, [](GLFWwindow* win, int width, int height)
@@ -73,6 +84,14 @@ void WindowManager::onStart()
 				break;
 			}
 		}
+	});
+
+	glfwSetCharCallback(window, [](GLFWwindow* win, uint32 key)
+	{
+		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
+		KeyTypedEvent ev;
+		ev.key = key;
+		man->keyTypedEvent->fire(ev);
 	});
 
 	glfwSetMouseButtonCallback(window, [](GLFWwindow* win, int button, int action, int mods)
@@ -134,7 +153,11 @@ void WindowManager::onTickBegin()
 		WindowCloseRequestedEvent close;
 		closeEvent->fire(close, &closeFuture);
 	}
+};
 
+void WindowManager::onTickEnd()
+{
+	glfwSwapBuffers(window);
 	glfwPollEvents();
 };
 

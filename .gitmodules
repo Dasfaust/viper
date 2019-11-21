@@ -10,3 +10,9 @@
 [submodule "submodules/glfw"]
 	path = submodules/glfw
 	url = https://github.com/Dasfaust/glfw
+[submodule "submodules/gladogl"]
+	path = submodules/gladogl
+	url = https://github.com/Dasfaust/gladogl
+[submodule "submodules/imgui"]
+	path = submodules/imgui
+	url = https://github.com/Dasfaust/imgui
