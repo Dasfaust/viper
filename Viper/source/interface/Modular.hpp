@@ -72,6 +72,6 @@ public:
 
 	inline bool isModuleLoaded(const std::string& name) const
 	{
-		return modules.count(name);
+		return modules.count(name) > 0;
 	};
 };
