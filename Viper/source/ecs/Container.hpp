@@ -38,7 +38,6 @@ namespace ecs
 		std::vector<ComponentMeta> componentData;
 		std::vector<std::shared_ptr<System>> systems;
 		std::vector<size_t> offsets;
-		std::vector<size_t> queueOffsets;
 		std::vector<uint32> heap;
 		std::vector<uint64> deletions;
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "../surface/WindowManager.hpp"
+#include "VkMemory.hpp"
 #include "util/IO.hpp"
 #include "log/Logger.hpp"
 #include <optional>
@@ -90,11 +91,6 @@ struct UniformBufferObject
 	glm::mat4 proj;
 };
 
-class Scene
-{
-public:
-};
-
 class VkGfx : public Module
 {
 public:
@@ -120,6 +116,7 @@ public:
 	VkDeviceMemory vertMemory;
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformMemory;
+	VkMemory memory;
 
 	std::vector<Vertex> testVertices = {
 		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},

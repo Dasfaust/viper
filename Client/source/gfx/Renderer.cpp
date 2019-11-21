@@ -11,7 +11,8 @@ void Renderer::onStart()
 {
 	wm = getParent<Modular>()->getModule<WindowManager>("wm");
 	gfx = initModule<VkGfx>("gfx");
-	initModule<FPSReporter>("fps", 1000.0);
+	//initModule<FPSReporter>("fps", 1000.0);
+	scene = initModule<Scene>("scene");
 
 	for (auto&& kv : modules)
 	{
