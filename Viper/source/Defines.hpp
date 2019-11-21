@@ -7,6 +7,9 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/lexical_cast.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 typedef unsigned long long int uint64;
 typedef unsigned int uint32;
@@ -14,6 +17,9 @@ typedef unsigned short uint16;
 typedef unsigned char uint8;
 typedef double time_val;
 typedef boost::uuids::uuid uid;
+typedef glm::vec2 vec2;
+typedef glm::vec3 vec3;
+typedef glm::mat4 mat4;
 
 #define flatmap(x, y) boost::container::flat_map<x, y>
 #define umap(x, y) std::unordered_map<x, y>

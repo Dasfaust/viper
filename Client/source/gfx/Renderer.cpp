@@ -10,7 +10,6 @@ void FPSReporter::onTick()
 void Renderer::onStart()
 {
 	wm = getParent<Modular>()->getModule<WindowManager>("wm");
-	gfx = initModule<VkGfx>("gfx");
 	//initModule<FPSReporter>("fps", 1000.0);
 	scene = initModule<Scene>("scene");
 
@@ -22,19 +21,6 @@ void Renderer::onStart()
 
 void Renderer::onTick()
 {
-	if (gfx->nominal)
-	{
-		if (wm->width > 0 && wm->height > 0)
-		{
-			if (wm->width != gfx->swapchain.extent.width || wm->height != gfx->swapchain.extent.height)
-			{
-				gfx->recreateSwapchain();
-				return;
-			}
-			gfx->draw();
-			fps++;
-		}
-	}
 	tickModules();
 };
 
