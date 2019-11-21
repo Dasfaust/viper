@@ -42,8 +42,8 @@ public:
 		mouseScrolled = wm->scrollEvent->listen(10, [](ScrollEvent& ev, std::vector<std::shared_ptr<Module>> mods)
 		{
 			ImGuiIO& io = ImGui::GetIO();
-			io.MouseWheelH += ev.x;
-			io.MouseWheel += ev.y;
+			io.MouseWheelH += (float)ev.x;
+			io.MouseWheel += (float)ev.y;
 		});
 		keyPressed = wm->keyPressedEvent->listen(10, [](KeyPressedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
 		{
@@ -118,8 +118,9 @@ public:
 	void onTickEnd() override
 	{
 		ImGuiIO& io = ImGui::GetIO();
-		float delta = (float)getParent<Modular>()->dt;
-		io.DeltaTime = delta > (1.0f / 144.0f) ? (1.0f / 144.0f) : delta;
+		time_val delta = (float)getParent<Modular>()->dt;
+		time_val maxDt = 1.0 / 240.0;
+		io.DeltaTime = delta > maxDt ? (float)maxDt : (float)delta;
 		io.DisplaySize = ImVec2((float)wm->width, (float)wm->height);
 
 		ImGui_ImplOpenGL3_NewFrame();
