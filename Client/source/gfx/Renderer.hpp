@@ -4,9 +4,17 @@
 #include "../surface/WindowManager.hpp"
 #include "../ui/UIManager.hpp"
 
+enum GFX_API
+{
+	OPEN_GL,
+	VULKAN
+};
+
 class Renderer : public Modular, public Module
 {
 public:
+	static GFX_API API;
+
 	std::shared_ptr<Listener<WindowSizeChangedEvent>> sizeChange;
 
 	std::shared_ptr<WindowManager> wm;

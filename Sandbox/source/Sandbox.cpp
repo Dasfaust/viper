@@ -7,20 +7,6 @@
 #include "ecs/ECS.hpp"
 #include "glm/vec3.hpp"
 
-struct Comp1
-{
-	float data = 3.14f;
-
-	make_serializable(CEREAL_NVP(data));
-};
-
-struct Comp2
-{
-	std::string data = "dickbutt";
-
-	make_serializable(CEREAL_NVP(data));
-};
-
 class Sandbox : public Module, public Modular
 {
 public:

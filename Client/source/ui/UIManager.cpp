@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "examples/imgui_impl_opengl3.h"
 #include "examples/imgui_impl_glfw.h"
+#include "../gfx/Renderer.hpp"
 
 void UIManager::onStart()
 {
@@ -19,8 +20,12 @@ void UIManager::onStart()
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-	ImGui_ImplOpenGL3_Init("#version 410");
-	ImGui_ImplGlfw_InitForOpenGL(wm->window, true);
+	
+	if (Renderer::API == OPEN_GL)
+	{
+		ImGui_ImplOpenGL3_Init("#version 410");
+		ImGui_ImplGlfw_InitForOpenGL(wm->window, true);
+	}
 };
 
 void UIManager::onTickBegin()
@@ -36,8 +41,12 @@ void UIManager::onTickEnd()
 	io.DeltaTime = delta > maxDt ? (float)maxDt : (float)delta;
 	io.DisplaySize = ImVec2((float)wm->width, (float)wm->height);
 
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
+	if (Renderer::API == OPEN_GL)
+	{
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+	}
+	
 	ImGui::NewFrame();
 
 	for (auto&& kv : commands)
@@ -46,7 +55,11 @@ void UIManager::onTickEnd()
 	}
 
 	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	if (Renderer::API == OPEN_GL)
+	{
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
 
 	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
@@ -59,6 +72,9 @@ void UIManager::onTickEnd()
 
 void UIManager::onShutdown()
 {
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
+	if (Renderer::API == OPEN_GL)
+	{
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+	}
 };

@@ -3,6 +3,7 @@
 #include "glad/glad.h"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include "../gfx/Renderer.hpp"
 
 bool WindowManager::vsync = false;
 
@@ -30,9 +31,13 @@ void WindowManager::onStart()
 	{
 		glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
 	}
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	if (Renderer::API == OPEN_GL)
+	{
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	}
 
 	glfwSetErrorCallback([](int code, const char* msg)
 	{
@@ -163,14 +168,18 @@ void WindowManager::onTickBegin()
 
 void WindowManager::onTickEnd()
 {
-	if (vsync)
+	if (Renderer::API == OPEN_GL)
 	{
-		glfwSwapBuffers(window);
+		if (vsync)
+		{
+			glfwSwapBuffers(window);
+		}
+		else
+		{
+			glFlush();
+		}
 	}
-	else
-	{
-		glFlush();
-	}
+
 	glfwPollEvents();
 };
 

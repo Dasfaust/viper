@@ -1,6 +1,9 @@
 #include "Renderer.hpp"
 #include "glad/glad.h"
 #include "imgui.h"
+#include "../Client.hpp"
+
+GFX_API Renderer::API = OPEN_GL;
 
 class FPSModule : public Module
 {
@@ -39,6 +42,7 @@ void Renderer::onStart()
 		ImGui::Text("FPS: %d", renderer->fps);
 		ImGui::Text("Frametime: %.4f", renderer->dt);
 		ImGui::Text("Entities: %d", renderer->scene->container->heap.size() / renderer->scene->container->entitySize);
+		ImGui::Text("Connected: %d", renderer->getParent<Client>()->isConnected.load());
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
