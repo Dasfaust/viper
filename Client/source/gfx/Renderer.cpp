@@ -55,23 +55,32 @@ void Renderer::onStart()
 		auto pos = ImGui::GetMainViewport()->Pos;
 		ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
 		ImGui::SetNextWindowViewport(ImGui::FindViewportByPlatformHandle(renderer->wm->context->handle)->ID);
-		ImGui::Begin("Client", &active, ImGuiWindowFlags_NoResize);
+		ImGui::Begin("Client", &active, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
 		//ImGui::Text("Vsync: %d", renderer->wm->vsync);
+		ImGui::Text("Connected: %d", renderer->getParent<Client>()->isConnected.load());
 		ImGui::Checkbox("Vsync", &renderer->wm->vsync);
 		ImGui::Text("FPS: %d", renderer->fps);
-		ImGui::Text("Frametime: %.4f", renderer->dt);
+		ImGui::Text("Frametime: %.4fms", renderer->dt);
 		ImGui::Text("Entities: %d", renderer->scene->container->heap.size() / renderer->scene->container->entitySize);
+		ImGui::Text("Scene tick: %.4fms", renderer->scene->updateTimeMs);
 		ImGui::Text("Draws: %d", std::reinterpret_pointer_cast<gfx::PipelineOpenGL>(renderer->pipeline)->drawCalls);
-		ImGui::Text("Connected: %d", renderer->getParent<Client>()->isConnected.load());
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
 	std::vector<vec2> vertices =
 	{
-		 vec2(0.5f,  0.5f),
+		 vec2(-0.5f,  -0.5f),
 		 vec2(0.5f, -0.5f),
-		 vec2(-0.5f, -0.5f),
+		 vec2(0.5f, 0.5f),
 		 vec2(-0.5f,  0.5f)
+	};
+
+	std::vector<vec2> verticesTex =
+	{
+		 vec2(-0.5f,  -0.5f), vec2(0.0f, 0.0f),
+		 vec2(0.5f, -0.5f), vec2(1.0f, 0.0f),
+		 vec2(0.5f, 0.5f), vec2(1.0f, 1.0f),
+		 vec2(-0.5f,  0.5f), vec2(0.0f, 1.0f)
 	};
 
 	std::vector<uint32> indices =
@@ -79,9 +88,13 @@ void Renderer::onStart()
 		0, 1, 3,
 		1, 2, 3
 	};
-
 	pipeline->getMemory()->requestBuffer("plane", vertices, indices, { {gfx::Float2, "position" } }, { { gfx::Float4x4, "model", false, 1 } });
-	pipeline->loadShader("basic");
+	pipeline->getMemory()->requestBuffer("plane_texture", verticesTex, indices, { {gfx::Float2, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
+	pipeline->loadShader("2d_basic");
+	pipeline->loadShader("2d_basic_texture");
+
+	pipeline->loadTexture("checkerboard.png");
+	pipeline->loadTexture("logo.png");
 };
 
 void Renderer::onTick()

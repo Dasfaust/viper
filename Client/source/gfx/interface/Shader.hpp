@@ -13,7 +13,5 @@ namespace gfx
 		virtual void cleanup() = 0;
 		virtual void bind() = 0;
 		virtual void unbind() = 0;
-
-		virtual void uploadMat4(const std::string& name, const mat4& matrix) = 0;
 	};
 };

@@ -103,7 +103,13 @@ namespace gfx
 			glUseProgram(0);
 		};
 
-		void uploadMat4(const std::string& name, const mat4& matrix) override
+		void uploadInt(const std::string& name, const int& i)
+		{
+			int loc = glGetUniformLocation(id, (const GLchar*)name.c_str());
+			glUniform1i(loc, i);
+		};
+
+		void uploadMat4(const std::string& name, const mat4& matrix)
 		{
 			int loc = glGetUniformLocation(id, (const GLchar*)name.c_str());
 			glUniformMatrix4fv(loc, 1, false, glm::value_ptr(matrix));

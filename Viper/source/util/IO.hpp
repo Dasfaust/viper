@@ -2,6 +2,7 @@
 #include <string>
 #include <regex>
 #include <fstream>
+#include "stb_image.h"
   
 inline std::string seperator();
 inline std::string workingDir();
@@ -44,4 +45,20 @@ inline std::vector<unsigned char> readFile(const std::string& name)
 	std::ifstream input(path, std::ios::binary);
 	std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(input), {});
 	return buffer;
+};
+
+struct ImageResource
+{
+	int width;
+	int height;
+	int channels;
+	unsigned char* data = nullptr;
+};
+
+inline ImageResource readImage(const std::string& name)
+{
+	std::string path = workingDir() + seperator() + "resources" + seperator() + name;
+	ImageResource resource;
+	resource.data = stbi_load(path.c_str(), &resource.width, &resource.height, &resource.channels, 0);
+	return resource;
 };

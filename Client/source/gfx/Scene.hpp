@@ -33,8 +33,10 @@ struct PlayerInput
 
 struct RenderData
 {
-	std::string meshName;
-	std::string shaderName;
+	std::string meshName = "";
+	std::string shaderName = "";
+	std::array<std::string, 8> textureNames;
+	bool dirty = true;
 };
 
 struct RenderInstance
@@ -42,6 +44,7 @@ struct RenderInstance
 	bool is3D = true;
 	Transform2D transform2d;
 	Transform3D transform3d;
+	std::vector<std::string> textureNames;
 };
 
 typedef umap(uint64, RenderInstance) InstanceMap;
@@ -51,23 +54,16 @@ class RenderSystem : public ecs::System
 public:
 	std::shared_ptr<ecs::Container> container;
 	umap(std::string, umap(std::string, InstanceMap)) renderData;
-	umap(uint64, bool) isDirty;
 
 	RenderSystem()
 	{
 		updateEntity = [](ecs::Entity* entity, void* component, std::shared_ptr<System> self, float dt)
 		{
 			auto rs = std::reinterpret_pointer_cast<RenderSystem>(self);
-			bool dirty = true;
-			if (rs->isDirty.find(entity->id) == rs->isDirty.end())
-			{
-				dirty = rs->isDirty[entity->id];
-			}
+			auto rd = reinterpret_cast<RenderData*>(component);
 
-			if (dirty)
+			if (rd->dirty)
 			{
-				auto rd = reinterpret_cast<RenderData*>(component);
-
 				umap(std::string, InstanceMap)* mInstances;
 				if (rs->renderData.find(rd->shaderName) == rs->renderData.end())
 				{
@@ -99,8 +95,15 @@ public:
 				{
 					instance->transform3d = Transform3D(*rs->container->getComponent<Transform3D>(entity->id));
 				}
+				for (auto tn : rd->textureNames)
+				{
+					if (!tn.empty())
+					{
+						instance->textureNames.push_back(tn);
+					}
+				}
 
-				rs->isDirty[entity->id] = false;
+				rd->dirty = false;
 			}
 		};
 	};
@@ -225,6 +228,7 @@ public:
 	std::shared_ptr<CameraSystem> cameraSystem;
 	std::shared_ptr<PlayerInputSystem> playerInputSystem;
 	bool firstUpdate = true;
+	time_val updateTimeMs;
 
 	void onStart() override
 	{
@@ -257,26 +261,33 @@ public:
 
 		initDefaultPlayer();
 
-		uint64 ent = container->makeEntity({ ecs::ComponentIDs<Transform2D>::ID, ecs::ComponentIDs<RenderData>::ID });
-		container->getComponent<RenderData>(ent)->meshName = "plane";
-		container->getComponent<RenderData>(ent)->shaderName = "basic";
-		container->getComponent<Transform2D>(ent)->position = glm::vec2(0.5f, 0.0f);
-		container->getComponent<Transform2D>(ent)->scale = 0.5f;
-		ent = container->makeEntity({ ecs::ComponentIDs<Transform2D>::ID, ecs::ComponentIDs<RenderData>::ID });
-		container->getComponent<RenderData>(ent)->meshName = "plane";
-		container->getComponent<RenderData>(ent)->shaderName = "basic";
-		container->getComponent<Transform2D>(ent)->position = glm::vec2(0.0f, 0.0f);
-		container->getComponent<Transform2D>(ent)->scale = 0.5f;
-		ent = container->makeEntity({ ecs::ComponentIDs<Transform2D>::ID, ecs::ComponentIDs<RenderData>::ID });
-		container->getComponent<RenderData>(ent)->meshName = "plane";
-		container->getComponent<RenderData>(ent)->shaderName = "basic";
-		container->getComponent<Transform2D>(ent)->position = glm::vec2(-1.0f, 0.0f);
-		container->getComponent<Transform2D>(ent)->scale = 0.5f;
+		for (uint32 x = 0; x < 10; x++)
+		{
+			for (uint32 y = 0; y < 10; y++)
+			{
+				uint64 ent = makeEntity({ ecs::ComponentIDs<Transform2D>::ID, ecs::ComponentIDs<RenderData>::ID });
+				auto rd = container->getComponent<RenderData>(ent);
+				auto tf = container->getComponent<Transform2D>(ent);
+				rd->meshName = "plane";
+				rd->shaderName = "2d_basic";
+				tf->position = glm::vec2((float)x * 0.5f, (float)y * 0.5f);
+				tf->scale = 0.5f;
+			}
+		}
+
+		uint64 ent = makeEntity({ ecs::ComponentIDs<Transform2D>::ID, ecs::ComponentIDs<RenderData>::ID });
+		auto rd = container->getComponent<RenderData>(ent);
+		rd->meshName = "plane_texture";
+		rd->shaderName = "2d_basic_texture";
+		rd->textureNames[0] = "checkerboard.png";
+		rd->textureNames[1] = "logo.png";
 	};
 
 	void onTick() override
 	{
+		auto start = tnowns();
 		tickModules();
+		updateTimeMs = timesince(start);
 	};
 
 	void initDefaultPlayer()
@@ -303,6 +314,12 @@ public:
 	{
 		if (players.empty()) { throw std::invalid_argument("The default camera has not been initialized"); }
 		return &cameraSystem->matrices[players[0]];
+	};
+
+	uint64 makeEntity(std::set<uint32> comps)
+	{
+		auto ent = container->makeEntity(comps);
+		return ent;
 	};
 
 	void onShutdown() override

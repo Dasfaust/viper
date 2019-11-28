@@ -3,6 +3,7 @@
 #include "glad/glad.h"
 #include "ShaderOpenGL.hpp"
 #include "MemoryOpenGL.hpp"
+#include "TextureOpenGL.hpp"
 
 namespace gfx
 {
@@ -17,6 +18,7 @@ namespace gfx
 	{
 	public:
 		umap(std::string, std::shared_ptr<ShaderOpenGL>) shaders;
+		umap(std::string, std::shared_ptr<Texture2DOpenGL>) textures;
 		std::shared_ptr<MemoryOpenGL> memory;
 		std::vector<Subscene> subscenes;
 		uint32 drawCalls = 0;
@@ -24,6 +26,9 @@ namespace gfx
 		bool init() override
 		{
 			info("OpenGL: %s %s (%s)", glGetString(GL_VENDOR), glGetString(GL_RENDERER), glGetString(GL_VERSION));
+
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			memory = std::make_shared<MemoryOpenGL>();
 
@@ -92,6 +97,18 @@ namespace gfx
 			drawCalls = 0;
 		};
 
+		std::shared_ptr<Texture> loadTexture(const std::string& name) override
+		{
+			textures[name] = std::make_shared<Texture2DOpenGL>();
+			textures[name]->init(name);
+			return textures[name];
+		};
+
+		std::shared_ptr<Texture> getTexture(const std::string& name) override
+		{
+			return textures[name];
+		};
+
 		void draw() override
 		{
 			glClear(GL_COLOR_BUFFER_BIT);
@@ -100,6 +117,15 @@ namespace gfx
 			{
 				subscene.shader->bind();
 				subscene.buffer->bind();
+				if (!(*subscene.instances->begin()).second.textureNames.empty())
+				{
+					for (uint32 i = 0; i < (*subscene.instances->begin()).second.textureNames.size(); i++)
+					{
+						auto tex = textures[(*subscene.instances->begin()).second.textureNames[i]];
+						tex->bind(i);
+						subscene.shader->uploadInt("uTexture" + std::to_string(i), i);
+					}
+				}
 				glDrawElementsInstanced(GL_TRIANGLES, subscene.buffer->indicesCount, GL_UNSIGNED_INT, nullptr, subscene.instances->size());
 				drawCalls++;
 				subscene.buffer->unbind();

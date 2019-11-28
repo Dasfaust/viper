@@ -3,6 +3,7 @@
 #include "Memory.hpp"
 #include "Shader.hpp"
 #include "../Scene.hpp"
+#include "Texture.hpp"
 
 namespace gfx
 {
@@ -15,6 +16,8 @@ namespace gfx
 		virtual std::shared_ptr<Memory> getMemory() = 0;
 		virtual std::shared_ptr<Shader> loadShader(const std::string& name) = 0;
 		virtual std::shared_ptr<Shader> getShader(const std::string& name) = 0;
+		virtual std::shared_ptr<Texture> loadTexture(const std::string& name) = 0;
+		virtual std::shared_ptr<Texture> getTexture(const std::string& name) = 0;
 		virtual void submit(const std::string& shader, const std::string& mesh, InstanceMap& instances) = 0;
 		virtual void draw() = 0;
 	};
