@@ -14,17 +14,34 @@ void UIManager::onStart()
 	ImGui::StyleColorsDark();
 
 	ImGuiIO& io = ImGui::GetIO();
+	io.DisplaySize = ImVec2((float)wm->width, (float)wm->height);
+	io.WantSaveIniSettings = false;
 	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 	io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_GrabRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_TabRounding, 0.0f);
+	//ImGui::PushStyleColor(ImGuiCol_)
 	
 	if (Renderer::API == OPEN_GL)
 	{
+		
+	}
+
+	switch (Renderer::API)
+	{
+	default:
 		ImGui_ImplOpenGL3_Init("#version 410");
-		ImGui_ImplGlfw_InitForOpenGL(wm->window, true);
+		ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)wm->context->handle, true);
+		break;
 	}
 };
 
@@ -41,8 +58,9 @@ void UIManager::onTickEnd()
 	io.DeltaTime = delta > maxDt ? (float)maxDt : (float)delta;
 	io.DisplaySize = ImVec2((float)wm->width, (float)wm->height);
 
-	if (Renderer::API == OPEN_GL)
+	switch (Renderer::API)
 	{
+	default:
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 	}
@@ -56,8 +74,9 @@ void UIManager::onTickEnd()
 
 	ImGui::Render();
 
-	if (Renderer::API == OPEN_GL)
+	switch (Renderer::API)
 	{
+	default:
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
 
@@ -72,8 +91,9 @@ void UIManager::onTickEnd()
 
 void UIManager::onShutdown()
 {
-	if (Renderer::API == OPEN_GL)
+	switch (Renderer::API)
 	{
+	default:
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 	}

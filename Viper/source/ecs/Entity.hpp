@@ -6,7 +6,7 @@ namespace ecs
 	struct Entity
 	{
 		uint64 id = 0;
-		std::vector<uint32> components;
+		std::set<uint32> components = { };
 		bool skip = false;
 	};
 };

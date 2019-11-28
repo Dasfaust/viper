@@ -9,7 +9,9 @@ namespace ecs
 	{
 	public:
 		uint32 componentId;
-		void(*updateEntity)(Entity* entity, void* component, std::shared_ptr<System> self);
+		void(*updateEntity)(Entity* entity, void* component, std::shared_ptr<System> self, float dt);
+
+		virtual void onTickBegin() { };
 	};
 
 	struct Job

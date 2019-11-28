@@ -44,7 +44,7 @@ namespace ecs
 		void onStart() override;
 		void onShutdown() override;
 		uint64 getNextEntityId();
-		uint64 makeEntity(std::vector<uint32> comps);
+		uint64 makeEntity(std::set<uint32> comps);
 		Entity* getEntity(uint64 id);
 		void deleteEntity(uint64 id);
 		void purge();
@@ -101,7 +101,7 @@ namespace ecs
 				systems.resize(compId + 1);
 			}
 			systems[compId] = std::make_shared<S>();
-			return systems[compId];
+			return std::reinterpret_pointer_cast<S>(systems[compId]);
 		};
 
 		template<typename T>

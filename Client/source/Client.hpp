@@ -8,6 +8,7 @@
 class Client : public Module, public Modular
 {
 public:
+	static bool enableNetworking;
 	std::atomic_bool isConnected = false;
 
 	std::shared_ptr<Listener<ClientConnectedEvent>> clientConnected;

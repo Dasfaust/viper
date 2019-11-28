@@ -1,8 +1,7 @@
 #pragma once
 #include "Viper.hpp"
 #include "event/Events.hpp"
-
-struct GLFWwindow;
+#include "../gfx/interface/Context.hpp"
 
 struct WindowCloseRequestedEvent : Event
 { };
@@ -59,7 +58,7 @@ public:
 
 	int width = 1280;
 	int height = 720;
-	GLFWwindow* window;
+	std::shared_ptr<gfx::Context> context;
 	std::shared_ptr<EventHandler<WindowCloseRequestedEvent>> closeEvent;
 	Future<WindowCloseRequestedEvent> closeFuture;
 	std::shared_ptr<EventHandler<WindowSizeChangedEvent>> sizeEvent;

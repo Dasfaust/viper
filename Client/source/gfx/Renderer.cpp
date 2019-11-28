@@ -1,7 +1,7 @@
 #include "Renderer.hpp"
-#include "glad/glad.h"
 #include "imgui.h"
 #include "../Client.hpp"
+#include "../gfx/ogl/PipelineOpenGL.hpp"
 
 GFX_API Renderer::API = OPEN_GL;
 
@@ -19,10 +19,20 @@ void Renderer::onStart()
 {
 	wm = getParent<Modular>()->getModule<WindowManager>("wm");
 
-	sizeChange = wm->sizeEvent->listen(0, [](WindowSizeChangedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
+	switch(API)
 	{
-		glViewport(0, 0, (int)ev.height, (int)ev.width);
-	});
+	default:
+		pipeline = initModule<gfx::PipelineOpenGL>("pipeline");
+		break;
+	}
+	if (!pipeline->init())
+	{
+		crit("Pipeline could not be initialized, can't continue");
+		nominal = false;
+		return;
+	}
+	pipeline->setClearColor({ 0.2f, 0.2f, 0.2f, 1.0f });
+	pipeline->setViewport({ wm->width, wm->height });
 
 	initModule<FPSModule>("fps", 1000.0);
 	ui = initModule<UIManager>("ui");
@@ -33,28 +43,52 @@ void Renderer::onStart()
 		kv.second->onStart();
 	}
 
+	sizeChange = wm->sizeEvent->listen(0, [](WindowSizeChangedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
+	{
+		std::reinterpret_pointer_cast<gfx::Pipeline>(mods[0])->setViewport({ ev.width, ev.height });
+	}, { pipeline });
+
 	ui->addCommand("client_telemetry", [](std::vector<std::shared_ptr<Module>> mods)
 	{
 		auto renderer = std::reinterpret_pointer_cast<Renderer>(mods[0]);
 		bool active = true;
-		ImGui::Begin("Client", &active);
-		ImGui::Text("Vsync: %d", renderer->wm->vsync);
+		auto pos = ImGui::GetMainViewport()->Pos;
+		ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
+		ImGui::SetNextWindowViewport(ImGui::FindViewportByPlatformHandle(renderer->wm->context->handle)->ID);
+		ImGui::Begin("Client", &active, ImGuiWindowFlags_NoResize);
+		//ImGui::Text("Vsync: %d", renderer->wm->vsync);
+		ImGui::Checkbox("Vsync", &renderer->wm->vsync);
 		ImGui::Text("FPS: %d", renderer->fps);
 		ImGui::Text("Frametime: %.4f", renderer->dt);
 		ImGui::Text("Entities: %d", renderer->scene->container->heap.size() / renderer->scene->container->entitySize);
+		ImGui::Text("Draws: %d", std::reinterpret_pointer_cast<gfx::PipelineOpenGL>(renderer->pipeline)->drawCalls);
 		ImGui::Text("Connected: %d", renderer->getParent<Client>()->isConnected.load());
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
-	glViewport(0, 0, (int)wm->height, (int)wm->width);
+	std::vector<vec2> vertices =
+	{
+		 vec2(0.5f,  0.5f),
+		 vec2(0.5f, -0.5f),
+		 vec2(-0.5f, -0.5f),
+		 vec2(-0.5f,  0.5f)
+	};
+
+	std::vector<uint32> indices =
+	{
+		0, 1, 3,
+		1, 2, 3
+	};
+
+	pipeline->getMemory()->requestBuffer("plane", vertices, indices, { {gfx::Float2, "position" } }, { { gfx::Float4x4, "model", false, 1 } });
+	pipeline->loadShader("basic");
 };
 
 void Renderer::onTick()
 {
-	sizeChange->poll();
+	if (!nominal) return;
 
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	sizeChange->poll();
 
 	for (auto&& kv : modules)
 	{
@@ -81,6 +115,18 @@ void Renderer::onTick()
 			kv.second->onTick();
 		}
 	}
+
+	for (auto&& kv : scene->renderSystem->renderData)
+	{
+		std::string shaderName = kv.first;
+		for (auto&& mkv : kv.second)
+		{
+			std::string meshName = mkv.first;
+			pipeline->submit(shaderName, meshName, mkv.second);
+		}
+	}
+
+	pipeline->draw();
 
 	for (auto&& kv : modules)
 	{

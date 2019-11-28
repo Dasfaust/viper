@@ -1,0 +1,183 @@
+#pragma once
+#include "../interface/Memory.hpp"
+#include "glad/glad.h"
+
+namespace gfx
+{
+	static GLenum DataTypeOpenGL[]
+	{
+		GL_BOOL,
+		GL_INT,
+		GL_INT,
+		GL_INT,
+		GL_FLOAT,
+		GL_FLOAT,
+		GL_FLOAT,
+		GL_FLOAT,
+		GL_FLOAT,
+		GL_FLOAT
+	};
+
+	class BufferViewOpenGL : public BufferView
+	{
+	public:
+		uint32 vertexArray;
+		uint32 vertexBuffer;
+		uint32 indexBuffer;
+		uint32 indicesCount;
+		uint32 instanceBuffer;
+
+		void bind() override
+		{
+			glBindVertexArray(vertexArray);
+		};
+
+		void unbind() override
+		{
+			glBindVertexArray(0);
+		};
+	};
+
+	class MemoryOpenGL : public Memory
+	{
+	public:
+		umap(std::string, std::shared_ptr<BufferViewOpenGL>) buffers;
+
+		std::shared_ptr<BufferView> requestBuffer(std::string name, std::vector<vec3>& vertices, std::vector<uint32>& indices, BufferAttributeList attributes, BufferAttributeList instanceAttributes) override
+		{
+			// todo delete existing buffer
+			auto buffer = std::make_shared<BufferViewOpenGL>();
+
+			glGenVertexArrays(1, &buffer->vertexArray);
+			glBindVertexArray(buffer->vertexArray);
+
+			glGenBuffers(1, &buffer->vertexBuffer);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->vertexBuffer);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+
+			uint32 nextAttribId = 0;
+			for (uint32 i = 0; i < attributes.data.size(); i++)
+			{
+				glEnableVertexAttribArray(nextAttribId);
+				glVertexAttribPointer(nextAttribId, attributes.data[i].count, DataTypeOpenGL[attributes.data[i].type], attributes.data[i].normalized ? GL_TRUE : GL_FALSE, (GLsizei)attributes.stride, (void*)attributes.data[i].offset);
+				glVertexAttribDivisor(nextAttribId, attributes.data[i].divisor);
+				nextAttribId++;
+			}
+
+			glGenBuffers(1, &buffer->instanceBuffer);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->instanceBuffer);
+
+			for (uint32 i = 0; i < instanceAttributes.data.size(); i++)
+			{
+				if (instanceAttributes.data[i].type == gfx::Float4x4)
+				{
+					size_t offset = 0;
+					for (uint32 j = 0; j < 4; j++)
+					{
+						glEnableVertexAttribArray(nextAttribId);
+						glVertexAttribPointer(nextAttribId, 4, DataTypeOpenGL[instanceAttributes.data[i].type], instanceAttributes.data[i].normalized ? GL_TRUE : GL_FALSE, (GLsizei)instanceAttributes.stride, (void*)offset);
+						glVertexAttribDivisor(nextAttribId, instanceAttributes.data[i].divisor);
+						offset += sizeof(float) * 4;
+						nextAttribId++;
+					}
+				}
+				else
+				{
+					glEnableVertexAttribArray(nextAttribId);
+					glVertexAttribPointer(nextAttribId, instanceAttributes.data[i].count, DataTypeOpenGL[instanceAttributes.data[i].type], instanceAttributes.data[i].normalized ? GL_TRUE : GL_FALSE, (GLsizei)instanceAttributes.stride, (void*)instanceAttributes.data[i].offset);
+					glVertexAttribDivisor(nextAttribId, instanceAttributes.data[i].divisor);
+				}
+			}
+
+			glGenBuffers(1, &buffer->indexBuffer);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->indexBuffer);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * indices.size(), &indices[0], GL_STATIC_DRAW);
+			buffer->indicesCount = (uint32)indices.size();
+			buffer->attributes = attributes;
+
+			glBindVertexArray(0);
+
+			buffers[name] = buffer;
+			return buffer;
+		};
+
+		std::shared_ptr<BufferView> requestBuffer(std::string name, std::vector<vec2>& vertices, std::vector<uint32>& indices, BufferAttributeList attributes, BufferAttributeList instanceAttributes) override
+		{
+			// todo delete existing buffer
+			auto buffer = std::make_shared<BufferViewOpenGL>();
+
+			glGenVertexArrays(1, &buffer->vertexArray);
+			glBindVertexArray(buffer->vertexArray);
+
+			glGenBuffers(1, &buffer->vertexBuffer);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->vertexBuffer);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+
+			uint32 nextAttribId = 0;
+			for (uint32 i = 0; i < attributes.data.size(); i++)
+			{
+				glEnableVertexAttribArray(nextAttribId);
+				glVertexAttribPointer(nextAttribId, attributes.data[i].count, DataTypeOpenGL[attributes.data[i].type], attributes.data[i].normalized ? GL_TRUE : GL_FALSE, (GLsizei)attributes.stride, (void*)attributes.data[i].offset);
+				glVertexAttribDivisor(nextAttribId, attributes.data[i].divisor);
+				nextAttribId++;
+			}
+
+			glGenBuffers(1, &buffer->instanceBuffer);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->instanceBuffer);
+
+			for (uint32 i = 0; i < instanceAttributes.data.size(); i++)
+			{
+				if (instanceAttributes.data[i].type == gfx::Float4x4)
+				{
+					size_t offset = 0;
+					for (uint32 j = 0; j < 4; j++)
+					{
+						glEnableVertexAttribArray(nextAttribId);
+						glVertexAttribPointer(nextAttribId, 4, DataTypeOpenGL[instanceAttributes.data[i].type], instanceAttributes.data[i].normalized ? GL_TRUE : GL_FALSE, (GLsizei)instanceAttributes.stride, (void*)offset);
+						glVertexAttribDivisor(nextAttribId, instanceAttributes.data[i].divisor);
+						offset += sizeof(float) * 4;
+						nextAttribId++;
+					}
+				}
+				else
+				{
+					glEnableVertexAttribArray(nextAttribId);
+					glVertexAttribPointer(nextAttribId, instanceAttributes.data[i].count, DataTypeOpenGL[instanceAttributes.data[i].type], instanceAttributes.data[i].normalized ? GL_TRUE : GL_FALSE, (GLsizei)instanceAttributes.stride, (void*)instanceAttributes.data[i].offset);
+					glVertexAttribDivisor(nextAttribId, instanceAttributes.data[i].divisor);
+				}
+			}
+
+			glGenBuffers(1, &buffer->indexBuffer);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->indexBuffer);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * indices.size(), &indices[0], GL_STATIC_DRAW);
+			buffer->indicesCount = (uint32)indices.size();
+			buffer->attributes = attributes;
+
+			glBindVertexArray(0);
+
+			buffers[name] = buffer;
+			return buffer;
+		};
+
+		bool isLoaded(std::string name) override
+		{
+			return buffers.find(name) != buffers.end();
+		}
+
+		std::shared_ptr<BufferView> getBuffer(std::string name) override
+		{
+			return buffers[name];
+		};
+
+		void cleanup() override
+		{
+			for (auto&& kv : buffers)
+			{
+				glDeleteVertexArrays(0, &kv.second->vertexArray);
+				glDeleteBuffers(1, &kv.second->vertexBuffer);
+				glDeleteBuffers(1, &kv.second->indexBuffer);
+				glDeleteBuffers(1, &kv.second->instanceBuffer);
+			}
+		};
+	};
+};

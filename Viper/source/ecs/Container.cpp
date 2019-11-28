@@ -16,10 +16,10 @@ void Container::onStart()
 		entitySize += meta.tSize;
 		offset += meta.tSize;
 	}
-	debug("Entity size: %d", entitySize);
+	//debug("Entity size: %d", entitySize);
 	for (auto& meta : componentData)
 	{
-		debug("Comp %d: size: %d, tsize: %d offset: %d, moffset: %d", meta.id, meta.size, meta.tSize, offsets[meta.id], offsets[meta.id] + meta.size);
+		//debug("Comp %d: size: %d, tsize: %d offset: %d, moffset: %d", meta.id, meta.size, meta.tSize, offsets[meta.id], offsets[meta.id] + meta.size);
 	}
 
 	if (async)
@@ -29,7 +29,7 @@ void Container::onStart()
 			auto mod = initModule<Worker>(std::to_string(i));
 			mod->id = i;
 			mod->sleep = false;
-			debug("Starting ECS worker %d...", i);
+			info("Starting ECS worker %d...", i);
 			mod->start();
 		}
 	}
@@ -54,7 +54,7 @@ void Container::purge()
 
 void Container::allocateNewBlock()
 {
-	debug("Reallocating ECS heap");
+	info("Reallocating ECS heap");
 	heap.reserve(heap.size() + (blockSizeMb * 1024000 / sizeof(uint32)));
 	blocksAllocated++;
 }
@@ -64,7 +64,7 @@ uint64 Container::getNextEntityId()
 	return deletions.empty() ? (uint64)(heap.size() / entitySize) : [this]() -> uint64 { uint64 free = deletions[0]; deletions.erase(deletions.begin()); return free; }();
 };
 
-uint64 Container::makeEntity(std::vector<uint32> comps)
+uint64 Container::makeEntity(std::set<uint32> comps)
 {
 	uint64 id = getNextEntityId();
 	if (blocksAllocated * blockSizeMb * 1024000 < heap.size() * sizeof(uint32)) allocateNewBlock();
@@ -95,9 +95,19 @@ void Container::deleteEntity(uint64 id)
 
 void Container::onTick()
 {
+	tickModules();
+
+	for (auto& sys : systems)
+	{
+		if (sys != nullptr)
+		{
+			sys->onTickBegin();
+		}
+	}
+
 	if (async)
 	{
-		uint32 entsPerWorker = (heap.size() / entitySize) / threads;
+		uint32 entsPerWorker = (uint32)(heap.size() / entitySize) / threads;
 		uint32 lastIndex = 0;
 		uint32 threadIndex = 0;
 		for (auto&& kv : modules)
@@ -121,6 +131,11 @@ void Container::onTick()
 		{
 			auto ent = reinterpret_cast<ecs::Entity*>(&heap[i]);
 
+			if (ent->components.empty() || ent->skip)
+			{
+				continue;
+			}
+
 			for (uint32 id : ent->components)
 			{
 				if (systems.size() > id)
@@ -128,7 +143,7 @@ void Container::onTick()
 					auto system = systems[id];
 					if (system != nullptr)
 					{
-						system->updateEntity(ent, getComponent(ent->id, id), system);
+						system->updateEntity(ent, getComponent(ent->id, id), system, (float)(dt / 1000.0));
 					}
 				}
 			}

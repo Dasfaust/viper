@@ -24,7 +24,8 @@ void Worker::onTickAsync()
 						{
 							auto flag = container->getFlag(ent->id, id);
 							while (flag->test_and_set()) {};
-							system->updateEntity(ent, container->getComponent(ent->id, id), system);
+							// TODO IMPORTANT DT
+							system->updateEntity(ent, container->getComponent(ent->id, id), system, 0.0);
 							flag->clear();
 						}
 					}

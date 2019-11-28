@@ -1,9 +1,8 @@
 #include "WindowManager.hpp"
 #include "log/Logger.hpp"
 #include "glad/glad.h"
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 #include "../gfx/Renderer.hpp"
+#include "../gfx/ogl/ContextOpenGL.hpp"
 
 bool WindowManager::vsync = false;
 
@@ -32,27 +31,29 @@ void WindowManager::onStart()
 		glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
 	}
 
-	if (Renderer::API == OPEN_GL)
+	switch(Renderer::API)
 	{
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	default:
+		context = std::make_shared<gfx::ContextOpenGL>();
+		break;
 	}
+
+	context->init();
 
 	glfwSetErrorCallback([](int code, const char* msg)
 	{
 		warn("GLFW error (%d): %s", code, msg);
 	});
 
-	window = glfwCreateWindow(width, height, getParent<Module>()->getParent<Viper>()->getModule("game")->friendlyName.c_str(), nullptr, nullptr);
-	glfwMakeContextCurrent(window);
+	context->setHandle(glfwCreateWindow(width, height, getParent<Module>()->getParent<Viper>()->getModule("game")->friendlyName.c_str(), nullptr, nullptr));
+	glfwMakeContextCurrent((GLFWwindow*)context->handle);
 
 	int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	if (!status) throw std::runtime_error("Failed to initialize GLAD");
 
-	glfwSetWindowUserPointer(window, this);
+	glfwSetWindowUserPointer((GLFWwindow*)context->handle, this);
 
-	glfwSetWindowSizeCallback(window, [](GLFWwindow* win, int width, int height)
+	glfwSetWindowSizeCallback((GLFWwindow*)context->handle, [](GLFWwindow* win, int width, int height)
 	{
 		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
 		man->width = width;
@@ -63,7 +64,7 @@ void WindowManager::onStart()
 		man->sizeEvent->fire(ev);
 	});
 
-	glfwSetKeyCallback(window, [](GLFWwindow* win, int key, int scan, int action, int mods)
+	glfwSetKeyCallback((GLFWwindow*)context->handle, [](GLFWwindow* win, int key, int scan, int action, int mods)
 	{
 		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
 		switch(action)
@@ -97,7 +98,7 @@ void WindowManager::onStart()
 		}
 	});
 
-	glfwSetCharCallback(window, [](GLFWwindow* win, uint32 key)
+	glfwSetCharCallback((GLFWwindow*)context->handle, [](GLFWwindow* win, uint32 key)
 	{
 		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
 		KeyTypedEvent ev;
@@ -105,7 +106,7 @@ void WindowManager::onStart()
 		man->keyTypedEvent->fire(ev);
 	});
 
-	glfwSetMouseButtonCallback(window, [](GLFWwindow* win, int button, int action, int mods)
+	glfwSetMouseButtonCallback((GLFWwindow*)context->handle, [](GLFWwindow* win, int button, int action, int mods)
 	{
 		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
 		switch (action)
@@ -129,7 +130,7 @@ void WindowManager::onStart()
 		}
 	});
 
-	glfwSetScrollCallback(window, [](GLFWwindow* win, double x, double y)
+	glfwSetScrollCallback((GLFWwindow*)context->handle, [](GLFWwindow* win, double x, double y)
 	{
 		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
 		ScrollEvent ev;
@@ -138,7 +139,7 @@ void WindowManager::onStart()
 		man->scrollEvent->fire(ev);
 	});
 
-	glfwSetCursorPosCallback(window, [](GLFWwindow* win, double x, double y)
+	glfwSetCursorPosCallback((GLFWwindow*)context->handle, [](GLFWwindow* win, double x, double y)
 	{
 		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
 		MouseMoveEvent ev;
@@ -159,7 +160,7 @@ void WindowManager::onTickBegin()
 		}
 	}
 
-	if (glfwWindowShouldClose(window))
+	if (glfwWindowShouldClose((GLFWwindow*)context->handle))
 	{
 		WindowCloseRequestedEvent close;
 		closeEvent->fire(close, &closeFuture);
@@ -168,23 +169,12 @@ void WindowManager::onTickBegin()
 
 void WindowManager::onTickEnd()
 {
-	if (Renderer::API == OPEN_GL)
-	{
-		if (vsync)
-		{
-			glfwSwapBuffers(window);
-		}
-		else
-		{
-			glFlush();
-		}
-	}
-
+	context->swapBuffers(vsync);
 	glfwPollEvents();
 };
 
 void WindowManager::onShutdown()
 {
-	glfwDestroyWindow(window);
+	glfwDestroyWindow((GLFWwindow*)context->handle);
 	glfwTerminate();
 };

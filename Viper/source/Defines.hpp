@@ -10,6 +10,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
+#include <set>
 
 typedef unsigned long long int uint64;
 typedef unsigned int uint32;
@@ -19,6 +20,8 @@ typedef double time_val;
 typedef boost::uuids::uuid uid;
 typedef glm::vec2 vec2;
 typedef glm::vec3 vec3;
+typedef glm::vec4 vec4;
+typedef glm::mat3 mat3;
 typedef glm::mat4 mat4;
 
 #define flatmap(x, y) boost::container::flat_map<x, y>

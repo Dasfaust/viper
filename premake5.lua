@@ -51,7 +51,7 @@ project "Viper"
 	filter "system:windows"
 		systemversion "latest"
 		flags { "MultiProcessorCompile" }
-        disablewarnings { "4996" }
+        disablewarnings { "4996", "4065" }
 		defines "VIPER_WIN64"
 
     filter "configurations:debug"
@@ -101,7 +101,7 @@ project "Server"
 	filter "system:windows"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
-        disablewarnings { "4996" }
+        disablewarnings { "4996", "4065" }
 		defines "VIPER_WIN64"
 
     filter "configurations:debug"
@@ -154,7 +154,7 @@ project "Client"
 	filter "system:windows"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
-        disablewarnings { "4996" }
+        disablewarnings { "4996", "4065" }
         includedirs { "C:/VulkanSDK/1.1.114.0/Include" }
 		defines "VIPER_WIN64"
 
@@ -214,6 +214,7 @@ project "Sandbox"
 
 	postbuildcommands
 	{
+        ("{RMDIR} ../bin/" .. outputdir .. "/Sandbox/resources"),
 		("{COPY} resources ../bin/" .. outputdir .. "/Sandbox/resources")
 	}
 
@@ -225,7 +226,7 @@ project "Sandbox"
 	filter "system:windows"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
-        disablewarnings { "4996" }
+        disablewarnings { "4996", "4065" }
 		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.114.0/Lib" }
         includedirs { "C:/VulkanSDK/1.1.114.0/Include" }
         links { "vulkan-1", "ws2_32", "lua53", "opengl32" }
