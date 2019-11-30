@@ -83,8 +83,7 @@ namespace gfx
 	class Memory
 	{
 	public:
-		virtual std::shared_ptr<BufferView> requestBuffer(std::string name, std::vector<vec3>& vertices, std::vector<uint32>& indices, BufferAttributeList attributes, BufferAttributeList instanceAttributes = { }) = 0;
-		virtual std::shared_ptr<BufferView> requestBuffer(std::string name, std::vector<vec2>& vertices, std::vector<uint32>& indices, BufferAttributeList attributes, BufferAttributeList instanceAttributes = { }) = 0;
+		virtual std::shared_ptr<BufferView> requestBuffer(std::string name, std::vector<float>* vertices, std::vector<uint32>* indices, BufferAttributeList attributes, BufferAttributeList instanceAttributes = { }) = 0;
 		virtual bool isLoaded(std::string name) = 0;
 		virtual std::shared_ptr<BufferView> getBuffer(std::string name) = 0;
 		virtual void cleanup() = 0;

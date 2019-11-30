@@ -36,6 +36,7 @@ namespace ecs
 		uint32 blocksAllocated = 0;
 		size_t entitySize;
 		std::vector<ComponentMeta> componentData;
+		std::vector<std::set<uint32>> systemTypes;
 		std::vector<std::shared_ptr<System>> systems;
 		std::vector<size_t> offsets;
 		std::vector<uint32> heap;
@@ -75,7 +76,7 @@ namespace ecs
 			return reinterpret_cast<T*>(&heap[id * entitySize + offsets[ComponentIDs<T>::ID]]);
 		};
 
-		void* getComponent(uint64 eid, uint32 cid)
+		void* getComponent(uint64 eid, uint8 cid)
 		{
 			return &heap[eid * entitySize + offsets[cid]];
 		};
@@ -87,27 +88,25 @@ namespace ecs
 			return reinterpret_cast<std::atomic_flag*>(&heap[id * entitySize + offsets[compId] + componentData[compId].size]);
 		};
 
-		std::atomic_flag* getFlag(uint64 eid, uint32 cid)
+		std::atomic_flag* getFlag(uint64 eid, uint8 cid)
 		{
 			return reinterpret_cast<std::atomic_flag*>(&heap[eid * entitySize + offsets[cid] + componentData[cid].size]);
 		};
 
-		template<typename T, typename S>
-		std::shared_ptr<S> initSystem()
+		template<typename S>
+		std::shared_ptr<S> initSystem(std::set<uint32> types)
 		{
-			auto compId = ComponentIDs<T>::ID;
-			if (systems.size() <= compId)
-			{
-				systems.resize(compId + 1);
-			}
-			systems[compId] = std::make_shared<S>();
-			return std::reinterpret_pointer_cast<S>(systems[compId]);
+			auto id = systemTypes.size();
+			systemTypes.push_back(types);
+			systems.resize(id + 1);
+			systems[id] = std::make_shared<S>();
+			return std::reinterpret_pointer_cast<S>(systems[id]);
 		};
 
 		template<typename T>
-		std::shared_ptr<System> initSystem(void(*updateEntity)(Entity* entity, void* component, std::shared_ptr<System> self))
+		std::shared_ptr<System> initSystem(std::set<uint32> types, void(*updateEntity)(Entity* entity, std::shared_ptr<System> self, float dt))
 		{
-			auto system = initSystem<T, System>();
+			auto system = initSystem<System>(types);
 			system->updateEntity = updateEntity;
 			return system;
 		};

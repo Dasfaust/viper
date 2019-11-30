@@ -16,10 +16,10 @@ void Container::onStart()
 		entitySize += meta.tSize;
 		offset += meta.tSize;
 	}
-	//debug("Entity size: %d", entitySize);
+	debug("Entity size: %d", entitySize);
 	for (auto& meta : componentData)
 	{
-		//debug("Comp %d: size: %d, tsize: %d offset: %d, moffset: %d", meta.id, meta.size, meta.tSize, offsets[meta.id], offsets[meta.id] + meta.size);
+		debug("Comp %d: size: %d, tsize: %d offset: %d, moffset: %d", meta.id, meta.size, meta.tSize, offsets[meta.id], offsets[meta.id] + meta.size);
 	}
 
 	if (async)
@@ -57,6 +57,19 @@ void Container::allocateNewBlock()
 	info("Reallocating ECS heap");
 	heap.reserve(heap.size() + (blockSizeMb * 1024000 / sizeof(uint32)));
 	blocksAllocated++;
+
+	for (uint64 i = 0; i < heap.size(); i += entitySize)
+	{
+		auto ent = reinterpret_cast<ecs::Entity*>(&heap[i]);
+		for (uint32 j = 0; j < ent->componentPointers.size(); j++)
+		{
+			auto ptr = ent->componentPointers[j];
+			if (ptr != nullptr)
+			{
+				ent->componentPointers[j] = getComponent(ent->id, j);
+			}
+		}
+	}
 }
 
 uint64 Container::getNextEntityId()
@@ -71,18 +84,27 @@ uint64 Container::makeEntity(std::set<uint32> comps)
 	if (id >= heap.size() / entitySize) heap.resize(heap.size() + entitySize);
 	uint64 index = id * (uint64)entitySize;
 	Entity* ent = new(&heap[index]) Entity();
-	ent->components = comps;
 	ent->id = id;
+
+	for (uint32 i = 0; i < ent->componentPointers.size(); i++)
+	{
+		ent->componentPointers[i] = nullptr;
+	}
+
 	size_t offset = sizeof(Entity);
 	for (auto meta : componentData)
 	{
-		meta.instantiate(heap, (uint64)(index + offset), meta);
+		auto ptr = meta.instantiate(heap, (uint64)(index + offset), meta);
+		if (comps.find(meta.id) != comps.end())
+		{
+			ent->componentPointers[meta.id] = ptr;
+		}
 		offset += meta.tSize;
 	}
 	return id;
 };
 
-ecs::Entity* Container::getEntity(uint64 id)
+Entity* Container::getEntity(uint64 id)
 {
 	return reinterpret_cast<Entity*>(&heap[id * entitySize]);
 };
@@ -99,10 +121,7 @@ void Container::onTick()
 
 	for (auto& sys : systems)
 	{
-		if (sys != nullptr)
-		{
-			sys->onTickBegin();
-		}
+		sys->onTickBegin();
 	}
 
 	if (async)
@@ -131,20 +150,27 @@ void Container::onTick()
 		{
 			auto ent = reinterpret_cast<ecs::Entity*>(&heap[i]);
 
-			if (ent->components.empty() || ent->skip)
+			if (ent->skip)
 			{
 				continue;
 			}
-
-			for (uint32 id : ent->components)
+			
+			for (uint32 i = 0; i < systemTypes.size(); i++)
 			{
-				if (systems.size() > id)
+				std::set<uint32> types = systemTypes[i];
+
+				bool update = true;
+				for (uint32 type : types)
 				{
-					auto system = systems[id];
-					if (system != nullptr)
+					if (ent->componentPointers[type] == nullptr)
 					{
-						system->updateEntity(ent, getComponent(ent->id, id), system, (float)(dt / 1000.0));
+						update = false;
+						break;
 					}
+				}
+				if (update)
+				{
+					systems[i]->updateEntity(ent, systems[i], (float)(dt / 1000.0));
 				}
 			}
 		}

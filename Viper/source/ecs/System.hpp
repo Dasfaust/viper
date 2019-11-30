@@ -8,8 +8,7 @@ namespace ecs
 	class System
 	{
 	public:
-		uint32 componentId;
-		void(*updateEntity)(Entity* entity, void* component, std::shared_ptr<System> self, float dt);
+		void(*updateEntity)(Entity* entity, std::shared_ptr<System> self, float dt);
 
 		virtual void onTickBegin() { };
 	};

@@ -3,6 +3,51 @@
 #include "../Client.hpp"
 #include "../gfx/ogl/PipelineOpenGL.hpp"
 
+std::vector<float> cubeVerts =
+{
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+};
+
 GFX_API Renderer::API = OPEN_GL;
 
 class FPSModule : public Module
@@ -67,20 +112,20 @@ void Renderer::onStart()
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
-	std::vector<vec2> vertices =
+	std::vector<float> vertices =
 	{
-		 vec2(-0.5f,  -0.5f),
-		 vec2(0.5f, -0.5f),
-		 vec2(0.5f, 0.5f),
-		 vec2(-0.5f,  0.5f)
+		 -0.5f, -0.5f,
+		  0.5f, -0.5f,
+		  0.5f,  0.5f,
+		 -0.5f,  0.5f
 	};
 
-	std::vector<vec2> verticesTex =
+	std::vector<float> verticesTex =
 	{
-		 vec2(-0.5f,  -0.5f), vec2(0.0f, 0.0f),
-		 vec2(0.5f, -0.5f), vec2(1.0f, 0.0f),
-		 vec2(0.5f, 0.5f), vec2(1.0f, 1.0f),
-		 vec2(-0.5f,  0.5f), vec2(0.0f, 1.0f)
+		 -0.5f, -0.5f, 0.0f, 0.0f,
+		  0.5f, -0.5f, 1.0f, 0.0f,
+		  0.5f,  0.5f, 1.0f, 1.0f,
+		 -0.5f,  0.5f, 0.0f, 1.0f
 	};
 
 	std::vector<uint32> indices =
@@ -88,13 +133,18 @@ void Renderer::onStart()
 		0, 1, 3,
 		1, 2, 3
 	};
-	pipeline->getMemory()->requestBuffer("plane", vertices, indices, { {gfx::Float2, "position" } }, { { gfx::Float4x4, "model", false, 1 } });
-	pipeline->getMemory()->requestBuffer("plane_texture", verticesTex, indices, { {gfx::Float2, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
+
+	pipeline->getMemory()->requestBuffer("plane", &vertices, &indices, { {gfx::Float2, "position" } }, { { gfx::Float4x4, "model", false, 1 } });
+	pipeline->getMemory()->requestBuffer("plane_texture", &verticesTex, &indices, { {gfx::Float2, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
 	pipeline->loadShader("2d_basic");
 	pipeline->loadShader("2d_basic_texture");
+	pipeline->loadShader("3d_default");
 
 	pipeline->loadTexture("checkerboard.png");
 	pipeline->loadTexture("logo.png");
+
+	pipeline->makeMaterial("flat", "2d_basic", { });
+	pipeline->makeMaterial("basic", "2d_basic_texture", { "checkerboard.png", "logo.png" });
 };
 
 void Renderer::onTick()
@@ -131,11 +181,11 @@ void Renderer::onTick()
 
 	for (auto&& kv : scene->renderSystem->renderData)
 	{
-		std::string shaderName = kv.first;
+		std::string materialName = kv.first;
 		for (auto&& mkv : kv.second)
 		{
 			std::string meshName = mkv.first;
-			pipeline->submit(shaderName, meshName, mkv.second);
+			pipeline->submit(materialName, meshName, mkv.second);
 		}
 	}
 

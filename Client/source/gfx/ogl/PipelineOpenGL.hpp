@@ -4,12 +4,13 @@
 #include "ShaderOpenGL.hpp"
 #include "MemoryOpenGL.hpp"
 #include "TextureOpenGL.hpp"
+#include "MaterialOpenGL.hpp"
 
 namespace gfx
 {
 	struct Subscene
 	{
-		std::shared_ptr<ShaderOpenGL> shader;
+		std::shared_ptr<MaterialOpenGL> material;
 		std::shared_ptr<BufferViewOpenGL> buffer;
 		InstanceMap* instances;
 	};
@@ -19,6 +20,7 @@ namespace gfx
 	public:
 		umap(std::string, std::shared_ptr<ShaderOpenGL>) shaders;
 		umap(std::string, std::shared_ptr<Texture2DOpenGL>) textures;
+		umap(std::string, std::shared_ptr<MaterialOpenGL>) materials;
 		std::shared_ptr<MemoryOpenGL> memory;
 		std::vector<Subscene> subscenes;
 		uint32 drawCalls = 0;
@@ -63,16 +65,44 @@ namespace gfx
 			return shaders[name];
 		};
 
-		void submit(const std::string& shaderName, const std::string& mesh, InstanceMap& instances) override
+		std::shared_ptr<Texture> loadTexture(const std::string& name) override
 		{
-			auto shader = shaders[shaderName];
+			textures[name] = std::make_shared<Texture2DOpenGL>();
+			textures[name]->init(name);
+			return textures[name];
+		};
+
+		std::shared_ptr<Texture> getTexture(const std::string& name) override
+		{
+			return textures[name];
+		};
+
+		std::shared_ptr<Material> makeMaterial(const std::string& name, const std::string& shaderName, const std::vector<std::string>& textureNames) override
+		{
+			materials[name] = std::make_shared<MaterialOpenGL>();
+			materials[name]->shader = shaders[shaderName];
+			for (auto& tex : textureNames)
+			{
+				materials[name]->textures.push_back(textures[tex]);
+			}
+			return materials[name];
+		};
+
+		std::shared_ptr<Material> getMaterial(const std::string& name) override
+		{
+			return materials[name];
+		};
+
+		void submit(const std::string& materialName, const std::string& mesh, InstanceMap& instances) override
+		{
+			auto material = materials[materialName];
 			auto buffer = memory->buffers[mesh];
 			auto scene = getParent<Modular>()->getModule<Scene>("scene");
-			Subscene sub = { shader, buffer, &instances };
-			shader->bind();
-			shader->uploadMat4("view", scene->getDefaultCamera()->view);
-			shader->uploadMat4("proj", scene->getDefaultCamera()->proj);
-			shader->unbind();
+			Subscene sub = { material, buffer, &instances };
+			material->shader->bind();
+			material->shader->uploadMat4("view", scene->getDefaultCamera()->view);
+			material->shader->uploadMat4("proj", scene->getDefaultCamera()->proj);
+			material->shader->unbind();
 
 			std::vector<mat4> models;
 			for (auto&& kv : instances)
@@ -97,39 +127,28 @@ namespace gfx
 			drawCalls = 0;
 		};
 
-		std::shared_ptr<Texture> loadTexture(const std::string& name) override
-		{
-			textures[name] = std::make_shared<Texture2DOpenGL>();
-			textures[name]->init(name);
-			return textures[name];
-		};
-
-		std::shared_ptr<Texture> getTexture(const std::string& name) override
-		{
-			return textures[name];
-		};
-
 		void draw() override
 		{
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			for (auto& subscene : subscenes)
 			{
-				subscene.shader->bind();
+				subscene.material->shader->bind();
 				subscene.buffer->bind();
-				if (!(*subscene.instances->begin()).second.textureNames.empty())
+
+				if (!subscene.material->textures.empty())
 				{
-					for (uint32 i = 0; i < (*subscene.instances->begin()).second.textureNames.size(); i++)
+					for (uint32 i = 0; i < subscene.material->textures.size(); i++)
 					{
-						auto tex = textures[(*subscene.instances->begin()).second.textureNames[i]];
+						auto tex = subscene.material->textures[i];
 						tex->bind(i);
-						subscene.shader->uploadInt("uTexture" + std::to_string(i), i);
+						subscene.material->shader->uploadInt("uTexture" + std::to_string(i), i);
 					}
 				}
 				glDrawElementsInstanced(GL_TRIANGLES, subscene.buffer->indicesCount, GL_UNSIGNED_INT, nullptr, subscene.instances->size());
 				drawCalls++;
 				subscene.buffer->unbind();
-				subscene.shader->unbind();
+				subscene.material->shader->unbind();
 			}
 
 			subscenes.clear();
@@ -143,6 +162,11 @@ namespace gfx
 				kv.second->cleanup();
 			}
 			shaders.clear();
+			for (auto&& kv : textures)
+			{
+				kv.second->cleanup();
+			}
+			textures.clear();
 		};
 	};
 };

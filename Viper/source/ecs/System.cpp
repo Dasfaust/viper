@@ -15,7 +15,7 @@ void Worker::onTickAsync()
 
 			if (!ent->skip)
 			{
-				for (uint32 id : ent->components)
+				/*for (uint32 id : ent->components)
 				{
 					if (container->systems.size() > id)
 					{
@@ -29,7 +29,7 @@ void Worker::onTickAsync()
 							flag->clear();
 						}
 					}
-				}
+				}*/
 
 				currentJob.iterated++;
 			}

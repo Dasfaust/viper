@@ -6,7 +6,7 @@ namespace ecs
 	struct Entity
 	{
 		uint64 id = 0;
-		std::set<uint32> components = { };
+		std::array<void*, 32> componentPointers;
 		bool skip = false;
 	};
 };

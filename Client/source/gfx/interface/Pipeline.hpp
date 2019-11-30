@@ -4,6 +4,7 @@
 #include "Shader.hpp"
 #include "../Scene.hpp"
 #include "Texture.hpp"
+#include "Material.hpp"
 
 namespace gfx
 {
@@ -18,7 +19,9 @@ namespace gfx
 		virtual std::shared_ptr<Shader> getShader(const std::string& name) = 0;
 		virtual std::shared_ptr<Texture> loadTexture(const std::string& name) = 0;
 		virtual std::shared_ptr<Texture> getTexture(const std::string& name) = 0;
-		virtual void submit(const std::string& shader, const std::string& mesh, InstanceMap& instances) = 0;
+		virtual std::shared_ptr<Material> makeMaterial(const std::string& name, const std::string& shaderName, const std::vector<std::string>& textureNames) = 0;
+		virtual std::shared_ptr<Material> getMaterial(const std::string& name) = 0;
+		virtual void submit(const std::string& material, const std::string& mesh, InstanceMap& instances) = 0;
 		virtual void draw() = 0;
 	};
 };

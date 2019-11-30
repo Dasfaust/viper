@@ -34,8 +34,7 @@ struct PlayerInput
 struct RenderData
 {
 	std::string meshName = "";
-	std::string shaderName = "";
-	std::array<std::string, 8> textureNames;
+	std::string materialName = "";
 	bool dirty = true;
 };
 
@@ -44,7 +43,6 @@ struct RenderInstance
 	bool is3D = true;
 	Transform2D transform2d;
 	Transform3D transform3d;
-	std::vector<std::string> textureNames;
 };
 
 typedef umap(uint64, RenderInstance) InstanceMap;
@@ -57,19 +55,19 @@ public:
 
 	RenderSystem()
 	{
-		updateEntity = [](ecs::Entity* entity, void* component, std::shared_ptr<System> self, float dt)
+		updateEntity = [](ecs::Entity* entity, std::shared_ptr<System> self, float dt)
 		{
 			auto rs = std::reinterpret_pointer_cast<RenderSystem>(self);
-			auto rd = reinterpret_cast<RenderData*>(component);
+			auto rd = reinterpret_cast<RenderData*>(entity->componentPointers[ecs::ComponentIDs<RenderData>::ID]);
 
 			if (rd->dirty)
 			{
 				umap(std::string, InstanceMap)* mInstances;
-				if (rs->renderData.find(rd->shaderName) == rs->renderData.end())
+				if (rs->renderData.find(rd->materialName) == rs->renderData.end())
 				{
-					rs->renderData[rd->shaderName] = umap(std::string, umap(uint64, RenderInstance))();	
+					rs->renderData[rd->materialName] = umap(std::string, umap(uint64, RenderInstance))();
 				}
-				mInstances = &rs->renderData[rd->shaderName];
+				mInstances = &rs->renderData[rd->materialName];
 
 				InstanceMap* instances;
 				if (mInstances->find(rd->meshName) == mInstances->end())
@@ -85,22 +83,16 @@ public:
 				}
 				instance = &(*instances)[entity->id];
 
-				bool is2d = entity->components.find(ecs::ComponentIDs<Transform2D>::ID) != entity->components.end();
+				bool is2d = entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID] != nullptr;
+
 				if (is2d)
 				{
 					instance->is3D = false;
-					instance->transform2d = Transform2D(*rs->container->getComponent<Transform2D>(entity->id));
+					instance->transform2d = Transform2D(*reinterpret_cast<Transform2D*>(entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID]));
 				}
 				else
 				{
-					instance->transform3d = Transform3D(*rs->container->getComponent<Transform3D>(entity->id));
-				}
-				for (auto tn : rd->textureNames)
-				{
-					if (!tn.empty())
-					{
-						instance->textureNames.push_back(tn);
-					}
+					instance->transform3d = Transform3D(*reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]));
 				}
 
 				rd->dirty = false;
@@ -124,14 +116,14 @@ public:
 
 	CameraSystem()
 	{
-		updateEntity = [](ecs::Entity* entity, void* component, std::shared_ptr<System> self, float dt)
+		updateEntity = [](ecs::Entity* entity, std::shared_ptr<System> self, float dt)
 		{
 			auto sys = std::reinterpret_pointer_cast<CameraSystem>(self);
 
-			auto cam = reinterpret_cast<OrthoCamera*>(component);
+			auto cam = reinterpret_cast<OrthoCamera*>(entity->componentPointers[ecs::ComponentIDs<OrthoCamera>::ID]);
 			if (cam->dirty)
 			{
-				auto tc = sys->container->getComponent<Transform2D>(entity->id);
+				auto tc = reinterpret_cast<Transform2D*>(entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID]);
 
 				float aspectRatio = (float)sys->wm->width / (float)sys->wm->height;
 
@@ -169,11 +161,11 @@ public:
 		inputBindings2d[LEFT] = KEY_A;
 		inputBindings2d[RIGHT] = KEY_D;
 
-		updateEntity = [](ecs::Entity* entity, void* component, std::shared_ptr<System> self, float dt)
+		updateEntity = [](ecs::Entity* entity, std::shared_ptr<System> self, float dt)
 		{
 			auto pi = std::reinterpret_pointer_cast<PlayerInputSystem>(self);
 
-			bool is2d = entity->components.find(ecs::ComponentIDs<Transform2D>::ID) != entity->components.end();
+			bool is2d = entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID] != nullptr;
 
 			bool changed = false;
 			if (is2d)
@@ -210,7 +202,7 @@ public:
 			{
 				if (is2d)
 				{
-					pi->container->getComponent<OrthoCamera>(entity->id)->dirty = true;
+					reinterpret_cast<OrthoCamera*>(entity->componentPointers[ecs::ComponentIDs<OrthoCamera>::ID])->dirty = true;
 				}
 			}
 		};
@@ -242,22 +234,22 @@ public:
 		container->registerComponent<OrthoCamera>();
 		container->registerComponent<PlayerInput>();
 
-		renderSystem = container->initSystem<RenderData, RenderSystem>();
-		renderSystem->container = container;
-
-		cameraSystem = container->initSystem<OrthoCamera, CameraSystem>();
-		cameraSystem->container = container;
-		cameraSystem->wm = wm;
-
-		playerInputSystem = container->initSystem<PlayerInput, PlayerInputSystem>();
-		playerInputSystem->container = container;
-		playerInputSystem->wm = wm;
-		playerInputSystem->input = input;
-
 		for (auto&& kv : modules)
 		{
 			kv.second->onStart();
 		}
+
+		renderSystem = container->initSystem<RenderSystem>({ ecs::ComponentIDs<RenderData>::ID });
+		renderSystem->container = container;
+
+		cameraSystem = container->initSystem<CameraSystem>({ ecs::ComponentIDs<OrthoCamera>::ID });
+		cameraSystem->container = container;
+		cameraSystem->wm = wm;
+
+		playerInputSystem = container->initSystem<PlayerInputSystem>({ ecs::ComponentIDs<PlayerInput>::ID });
+		playerInputSystem->container = container;
+		playerInputSystem->wm = wm;
+		playerInputSystem->input = input;
 
 		initDefaultPlayer();
 
@@ -269,7 +261,7 @@ public:
 				auto rd = container->getComponent<RenderData>(ent);
 				auto tf = container->getComponent<Transform2D>(ent);
 				rd->meshName = "plane";
-				rd->shaderName = "2d_basic";
+				rd->materialName = "flat";
 				tf->position = glm::vec2((float)x * 0.5f, (float)y * 0.5f);
 				tf->scale = 0.5f;
 			}
@@ -278,9 +270,7 @@ public:
 		uint64 ent = makeEntity({ ecs::ComponentIDs<Transform2D>::ID, ecs::ComponentIDs<RenderData>::ID });
 		auto rd = container->getComponent<RenderData>(ent);
 		rd->meshName = "plane_texture";
-		rd->shaderName = "2d_basic_texture";
-		rd->textureNames[0] = "checkerboard.png";
-		rd->textureNames[1] = "logo.png";
+		rd->materialName = "basic";
 	};
 
 	void onTick() override
