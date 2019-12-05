@@ -14,6 +14,9 @@ struct Transform2D
 struct Transform3D
 {
 	vec3 position = vec3(0.0f);
+	vec3 rotationAxis = vec3(1.0f, 0.0f, 0.0f);
+	float rotation = 0.0f;
+	vec3 scale = vec3(1.0f);
 };
 
 struct Camera
@@ -24,6 +27,12 @@ struct Camera
 struct OrthoCamera : Camera
 {
 	vec4 bounds;
+};
+
+struct PerspectiveCamera : OrthoCamera
+{
+	float fov = 65.0f;
+	vec3 offset = vec3(0.0f, 0.0f, -3.0f);
 };
 
 struct PlayerInput
@@ -120,21 +129,41 @@ public:
 		{
 			auto sys = std::reinterpret_pointer_cast<CameraSystem>(self);
 
-			auto cam = reinterpret_cast<OrthoCamera*>(entity->componentPointers[ecs::ComponentIDs<OrthoCamera>::ID]);
-			if (cam->dirty)
+			if (entity->componentPointers[ecs::ComponentIDs<OrthoCamera>::ID])
 			{
-				auto tc = reinterpret_cast<Transform2D*>(entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID]);
-
-				float aspectRatio = (float)sys->wm->width / (float)sys->wm->height;
-
-				mat4 transform = glm::translate(mat4(1.0f), vec3(tc->position, 0.0f)) * glm::rotate(mat4(1.0f), glm::radians(tc->rotation), vec3(0.0f, 0.0f, 1.0f));
-				sys->matrices[entity->id] =
+				auto cam = reinterpret_cast<OrthoCamera*>(entity->componentPointers[ecs::ComponentIDs<OrthoCamera>::ID]);
+				if (cam->dirty)
 				{
-					glm::inverse(transform),
-					glm::ortho(cam->bounds[0] * aspectRatio, cam->bounds[1] * aspectRatio, cam->bounds[2], cam->bounds[3], -1.0f, 1.0f)
-				};
+					auto tc = reinterpret_cast<Transform2D*>(entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID]);
 
-				cam->dirty = false;
+					float aspectRatio = (float)sys->wm->width / (float)sys->wm->height;
+
+					mat4 transform = glm::translate(mat4(1.0f), vec3(tc->position, 0.0f)) * glm::rotate(mat4(1.0f), glm::radians(tc->rotation), vec3(0.0f, 0.0f, 1.0f));
+					sys->matrices[entity->id] =
+					{
+						glm::inverse(transform),
+						glm::ortho(cam->bounds[0] * aspectRatio, cam->bounds[1] * aspectRatio, cam->bounds[2], cam->bounds[3], -1.0f, 1.0f)
+					};
+
+					cam->dirty = false;
+				}
+			}
+			else
+			{
+				auto cam = reinterpret_cast<PerspectiveCamera*>(entity->componentPointers[ecs::ComponentIDs<PerspectiveCamera>::ID]);
+				if (cam->dirty)
+				{
+					auto tc = reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]);
+
+					mat4 view(1.0f);
+					sys->matrices[entity->id] =
+					{
+						glm::translate(view, tc->position + cam->offset),
+						glm::perspective(glm::radians(cam->fov), cam->bounds.x / cam->bounds.y, cam->bounds.z, cam->bounds.w)
+					};
+
+					cam->dirty = false;
+				}
 			}
 		};
 	};
@@ -232,6 +261,7 @@ public:
 		container->registerComponent<Transform2D>();
 		container->registerComponent<Transform3D>();
 		container->registerComponent<OrthoCamera>();
+		container->registerComponent<PerspectiveCamera>();
 		container->registerComponent<PlayerInput>();
 
 		for (auto&& kv : modules)
@@ -239,21 +269,31 @@ public:
 			kv.second->onStart();
 		}
 
-		renderSystem = container->initSystem<RenderSystem>({ ecs::ComponentIDs<RenderData>::ID });
+		renderSystem = container->initSystem<RenderSystem>({ { ecs::ComponentIDs<RenderData>::ID, ecs::NONE_REQUIRED } });
 		renderSystem->container = container;
 
-		cameraSystem = container->initSystem<CameraSystem>({ ecs::ComponentIDs<OrthoCamera>::ID });
+		cameraSystem = container->initSystem<CameraSystem>({ { ecs::ComponentIDs<OrthoCamera>::ID, ecs::NOT_REQUIRED }, { ecs::ComponentIDs<PerspectiveCamera>::ID, ecs::NOT_REQUIRED } });
 		cameraSystem->container = container;
 		cameraSystem->wm = wm;
 
-		playerInputSystem = container->initSystem<PlayerInputSystem>({ ecs::ComponentIDs<PlayerInput>::ID });
+		playerInputSystem = container->initSystem<PlayerInputSystem>({ { ecs::ComponentIDs<PlayerInput>::ID, ecs::NONE_REQUIRED } });
 		playerInputSystem->container = container;
 		playerInputSystem->wm = wm;
 		playerInputSystem->input = input;
 
+		container->initSystem({ { ecs::ComponentIDs<Transform3D>::ID, ecs::NONE_REQUIRED }, { ecs::ComponentIDs<PlayerInput>::ID, ecs::SKIP } }, [](ecs::Entity* entity, std::shared_ptr<ecs::System> self, float dt)
+		{
+			auto transform = reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]);
+			float rot = transform->rotation + (10.0f * dt);
+			if (rot >= 180.0f) { rot = -180.0f; }
+			transform->rotation = rot;
+			auto rd = reinterpret_cast<RenderData*>(entity->componentPointers[ecs::ComponentIDs<RenderData>::ID]);
+			rd->dirty = true;
+		});
+
 		initDefaultPlayer();
 
-		for (uint32 x = 0; x < 10; x++)
+		/*for (uint32 x = 0; x < 10; x++)
 		{
 			for (uint32 y = 0; y < 10; y++)
 			{
@@ -270,7 +310,15 @@ public:
 		uint64 ent = makeEntity({ ecs::ComponentIDs<Transform2D>::ID, ecs::ComponentIDs<RenderData>::ID });
 		auto rd = container->getComponent<RenderData>(ent);
 		rd->meshName = "plane_texture";
-		rd->materialName = "basic";
+		rd->materialName = "basic";*/
+
+		uint64 ent = makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
+		auto rd = container->getComponent<RenderData>(ent);
+		rd->meshName = "cube";
+		rd->materialName = "3d_default";
+		auto tc = container->getComponent<Transform3D>(ent);
+		tc->rotationAxis = vec3(0.5f, 1.0f, 0.0f);
+		tc->rotation = 0.0f;
 	};
 
 	void onTick() override
@@ -285,19 +333,20 @@ public:
 		players.push_back(
 		container->makeEntity(
 			{
-					ecs::ComponentIDs<Transform2D>::ID,
-					ecs::ComponentIDs<OrthoCamera>::ID,
+					ecs::ComponentIDs<Transform3D>::ID,
+					ecs::ComponentIDs<PerspectiveCamera>::ID,
 					ecs::ComponentIDs<PlayerInput>::ID
 				}
 			)
 		);
-		auto trans = container->getComponent<Transform2D>(players[0]);
-		trans->position = vec2(0.0f);
-		trans->rotation = 0.0f;
-		trans->scale = 1.0f;
+		auto trans = container->getComponent<Transform3D>(players[0]);
 
-		auto cam = container->getComponent<OrthoCamera>(players[0]);
-		cam->bounds = vec4(-1.0f, 1.0f, -1.0f, 1.0f);
+		/*auto cam = container->getComponent<OrthoCamera>(players[0]);
+		cam->bounds = vec4(-1.0f, 1.0f, -1.0f, 1.0f);*/
+
+		auto cam = container->getComponent<PerspectiveCamera>(players[0]);
+		cam->bounds = vec4(wm->width, wm->height, 0.1f, 100.0f);
+		cam->fov = 65.0f;
 	};
 
 	ViewProjectionMatrix* getDefaultCamera()

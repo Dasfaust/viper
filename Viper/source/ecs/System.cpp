@@ -9,31 +9,35 @@ void Worker::onTickAsync()
 	{
 		auto container = getParent<Container>();
 
-		for (uint64 i = currentJob.start * container->entitySize; i <= currentJob.end * container->entitySize; i += container->entitySize)
+		/*for (uint64 i = currentJob.start * container->entitySize; i <= currentJob.end * container->entitySize; i += container->entitySize)
 		{
-			auto ent = reinterpret_cast<Entity*>(&container->heap[i]);
+			auto ent = reinterpret_cast<ecs::Entity*>(&container->heap[i]);
 
-			if (!ent->skip)
+			if (ent->skip)
 			{
-				/*for (uint32 id : ent->components)
-				{
-					if (container->systems.size() > id)
-					{
-						auto system = container->systems[id];
-						if (system != nullptr)
-						{
-							auto flag = container->getFlag(ent->id, id);
-							while (flag->test_and_set()) {};
-							// TODO IMPORTANT DT
-							system->updateEntity(ent, container->getComponent(ent->id, id), system, 0.0);
-							flag->clear();
-						}
-					}
-				}*/
-
-				currentJob.iterated++;
+				continue;
 			}
-		}
+
+			for (uint32 i = 0; i < container->systemTypes.size(); i++)
+			{
+				std::set<uint32> types = container->systemTypes[i];
+
+				bool update = true;
+				for (uint32 type : types)
+				{
+					if (ent->componentPointers[type] == nullptr)
+					{
+						update = false;
+						break;
+					}
+				}
+				if (update)
+				{
+					//while(container->getFlag(ent->id)) {}
+					container->systems[i]->updateEntity(ent, container->systems[i], (float)(container->dt / 1000.0));
+				}
+			}
+		}*/
 
 		completed.enqueue(currentJob);
 		currentJob.valid = false;

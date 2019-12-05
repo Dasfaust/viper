@@ -12,5 +12,5 @@ out vec2 sTexCoord;
 void main()
 {
     sTexCoord = texCoord;
-    gl_Position = view * proj * model * vec4(position, 1.0);
+    gl_Position = proj *view * model * vec4(position, 1.0);
 }

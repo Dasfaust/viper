@@ -30,3 +30,4 @@ typedef glm::mat4 mat4;
 #define tnowns() static_cast<time_val>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count())
 #define set_atom(x, y, z) z __x = y; while (!x.compare_exchange_strong(__x, y))
 #define timesince(x) (tnowns() - x) / 1000000.0
+#define distance2d(v1, v2) sqrt(pow(v2.x - v1.x, 2) + pow(v2.y - v1.y, 2) * 1.0f)

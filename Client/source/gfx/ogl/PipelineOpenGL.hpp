@@ -30,6 +30,7 @@ namespace gfx
 			info("OpenGL: %s %s (%s)", glGetString(GL_VENDOR), glGetString(GL_RENDERER), glGetString(GL_VERSION));
 
 			glEnable(GL_BLEND);
+			glEnable(GL_DEPTH_TEST);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			memory = std::make_shared<MemoryOpenGL>();
@@ -109,7 +110,10 @@ namespace gfx
 			{
 				if (kv.second.is3D)
 				{
-					models.push_back(glm::translate(mat4(1.0f), kv.second.transform3d.position));
+					auto model = mat4(1.0f);
+					model = glm::rotate(model, glm::radians(kv.second.transform3d.rotation), kv.second.transform3d.rotationAxis);
+					model = glm::scale(model, kv.second.transform3d.scale);
+					models.push_back(glm::translate(model, kv.second.transform3d.position));
 				}
 				else
 				{
@@ -129,7 +133,7 @@ namespace gfx
 
 		void draw() override
 		{
-			glClear(GL_COLOR_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			for (auto& subscene : subscenes)
 			{
@@ -145,7 +149,16 @@ namespace gfx
 						subscene.material->shader->uploadInt("uTexture" + std::to_string(i), i);
 					}
 				}
-				glDrawElementsInstanced(GL_TRIANGLES, subscene.buffer->indicesCount, GL_UNSIGNED_INT, nullptr, subscene.instances->size());
+
+				if (subscene.buffer->indicesCount == 0)
+				{
+					glDrawArraysInstanced(GL_TRIANGLES, 0, subscene.buffer->verticesCount, subscene.instances->size());
+				}
+				else
+				{
+					glDrawElementsInstanced(GL_TRIANGLES, subscene.buffer->indicesCount, GL_UNSIGNED_INT, nullptr, subscene.instances->size());
+				}
+
 				drawCalls++;
 				subscene.buffer->unbind();
 				subscene.material->shader->unbind();

@@ -23,6 +23,7 @@ namespace gfx
 	public:
 		uint32 vertexArray;
 		uint32 vertexBuffer;
+		uint32 verticesCount;
 		uint32 indexBuffer;
 		uint32 indicesCount;
 		uint32 instanceBuffer;
@@ -48,6 +49,8 @@ namespace gfx
 			// todo deal with existing buffer
 			auto buffer = std::make_shared<BufferViewOpenGL>();
 
+			buffer->verticesCount = (vertices->size() * sizeof(float)) / attributes.stride;
+			
 			glGenVertexArrays(1, &buffer->vertexArray);
 			glBindVertexArray(buffer->vertexArray);
 
@@ -89,16 +92,25 @@ namespace gfx
 				}
 			}
 
-			glGenBuffers(1, &buffer->indexBuffer);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->indexBuffer);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * indices->size(), indices->data(), GL_STATIC_DRAW);
-			buffer->indicesCount = (uint32)indices->size();
+			if (indices != nullptr)
+			{
+				glGenBuffers(1, &buffer->indexBuffer);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->indexBuffer);
+				glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * indices->size(), indices->data(), GL_STATIC_DRAW);
+				buffer->indicesCount = (uint32)indices->size();
+			}
+			else
+			{
+				buffer->indexBuffer = 0;
+				buffer->indicesCount = 0;
+			}
+
 			buffer->attributes = attributes;
 
 			glBindVertexArray(0);
 
 			buffers[name] = buffer;
-			return buffer;
+			return buffer;  
 		};
 
 		bool isLoaded(std::string name) override
@@ -117,7 +129,7 @@ namespace gfx
 			{
 				glDeleteVertexArrays(0, &kv.second->vertexArray);
 				glDeleteBuffers(1, &kv.second->vertexBuffer);
-				glDeleteBuffers(1, &kv.second->indexBuffer);
+				if (kv.second->indexBuffer > 0) { glDeleteBuffers(1, &kv.second->indexBuffer); }
 				glDeleteBuffers(1, &kv.second->instanceBuffer);
 			}
 		};

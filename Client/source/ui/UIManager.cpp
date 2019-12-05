@@ -29,12 +29,6 @@ void UIManager::onStart()
 	ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_TabRounding, 0.0f);
-	//ImGui::PushStyleColor(ImGuiCol_)
-	
-	if (Renderer::API == OPEN_GL)
-	{
-		
-	}
 
 	switch (Renderer::API)
 	{

@@ -100,8 +100,7 @@ void Renderer::onStart()
 		auto pos = ImGui::GetMainViewport()->Pos;
 		ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
 		ImGui::SetNextWindowViewport(ImGui::FindViewportByPlatformHandle(renderer->wm->context->handle)->ID);
-		ImGui::Begin("Client", &active, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
-		//ImGui::Text("Vsync: %d", renderer->wm->vsync);
+		ImGui::Begin("Telemetry", &active, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Text("Connected: %d", renderer->getParent<Client>()->isConnected.load());
 		ImGui::Checkbox("Vsync", &renderer->wm->vsync);
 		ImGui::Text("FPS: %d", renderer->fps);
@@ -109,6 +108,33 @@ void Renderer::onStart()
 		ImGui::Text("Entities: %d", renderer->scene->container->heap.size() / renderer->scene->container->entitySize);
 		ImGui::Text("Scene tick: %.4fms", renderer->scene->updateTimeMs);
 		ImGui::Text("Draws: %d", std::reinterpret_pointer_cast<gfx::PipelineOpenGL>(renderer->pipeline)->drawCalls);
+		ImGui::End();
+	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
+
+	ui->addCommand("selection_control", [](std::vector<std::shared_ptr<Module>> mods)
+	{
+		auto renderer = std::reinterpret_pointer_cast<Renderer>(mods[0]);
+		bool active = true;
+		auto selected = renderer->scene->container->getEntity(1);
+		ImGui::Begin("Selection", &active, ImGuiWindowFlags_AlwaysAutoResize);
+		auto transform = renderer->scene->container->getComponent<Transform3D>(selected->id);
+		auto renderData = renderer->scene->container->getComponent<RenderData>(selected->id);
+		if (ImGui::InputFloat3("Position", glm::value_ptr(transform->position)))
+		{
+			renderData->dirty = true;
+		}
+		if (ImGui::InputFloat3("Rotation Axis", glm::value_ptr(transform->rotationAxis)))
+		{
+			renderData->dirty = true;
+		}
+		if (ImGui::SliderFloat("Rotation", &transform->rotation, -180.0f, 180.0f))
+		{
+			renderData->dirty = true;
+		}
+		if (ImGui::InputFloat3("Scale", glm::value_ptr(transform->scale)))
+		{
+			renderData->dirty = true;
+		}
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
@@ -136,6 +162,8 @@ void Renderer::onStart()
 
 	pipeline->getMemory()->requestBuffer("plane", &vertices, &indices, { {gfx::Float2, "position" } }, { { gfx::Float4x4, "model", false, 1 } });
 	pipeline->getMemory()->requestBuffer("plane_texture", &verticesTex, &indices, { {gfx::Float2, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
+	pipeline->getMemory()->requestBuffer("cube", &cubeVerts, nullptr, { {gfx::Float3, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
+
 	pipeline->loadShader("2d_basic");
 	pipeline->loadShader("2d_basic_texture");
 	pipeline->loadShader("3d_default");
@@ -145,6 +173,7 @@ void Renderer::onStart()
 
 	pipeline->makeMaterial("flat", "2d_basic", { });
 	pipeline->makeMaterial("basic", "2d_basic_texture", { "checkerboard.png", "logo.png" });
+	pipeline->makeMaterial("3d_default", "3d_default", { "checkerboard.png" });
 };
 
 void Renderer::onTick()

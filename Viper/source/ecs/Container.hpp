@@ -1,12 +1,20 @@
 #pragma once
 #include "Entity.hpp"
-#include "System.hpp"
 #include "../interface/Modular.hpp"
 #include "../interface/Threadable.hpp"
+#include "System.hpp"
 #include <atomic>
 
 namespace ecs
 {
+	enum SystemComponentFlag
+	{
+		NONE_REQUIRED = 0,
+		NOT_REQUIRED = 1,
+		SKIP = 2
+	};
+
+
 	static uint32 componentIndex = 0;
 	
 	template<typename T>
@@ -36,7 +44,7 @@ namespace ecs
 		uint32 blocksAllocated = 0;
 		size_t entitySize;
 		std::vector<ComponentMeta> componentData;
-		std::vector<std::set<uint32>> systemTypes;
+		std::vector<std::set<std::pair<uint32, SystemComponentFlag>>> systemTypes;
 		std::vector<std::shared_ptr<System>> systems;
 		std::vector<size_t> offsets;
 		std::vector<uint32> heap;
@@ -46,6 +54,7 @@ namespace ecs
 		void onShutdown() override;
 		uint64 getNextEntityId();
 		uint64 makeEntity(std::set<uint32> comps);
+		void updateSystemsCache(uint64 ent);
 		Entity* getEntity(uint64 id);
 		void deleteEntity(uint64 id);
 		void purge();
@@ -94,7 +103,7 @@ namespace ecs
 		};
 
 		template<typename S>
-		std::shared_ptr<S> initSystem(std::set<uint32> types)
+		std::shared_ptr<S> initSystem(std::set<std::pair<uint32, SystemComponentFlag>> types)
 		{
 			auto id = systemTypes.size();
 			systemTypes.push_back(types);
@@ -103,8 +112,7 @@ namespace ecs
 			return std::reinterpret_pointer_cast<S>(systems[id]);
 		};
 
-		template<typename T>
-		std::shared_ptr<System> initSystem(std::set<uint32> types, void(*updateEntity)(Entity* entity, std::shared_ptr<System> self, float dt))
+		std::shared_ptr<System> initSystem(std::set<std::pair<uint32, SystemComponentFlag>> types, void(*updateEntity)(Entity* entity, std::shared_ptr<System> self, float dt))
 		{
 			auto system = initSystem<System>(types);
 			system->updateEntity = updateEntity;

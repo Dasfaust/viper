@@ -101,8 +101,61 @@ uint64 Container::makeEntity(std::set<uint32> comps)
 		}
 		offset += meta.tSize;
 	}
+
+	updateSystemsCache(id);
+
 	return id;
 };
+
+void Container::updateSystemsCache(uint64 id)
+{
+	auto ent = getEntity(id);
+
+	for (uint32 i = 0; i < ent->systems.size(); i++)
+	{
+		ent->systems[i] = -1;
+	}
+	for (uint32 i = 0; i < systemTypes.size(); i++)
+	{
+		auto types = systemTypes[i];
+
+		bool update = true;
+		bool foundAny = false;
+		uint32 index = 0;
+		for (auto type : types)
+		{
+			index++;
+
+			if (ent->componentPointers[type.first] == nullptr)
+			{
+				if (type.second == NOT_REQUIRED || type.second == SKIP)
+				{
+					if (index == types.size() && !foundAny)
+					{
+						update = false;
+					}
+
+					continue;
+				}
+
+				update = false;
+				break;
+			}
+
+			if (type.second == SKIP)
+			{
+				update = false;
+			}
+
+			foundAny = true;
+		}
+		if (update)
+		{
+			ent->systems[i] = i;
+		}
+	}
+};
+
 
 Entity* Container::getEntity(uint64 id)
 {
@@ -148,29 +201,15 @@ void Container::onTick()
 	{
 		for (uint64 i = 0; i < heap.size(); i += entitySize)
 		{
-			auto ent = reinterpret_cast<ecs::Entity*>(&heap[i]);
+			auto ent = reinterpret_cast<Entity*>(&heap[i]);
 
-			if (ent->skip)
-			{
-				continue;
-			}
-			
-			for (uint32 i = 0; i < systemTypes.size(); i++)
-			{
-				std::set<uint32> types = systemTypes[i];
+			if (ent->skip) { continue; }
 
-				bool update = true;
-				for (uint32 type : types)
+			for (int sys : ent->systems)
+			{
+				if (sys > -1)
 				{
-					if (ent->componentPointers[type] == nullptr)
-					{
-						update = false;
-						break;
-					}
-				}
-				if (update)
-				{
-					systems[i]->updateEntity(ent, systems[i], (float)(dt / 1000.0));
+					systems[sys]->updateEntity(ent, systems[sys], (float)(dt / 1000.0));
 				}
 			}
 		}
