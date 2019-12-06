@@ -17,6 +17,7 @@ struct Transform3D
 	vec3 rotationAxis = vec3(1.0f, 0.0f, 0.0f);
 	float rotation = 0.0f;
 	vec3 scale = vec3(1.0f);
+	bool isStatic = false;
 };
 
 struct Camera
@@ -33,6 +34,13 @@ struct PerspectiveCamera : OrthoCamera
 {
 	float fov = 65.0f;
 	vec3 offset = vec3(0.0f, 0.0f, -3.0f);
+	vec3 target = vec3(0.0f);
+	vec3 upAxis = vec3(0.0f, 1.0f, 0.0f);
+	vec3 frontAxis = vec3(0.0f, 0.0f, -1.0f);
+	float pitch = 0.0f;
+	float yaw = 0.0f;
+	float roll = 0.0f;
+	float zoom = 0.0f;
 };
 
 struct PlayerInput
@@ -42,25 +50,33 @@ struct PlayerInput
 
 struct RenderData
 {
-	std::string meshName = "";
-	std::string materialName = "";
+	uint32 materialId = 0;
+	uint32 meshId = 0;
 	bool dirty = true;
+};
+
+struct InstanceMap
+{
+	uint32 mesh;
+	uint32 material;
+	umap(uint64, uint32) entities;
+	std::vector<mat4> instances;
+	bool changed = false;
 };
 
 struct RenderInstance
 {
-	bool is3D = true;
-	Transform2D transform2d;
-	Transform3D transform3d;
+	uint64 entity;
+	uint64 instanceId;
+	mat4 model;
 };
-
-typedef umap(uint64, RenderInstance) InstanceMap;
 
 class RenderSystem : public ecs::System
 {
 public:
 	std::shared_ptr<ecs::Container> container;
-	umap(std::string, umap(std::string, InstanceMap)) renderData;
+	umap(uint64, InstanceMap) renderData;
+	moodycamel::ConcurrentQueue<RenderInstance> instanceQueue;
 
 	RenderSystem()
 	{
@@ -71,42 +87,56 @@ public:
 
 			if (rd->dirty)
 			{
-				umap(std::string, InstanceMap)* mInstances;
-				if (rs->renderData.find(rd->materialName) == rs->renderData.end())
-				{
-					rs->renderData[rd->materialName] = umap(std::string, umap(uint64, RenderInstance))();
-				}
-				mInstances = &rs->renderData[rd->materialName];
+				uint64 instanceId = (uint64) rd->materialId << 32 | rd->meshId;
 
-				InstanceMap* instances;
-				if (mInstances->find(rd->meshName) == mInstances->end())
-				{
-					(*mInstances)[rd->meshName] = umap(uint64, RenderInstance)();
-				}
-				instances = &(*mInstances)[rd->meshName];
+				auto tc = reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]);
 
-				RenderInstance* instance;
-				if ((*instances).find(entity->id) == instances->end())
-				{
-					(*instances)[entity->id] = { };
-				}
-				instance = &(*instances)[entity->id];
+				auto model = mat4(1.0f);
+				model = glm::translate(model, tc->position);
+				model = glm::rotate(model, glm::radians(tc->rotation), tc->rotationAxis);
+				model = glm::scale(model, tc->scale);
 
-				bool is2d = entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID] != nullptr;
-
-				if (is2d)
-				{
-					instance->is3D = false;
-					instance->transform2d = Transform2D(*reinterpret_cast<Transform2D*>(entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID]));
-				}
-				else
-				{
-					instance->transform3d = Transform3D(*reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]));
-				}
+				rs->instanceQueue.enqueue({ entity->id, instanceId, model });
 
 				rd->dirty = false;
 			}
 		};
+	};
+
+	void onTickEnd() override
+	{
+		RenderInstance instance;
+		while(instanceQueue.try_dequeue(instance))
+		{
+			InstanceMap* map;
+			if (renderData.find(instance.instanceId) == renderData.end())
+			{
+				renderData[instance.instanceId] = InstanceMap();
+				map = &renderData[instance.instanceId];
+				map->mesh = (uint32)instance.instanceId;
+				map->material = instance.instanceId >> 32;
+			}
+			else
+			{
+				map = &renderData[instance.instanceId];
+			}
+
+			uint32 location;
+			if (map->entities.find(instance.entity) == map->entities.end())
+			{
+				location = (uint32)map->instances.size();
+				map->entities[instance.entity] = location;
+				map->instances.resize(location + 1);
+			}
+			else
+			{
+				location = map->entities[instance.entity];
+			}
+
+			map->instances[location] = instance.model;
+
+			map->changed = true;
+		}
 	};
 };
 
@@ -155,10 +185,9 @@ public:
 				{
 					auto tc = reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]);
 
-					mat4 view(1.0f);
 					sys->matrices[entity->id] =
 					{
-						glm::translate(view, tc->position + cam->offset),
+						glm::lookAt(tc->position + cam->offset, tc->position + cam->offset + cam->frontAxis, cam->upAxis),
 						glm::perspective(glm::radians(cam->fov), cam->bounds.x / cam->bounds.y, cam->bounds.z, cam->bounds.w)
 					};
 
@@ -180,6 +209,12 @@ public:
 	std::shared_ptr<ecs::Container> container;
 	std::shared_ptr<WindowManager> wm;
 	std::shared_ptr<InputManager> input;
+	std::shared_ptr<Listener<ButtonPressedEvent>> buttonPressed;
+	float speed = 1.5f;
+	float sensitivity = 0.5f;
+	float lastMouseX = 0.0f;
+	float lastMouseY = 0.0f;
+	bool captured = false;
 
 	umap(InputDirection2D, uint32) inputBindings2d;
 
@@ -199,32 +234,85 @@ public:
 			bool changed = false;
 			if (is2d)
 			{
-				auto trans = pi->container->getComponent<Transform2D>(entity->id);
+				auto trans = reinterpret_cast<Transform2D*>(entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID]);
 
 				if (pi->input->isDown(pi->inputBindings2d[UP]))
 				{
-					trans->position.y += 0.5f * dt;
+					trans->position.y += pi->speed * dt;
 					changed = true;
 				}
 				if (pi->input->isDown(pi->inputBindings2d[DOWN]))
 				{
-					trans->position.y -= 0.5f * dt;
+					trans->position.y -= pi->speed * dt;
 					changed = true;
 				}
 				if (pi->input->isDown(pi->inputBindings2d[LEFT]))
 				{
-					trans->position.x -= 0.5f * dt;
+					trans->position.x -= pi->speed * dt;
 					changed = true;
 				}
 				if (pi->input->isDown(pi->inputBindings2d[RIGHT]))
 				{
-					trans->position.x += 0.5f * dt;
+					trans->position.x += pi->speed * dt;
 					changed = true;
 				}
 			}
 			else
 			{
-				
+				auto trans = reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]);
+				auto cam = reinterpret_cast<PerspectiveCamera*>(entity->componentPointers[ecs::ComponentIDs<PerspectiveCamera>::ID]);
+
+				if (pi->captured && pi->input->isDown(KEY_ESCAPE))
+				{
+					pi->captured = false;
+					pi->wm->setShowCursor(true);
+				}
+
+				if (pi->captured && (fabs(pi->lastMouseX - pi->input->mousePos.x) > 0.01f || fabs(pi->lastMouseY - pi->input->mousePos.y) > 0.01f))
+				{
+					float xOffset = (pi->input->mousePos.x - pi->lastMouseX) * pi->sensitivity;
+					float yOffset = (pi->lastMouseY - pi->input->mousePos.y) * pi->sensitivity;
+					cam->yaw += xOffset;
+					cam->pitch += yOffset;
+
+					if (cam->pitch > 89.0f) { cam->pitch = 89.0f; }
+					if (cam->pitch < -89.0f) { cam->pitch = -89.0f; }
+
+					vec3 direction;
+					direction.x = cos(glm::radians(cam->yaw)) * cos(glm::radians(cam->pitch));
+					direction.y = sin(glm::radians(cam->pitch));
+					direction.z = sin(glm::radians(cam->yaw)) * cos(glm::radians(cam->pitch));
+					direction = glm::normalize(direction);
+
+					cam->frontAxis = direction;
+					pi->lastMouseX = pi->input->mousePos.x;
+					pi->lastMouseY = pi->input->mousePos.y;
+
+					changed = true;
+				}
+
+				if (pi->input->isDown(pi->inputBindings2d[UP]))
+				{
+					trans->position += cam->frontAxis * pi->speed * dt;
+					changed = true;
+				}
+				if (pi->input->isDown(pi->inputBindings2d[DOWN]))
+				{
+					trans->position -= cam->frontAxis * pi->speed * dt;
+					changed = true;
+				}
+				if (pi->input->isDown(pi->inputBindings2d[LEFT]))
+				{
+					trans->position += glm::normalize(glm::cross(cam->upAxis, cam->frontAxis)) * pi->speed * dt;
+					changed = true;
+				}
+				if (pi->input->isDown(pi->inputBindings2d[RIGHT]))
+				{
+					trans->position -= glm::normalize(glm::cross(cam->upAxis, cam->frontAxis)) * pi->speed * dt;
+					changed = true;
+				}
+
+				cam->target = trans->position;
 			}
 
 			if (changed)
@@ -233,8 +321,34 @@ public:
 				{
 					reinterpret_cast<OrthoCamera*>(entity->componentPointers[ecs::ComponentIDs<OrthoCamera>::ID])->dirty = true;
 				}
+				else
+				{
+					reinterpret_cast<PerspectiveCamera*>(entity->componentPointers[ecs::ComponentIDs<PerspectiveCamera>::ID])->dirty = true;
+				}
 			}
 		};
+	};
+
+	void onStart() override
+	{
+		buttonPressed = wm->buttonPressedEvent->listen(20, [](ButtonPressedEvent& ev, std::vector<std::shared_ptr<Module>> modules)
+		{
+			auto self = std::reinterpret_pointer_cast<PlayerInputSystem>(modules[0]);
+			if (ev.button == 0 && !self->captured)
+			{
+				self->lastMouseX = self->input->mousePos.x;
+				self->lastMouseY = self->input->mousePos.y;
+				self->captured = true;
+				self->wm->setShowCursor(false);
+				self->lastMouseX = self->wm->showCursorCoords.x;
+				self->lastMouseY = self->wm->showCursorCoords.y;
+			}
+		}, { shared_from_this() });
+	};
+
+	void onTickBegin() override
+	{
+		buttonPressed->poll();
 	};
 };
 
@@ -293,32 +407,34 @@ public:
 
 		initDefaultPlayer();
 
-		/*for (uint32 x = 0; x < 10; x++)
+		for (uint32 x = 0; x < 100; x++)
 		{
-			for (uint32 y = 0; y < 10; y++)
+			for (uint32 z = 0; z < 100; z++)
 			{
-				uint64 ent = makeEntity({ ecs::ComponentIDs<Transform2D>::ID, ecs::ComponentIDs<RenderData>::ID });
-				auto rd = container->getComponent<RenderData>(ent);
-				auto tf = container->getComponent<Transform2D>(ent);
-				rd->meshName = "plane";
-				rd->materialName = "flat";
-				tf->position = glm::vec2((float)x * 0.5f, (float)y * 0.5f);
-				tf->scale = 0.5f;
+				for (uint32 y = 0; y < 2; y++)
+				{
+					uint64 ent = makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
+					auto rd = container->getComponent<RenderData>(ent);
+					rd->materialId = 0;
+					rd->meshId = 0;
+					auto tc = container->getComponent<Transform3D>(ent);
+					tc->position = vec3(x, y, z);
+					tc->rotationAxis = vec3(1.0f, 0.3f, 0.5f);
+					tc->rotation = 0.0f;
+					tc->scale = vec3(0.5f);
+				}
 			}
 		}
 
-		uint64 ent = makeEntity({ ecs::ComponentIDs<Transform2D>::ID, ecs::ComponentIDs<RenderData>::ID });
-		auto rd = container->getComponent<RenderData>(ent);
-		rd->meshName = "plane_texture";
-		rd->materialName = "basic";*/
-
 		uint64 ent = makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
 		auto rd = container->getComponent<RenderData>(ent);
-		rd->meshName = "cube";
-		rd->materialName = "3d_default";
+		rd->materialId = 1;
+		rd->meshId = 1;
 		auto tc = container->getComponent<Transform3D>(ent);
-		tc->rotationAxis = vec3(0.5f, 1.0f, 0.0f);
+		tc->position = vec3(-1.0f, 0.0f, -1.0f);
+		tc->rotationAxis = vec3(1.0f, 0.3f, 0.5f);
 		tc->rotation = 0.0f;
+		tc->scale = vec3(0.5f);
 	};
 
 	void onTick() override
@@ -347,6 +463,9 @@ public:
 		auto cam = container->getComponent<PerspectiveCamera>(players[0]);
 		cam->bounds = vec4(wm->width, wm->height, 0.1f, 100.0f);
 		cam->fov = 65.0f;
+		trans->position = vec3(-1.5f, 1.0f, 1.5f);
+		cam->target = trans->position;
+		cam->frontAxis = vec3(0.6f, -0.3f, 0.6f);
 	};
 
 	ViewProjectionMatrix* getDefaultCamera()

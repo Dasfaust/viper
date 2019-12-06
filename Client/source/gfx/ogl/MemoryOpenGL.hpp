@@ -42,14 +42,18 @@ namespace gfx
 	class MemoryOpenGL : public Memory
 	{
 	public:
-		umap(std::string, std::shared_ptr<BufferViewOpenGL>) buffers;
+		std::vector<std::shared_ptr<BufferViewOpenGL>> buffers;
+		umap(std::string, uint32) bufferNameToId;
 
 		std::shared_ptr<BufferView> requestBuffer(std::string name, std::vector<float>* vertices, std::vector<uint32>* indices, BufferAttributeList attributes, BufferAttributeList instanceAttributes) override
 		{
 			// todo deal with existing buffer
-			auto buffer = std::make_shared<BufferViewOpenGL>();
 
-			buffer->verticesCount = (vertices->size() * sizeof(float)) / attributes.stride;
+			auto buffer = std::make_shared<BufferViewOpenGL>();
+			buffer->id = (uint32)buffers.size();
+			buffers.resize(buffer->id + 1);
+
+			buffer->verticesCount = (uint32)((vertices->size() * sizeof(float)) / attributes.stride);
 			
 			glGenVertexArrays(1, &buffer->vertexArray);
 			glBindVertexArray(buffer->vertexArray);
@@ -105,32 +109,36 @@ namespace gfx
 				buffer->indicesCount = 0;
 			}
 
-			buffer->attributes = attributes;
-
 			glBindVertexArray(0);
 
-			buffers[name] = buffer;
+			buffers[buffer->id] = buffer;
+			bufferNameToId[name] = buffer->id;
 			return buffer;  
 		};
 
 		bool isLoaded(std::string name) override
 		{
-			return buffers.find(name) != buffers.end();
+			return bufferNameToId.find(name) != bufferNameToId.end();
 		}
 
 		std::shared_ptr<BufferView> getBuffer(std::string name) override
 		{
-			return buffers[name];
+			return buffers[bufferNameToId[name]];
+		};
+
+		std::shared_ptr<BufferView> getBuffer(uint32 id) override
+		{
+			return buffers[id];
 		};
 
 		void cleanup() override
 		{
-			for (auto&& kv : buffers)
+			for (auto buff : buffers)
 			{
-				glDeleteVertexArrays(0, &kv.second->vertexArray);
-				glDeleteBuffers(1, &kv.second->vertexBuffer);
-				if (kv.second->indexBuffer > 0) { glDeleteBuffers(1, &kv.second->indexBuffer); }
-				glDeleteBuffers(1, &kv.second->instanceBuffer);
+				glDeleteVertexArrays(0, &buff->vertexArray);
+				glDeleteBuffers(1, &buff->vertexBuffer);
+				if (buff->indexBuffer > 0) { glDeleteBuffers(1, &buff->indexBuffer); }
+				glDeleteBuffers(1, &buff->instanceBuffer);
 			}
 		};
 	};

@@ -69,6 +69,9 @@ public:
 	std::shared_ptr<EventHandler<ButtonReleasedEvent>> buttonReleasedEvent;
 	std::shared_ptr<EventHandler<ScrollEvent>> scrollEvent;
 	std::shared_ptr<EventHandler<MouseMoveEvent>> mouseMoveEvent;
+	vec2 showCursorCoords;
+
+	void setShowCursor(bool show);
 
 	void onStart() override;
 

@@ -10,6 +10,15 @@ void UIManager::onStart()
 {
 	wm = getParent<Module>()->getParent<Modular>()->getModule<WindowManager>("wm");
 
+	buttonPressed = wm->buttonPressedEvent->listen(5, [](ButtonPressedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.WantCaptureMouse)
+		{
+			ev.cancelled = true;
+		}
+	}, { shared_from_this() });
+
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 
@@ -41,7 +50,7 @@ void UIManager::onStart()
 
 void UIManager::onTickBegin()
 {
-
+	buttonPressed->poll();
 };
 
 void UIManager::onTickEnd()

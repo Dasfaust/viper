@@ -9,6 +9,21 @@ void Worker::onTickAsync()
 	{
 		auto container = getParent<Container>();
 
+		for (uint64 i = currentJob.start * container->entitySize; i <= currentJob.end * container->entitySize; i += container->entitySize)
+		{
+			auto ent = reinterpret_cast<Entity*>(&container->heap[i]);
+
+			if (ent->skip) { continue; }
+
+			for (int sys : ent->systems)
+			{
+				if (sys > -1)
+				{
+					container->systems[sys]->updateEntity(ent, container->systems[sys], (float)(container->dt / 1000.0));
+				}
+			}
+		}
+
 		/*for (uint64 i = currentJob.start * container->entitySize; i <= currentJob.end * container->entitySize; i += container->entitySize)
 		{
 			auto ent = reinterpret_cast<ecs::Entity*>(&container->heap[i]);

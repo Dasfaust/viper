@@ -22,7 +22,7 @@ public:
 	std::shared_ptr<NetServer> ns;
 	std::shared_ptr<Listener<ClientConnectedEvent>> clientConnected;
 	std::shared_ptr<Listener<ClientDisconnectedEvent>> clientDisconnected;
-	flatmap(uid, NetworkClient) clients;
+	boost::container::flat_map<uid, NetworkClient> clients;
 	std::shared_ptr<PacketHandler<P1Nickname>> p1Handler;
 	std::shared_ptr<Listener<P1Nickname>> p1Listener;
 	std::shared_ptr<PacketHandler<P2ClientTelemetry>> p2Handler;

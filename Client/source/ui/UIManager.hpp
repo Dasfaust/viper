@@ -8,10 +8,11 @@ struct UICommandSet
 	std::vector<std::shared_ptr<Module>> modules;
 };
 
-class UIManager : public Module
+class UIManager : public Module, public std::enable_shared_from_this<Module>
 {
 public:
 	std::shared_ptr<WindowManager> wm;
+	std::shared_ptr<Listener<ButtonPressedEvent>> buttonPressed;
 	umap(std::string, UICommandSet) commands;
 
 	void onStart() override;

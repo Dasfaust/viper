@@ -8,21 +8,16 @@
 
 namespace gfx
 {
-	struct Subscene
-	{
-		std::shared_ptr<MaterialOpenGL> material;
-		std::shared_ptr<BufferViewOpenGL> buffer;
-		InstanceMap* instances;
-	};
-
 	class PipelineOpenGL : public Pipeline
 	{
 	public:
 		umap(std::string, std::shared_ptr<ShaderOpenGL>) shaders;
 		umap(std::string, std::shared_ptr<Texture2DOpenGL>) textures;
-		umap(std::string, std::shared_ptr<MaterialOpenGL>) materials;
+		std::vector<std::shared_ptr<MaterialOpenGL>> materials;
+		umap(std::string, uint32) materialNameToId;
 		std::shared_ptr<MemoryOpenGL> memory;
-		std::vector<Subscene> subscenes;
+		umap(uint64, uint32) instances;
+		std::shared_ptr<Scene> scene;
 		uint32 drawCalls = 0;
 
 		bool init() override
@@ -32,6 +27,8 @@ namespace gfx
 			glEnable(GL_BLEND);
 			glEnable(GL_DEPTH_TEST);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_BACK);
 
 			memory = std::make_shared<MemoryOpenGL>();
 
@@ -80,91 +77,100 @@ namespace gfx
 
 		std::shared_ptr<Material> makeMaterial(const std::string& name, const std::string& shaderName, const std::vector<std::string>& textureNames) override
 		{
-			materials[name] = std::make_shared<MaterialOpenGL>();
-			materials[name]->shader = shaders[shaderName];
+			auto material = std::make_shared<MaterialOpenGL>();
+			material->id = materials.size();
+			materials.resize(material->id + 1);
+
+			material->shader = shaders[shaderName];
 			for (auto& tex : textureNames)
 			{
-				materials[name]->textures.push_back(textures[tex]);
+				material->textures.push_back(textures[tex]);
 			}
-			return materials[name];
+
+			materials[material->id] = material;
+			materialNameToId[name] = material->id;
+			return material;
 		};
 
 		std::shared_ptr<Material> getMaterial(const std::string& name) override
 		{
-			return materials[name];
+			return materials[materialNameToId[name]];
 		};
 
-		void submit(const std::string& materialName, const std::string& mesh, InstanceMap& instances) override
+		std::shared_ptr<Material> getMaterial(uint32 id) override
 		{
-			auto material = materials[materialName];
-			auto buffer = memory->buffers[mesh];
-			auto scene = getParent<Modular>()->getModule<Scene>("scene");
-			Subscene sub = { material, buffer, &instances };
-			material->shader->bind();
-			material->shader->uploadMat4("view", scene->getDefaultCamera()->view);
-			material->shader->uploadMat4("proj", scene->getDefaultCamera()->proj);
-			material->shader->unbind();
+			return materials[id];
+		};
 
-			std::vector<mat4> models;
-			for (auto&& kv : instances)
-			{
-				if (kv.second.is3D)
-				{
-					auto model = mat4(1.0f);
-					model = glm::rotate(model, glm::radians(kv.second.transform3d.rotation), kv.second.transform3d.rotationAxis);
-					model = glm::scale(model, kv.second.transform3d.scale);
-					models.push_back(glm::translate(model, kv.second.transform3d.position));
-				}
-				else
-				{
-					mat4 model(1.0f);
-					model = glm::translate(model, vec3(kv.second.transform2d.position, 0.0f));
-					model = glm::scale(model, vec3(kv.second.transform2d.scale));
-					models.push_back(model);
-				}
-			}
-			glBindBuffer(GL_ARRAY_BUFFER, buffer->instanceBuffer);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(mat4) * models.size(), &models[0], GL_DYNAMIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		void onStart() override
+		{
+			scene = getParent<Modular>()->getModule<Scene>("scene");
+		}
 
-			subscenes.push_back(sub);
+		void submit(InstanceMap& map) override
+		{
 			drawCalls = 0;
+
+			uint64 instanceId = (uint64) map.material << 32 | map.mesh;
+
+			auto buffer = memory->buffers[map.mesh];
+			auto mat = materials[map.material];
+
+			mat->shader->bind();
+			mat->shader->uploadMat4("view", scene->getDefaultCamera()->view);
+			mat->shader->uploadMat4("proj", scene->getDefaultCamera()->proj);
+			mat->shader->unbind();
+
+			if (!map.changed && instances.find(instanceId) != instances.end())
+			{
+				return;
+			}
+
+			instances[instanceId] = map.instances.size();
+			map.changed = false;
+
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->instanceBuffer);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(mat4) * map.instances.size(), &map.instances[0], GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		};
 
 		void draw() override
 		{
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			for (auto& subscene : subscenes)
+			for (auto&& kv : instances)
 			{
-				subscene.material->shader->bind();
-				subscene.buffer->bind();
+				auto buffer = memory->buffers[(uint32)kv.first];
+				auto mat = materials[kv.first >> 32];
 
-				if (!subscene.material->textures.empty())
+				mat->shader->bind();
+				buffer->bind();
+
+				// TODO: do during submit?
+				if (!mat->textures.empty())
 				{
-					for (uint32 i = 0; i < subscene.material->textures.size(); i++)
+					for (uint32 i = 0; i < mat->textures.size(); i++)
 					{
-						auto tex = subscene.material->textures[i];
+						auto tex = mat->textures[i];
 						tex->bind(i);
-						subscene.material->shader->uploadInt("uTexture" + std::to_string(i), i);
+						mat->shader->uploadInt("uTexture" + std::to_string(i), i);
 					}
 				}
 
-				if (subscene.buffer->indicesCount == 0)
+				if (buffer->indicesCount == 0)
 				{
-					glDrawArraysInstanced(GL_TRIANGLES, 0, subscene.buffer->verticesCount, subscene.instances->size());
+					glDrawArraysInstanced(GL_TRIANGLES, 0, buffer->verticesCount, kv.second);
 				}
 				else
 				{
-					glDrawElementsInstanced(GL_TRIANGLES, subscene.buffer->indicesCount, GL_UNSIGNED_INT, nullptr, subscene.instances->size());
+					glDrawElementsInstanced(GL_TRIANGLES, buffer->indicesCount, GL_UNSIGNED_INT, nullptr, kv.second);
 				}
 
-				drawCalls++;
-				subscene.buffer->unbind();
-				subscene.material->shader->unbind();
-			}
+				buffer->unbind();
+				mat->shader->unbind();
 
-			subscenes.clear();
+				drawCalls++;
+			}
 		};
 
 		void onShutdown() override

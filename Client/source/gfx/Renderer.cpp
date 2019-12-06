@@ -5,47 +5,48 @@
 
 std::vector<float> cubeVerts =
 {
-	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+	// Back face
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right         
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+	// Front face
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // top-left
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+	// Left face
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+	// Right face
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right         
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left     
+	// Bottom face
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+	// Top face
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right     
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f  // bottom-left        
 };
 
 GFX_API Renderer::API = OPEN_GL;
@@ -138,6 +139,41 @@ void Renderer::onStart()
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
+	ui->addCommand("camera_control", [](std::vector<std::shared_ptr<Module>> mods)
+	{
+		auto renderer = std::reinterpret_pointer_cast<Renderer>(mods[0]);
+		bool active = true;
+		auto selected = renderer->scene->container->getEntity(0);
+		ImGui::Begin("Camera", &active, ImGuiWindowFlags_AlwaysAutoResize);
+		auto transform = renderer->scene->container->getComponent<Transform3D>(selected->id);
+		auto cam = renderer->scene->container->getComponent<PerspectiveCamera>(selected->id);
+		if (ImGui::InputFloat3("Position", glm::value_ptr(transform->position)))
+		{
+			cam->dirty = true;
+		}
+		if (ImGui::InputFloat3("Offset", glm::value_ptr(cam->offset)))
+		{
+			cam->dirty = true;
+		}
+		if (ImGui::InputFloat3("Target", glm::value_ptr(cam->target)))
+		{
+			cam->dirty = true;
+		}
+		if (ImGui::InputFloat3("Up", glm::value_ptr(cam->upAxis)))
+		{
+			cam->dirty = true;
+		}
+		if (ImGui::InputFloat3("Front", glm::value_ptr(cam->frontAxis)))
+		{
+			cam->dirty = true;
+		}
+		ImGui::Text("Yaw: %.2f", cam->yaw);
+		ImGui::Text("Pitch: %.2f", cam->pitch);
+		ImGui::Text("Roll: %.2f", cam->roll);
+		ImGui::Text("Zoom: %.2f", cam->zoom);
+		ImGui::End();
+	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
+
 	std::vector<float> vertices =
 	{
 		 -0.5f, -0.5f,
@@ -160,20 +196,24 @@ void Renderer::onStart()
 		1, 2, 3
 	};
 
-	pipeline->getMemory()->requestBuffer("plane", &vertices, &indices, { {gfx::Float2, "position" } }, { { gfx::Float4x4, "model", false, 1 } });
-	pipeline->getMemory()->requestBuffer("plane_texture", &verticesTex, &indices, { {gfx::Float2, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
+	//pipeline->getMemory()->requestBuffer("plane", &vertices, &indices, { {gfx::Float2, "position" } }, { { gfx::Float4x4, "model", false, 1 } });
+	//pipeline->getMemory()->requestBuffer("plane_texture", &verticesTex, &indices, { {gfx::Float2, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
 	pipeline->getMemory()->requestBuffer("cube", &cubeVerts, nullptr, { {gfx::Float3, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
+	pipeline->getMemory()->requestBuffer("cube2", &cubeVerts, nullptr, { {gfx::Float3, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
 
-	pipeline->loadShader("2d_basic");
-	pipeline->loadShader("2d_basic_texture");
+	//pipeline->loadShader("2d_basic");
+	//pipeline->loadShader("2d_basic_texture");
 	pipeline->loadShader("3d_default");
+	pipeline->loadShader("3d_default2");
 
 	pipeline->loadTexture("checkerboard.png");
-	pipeline->loadTexture("logo.png");
+	pipeline->loadTexture("awesomeface.png");
+	//pipeline->loadTexture("logo.png");
 
-	pipeline->makeMaterial("flat", "2d_basic", { });
-	pipeline->makeMaterial("basic", "2d_basic_texture", { "checkerboard.png", "logo.png" });
+	//pipeline->makeMaterial("flat", "2d_basic", { });
+	//pipeline->makeMaterial("basic", "2d_basic_texture", { "checkerboard.png", "logo.png" });
 	pipeline->makeMaterial("3d_default", "3d_default", { "checkerboard.png" });
+	pipeline->makeMaterial("3d_default2", "3d_default2", { "awesomeface.png" });
 };
 
 void Renderer::onTick()
@@ -210,12 +250,7 @@ void Renderer::onTick()
 
 	for (auto&& kv : scene->renderSystem->renderData)
 	{
-		std::string materialName = kv.first;
-		for (auto&& mkv : kv.second)
-		{
-			std::string meshName = mkv.first;
-			pipeline->submit(materialName, meshName, mkv.second);
-		}
+		pipeline->submit(kv.second);
 	}
 
 	pipeline->draw();

@@ -173,6 +173,22 @@ void WindowManager::onTickEnd()
 	glfwPollEvents();
 };
 
+void WindowManager::setShowCursor(bool show)
+{
+	glfwSetInputMode((GLFWwindow*)context->handle, GLFW_CURSOR, show ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+	if (show)
+	{
+		glfwSetCursorPos((GLFWwindow*)context->handle, (double)showCursorCoords.x, (double)showCursorCoords.y);
+	}
+	else
+	{
+		double x;
+		double y;
+		glfwGetCursorPos((GLFWwindow*)context->handle, &x, &y);
+		showCursorCoords = vec2((float)x, (float)y);
+	}
+}
+
 void WindowManager::onShutdown()
 {
 	glfwDestroyWindow((GLFWwindow*)context->handle);

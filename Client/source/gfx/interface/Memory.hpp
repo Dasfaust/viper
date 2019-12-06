@@ -74,7 +74,7 @@ namespace gfx
 	class BufferView
 	{
 	public:
-		BufferAttributeList attributes;
+		uint32 id;
 
 		virtual void bind() = 0;
 		virtual void unbind() = 0;
@@ -86,6 +86,7 @@ namespace gfx
 		virtual std::shared_ptr<BufferView> requestBuffer(std::string name, std::vector<float>* vertices, std::vector<uint32>* indices, BufferAttributeList attributes, BufferAttributeList instanceAttributes = { }) = 0;
 		virtual bool isLoaded(std::string name) = 0;
 		virtual std::shared_ptr<BufferView> getBuffer(std::string name) = 0;
+		virtual std::shared_ptr<BufferView> getBuffer(uint32 id) = 0;
 		virtual void cleanup() = 0;
 	};
 };

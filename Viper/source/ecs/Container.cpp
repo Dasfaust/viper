@@ -170,6 +170,16 @@ void Container::deleteEntity(uint64 id)
 
 void Container::onTick()
 {
+	if (firstTick)
+	{
+		for (auto& sys : systems)
+		{
+			sys->onStart();
+		}
+
+		firstTick = false;
+	}
+
 	tickModules();
 
 	for (auto& sys : systems)
@@ -213,5 +223,10 @@ void Container::onTick()
 				}
 			}
 		}
+	}
+
+	for (auto& sys : systems)
+	{
+		sys->onTickEnd();
 	}
 };

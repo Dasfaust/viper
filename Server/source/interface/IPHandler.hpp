@@ -37,7 +37,7 @@ public:
 	std::shared_ptr<Viper> viper;
 
 	flatmap(uint32, uid) tokens;
-	flatmap(uid, InetAddress) clients;
+	boost::container::flat_map<uid, InetAddress> clients;
 	flatmap(std::string, uid) clientHosts;
 
 	std::shared_ptr<PacketHandler<P0Handshake>> p0Handler;

@@ -14,7 +14,6 @@ namespace ecs
 		SKIP = 2
 	};
 
-
 	static uint32 componentIndex = 0;
 	
 	template<typename T>
@@ -38,7 +37,7 @@ namespace ecs
 	{
 	public:
 		uint32 blockSizeMb = 8;
-		bool async = false;
+		bool async = true;
 		uint32 threads = 2;
 
 		uint32 blocksAllocated = 0;
@@ -49,6 +48,7 @@ namespace ecs
 		std::vector<size_t> offsets;
 		std::vector<uint32> heap;
 		std::vector<uint64> deletions;
+		bool firstTick = true;
 
 		void onStart() override;
 		void onShutdown() override;

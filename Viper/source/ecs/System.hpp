@@ -5,12 +5,10 @@
 
 namespace ecs
 {
-	class System
+	class System : public Module, public std::enable_shared_from_this<Module>
 	{
 	public:
 		void(*updateEntity)(Entity* entity, std::shared_ptr<System> self, float dt);
-
-		virtual void onTickBegin() { };
 	};
 
 	struct Job

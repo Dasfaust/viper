@@ -38,7 +38,7 @@ public:
 int main()
 {
 	Logging::async = false;
-	WindowManager::vsync = true;
+	WindowManager::vsync = false;
 	auto vi = std::make_shared<Viper>();
 	auto lo = vi->initModule<Logging>("logging");
 	auto th = vi->initModule<Threads>("threads");
