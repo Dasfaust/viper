@@ -1,0 +1,122 @@
+#pragma once
+#include "Entity.hpp"
+#include "../interface/Modular.hpp"
+#include "../interface/Threadable.hpp"
+#include "System.hpp"
+#include <atomic>
+
+namespace ecs
+{
+	enum SystemComponentFlag
+	{
+		NONE_REQUIRED = 0,
+		NOT_REQUIRED = 1,
+		SKIP = 2
+	};
+
+	static uint32 componentIndex = 0;
+	
+	template<typename T>
+	struct ComponentIDs
+	{
+		static uint32 ID;
+	};
+	template<typename T>
+	uint32 ComponentIDs<T>::ID = componentIndex++;
+
+	struct ComponentMeta
+	{
+		uint32 id = 0;
+		std::shared_ptr<void> object;
+		size_t size;
+		size_t tSize;
+		void*(*instantiate)(std::vector<uint32>& heap, uint64 index, ComponentMeta& self);
+	};
+
+	class Container : public Module, public Modular
+	{
+	public:
+		uint32 blockSizeMb = 8;
+		bool async = true;
+		uint32 threads = 2;
+
+		uint32 blocksAllocated = 0;
+		size_t entitySize;
+		std::vector<ComponentMeta> componentData;
+		std::vector<std::set<std::pair<uint32, SystemComponentFlag>>> systemTypes;
+		std::vector<std::shared_ptr<System>> systems;
+		std::vector<size_t> offsets;
+		std::vector<uint32> heap;
+		std::vector<uint64> deletions;
+		bool firstTick = true;
+
+		void onStart() override;
+		void onShutdown() override;
+		uint64 getNextEntityId();
+		uint64 makeEntity(std::set<uint32> comps);
+		void updateSystemsCache(uint64 ent);
+		Entity* getEntity(uint64 id);
+		void deleteEntity(uint64 id);
+		void purge();
+		void allocateNewBlock();
+		void onTick() override;
+
+		template<typename T>
+		void registerComponent()
+		{
+			uint32 id = ComponentIDs<T>::ID;
+			if (componentData.size() < id + 1) componentData.resize(id + 1);
+			componentData[id] = {
+				id,
+				std::make_shared<T>(),
+				sizeof(T),
+				sizeof(T) + sizeof(std::atomic_flag),
+				[](std::vector<uint32>& heap, uint64 index, ComponentMeta& self) -> void*
+				{
+					new(&heap[index + self.size]) std::atomic_flag();
+					return new(&heap[index]) T(*std::static_pointer_cast<T>(self.object));
+				}
+			};
+		};
+
+		template<typename T>
+		T* getComponent(uint64 id)
+		{
+			return reinterpret_cast<T*>(&heap[id * entitySize + offsets[ComponentIDs<T>::ID]]);
+		};
+
+		void* getComponent(uint64 eid, uint8 cid)
+		{
+			return &heap[eid * entitySize + offsets[cid]];
+		};
+
+		template<typename T>
+		std::atomic_flag* getFlag(uint64 id)
+		{
+			auto compId = ComponentIDs<T>::ID;
+			return reinterpret_cast<std::atomic_flag*>(&heap[id * entitySize + offsets[compId] + componentData[compId].size]);
+		};
+
+		std::atomic_flag* getFlag(uint64 eid, uint8 cid)
+		{
+			return reinterpret_cast<std::atomic_flag*>(&heap[eid * entitySize + offsets[cid] + componentData[cid].size]);
+		};
+
+		template<typename S>
+		std::shared_ptr<S> initSystem(std::set<std::pair<uint32, SystemComponentFlag>> types)
+		{
+			auto id = systemTypes.size();
+			systemTypes.push_back(types);
+			systems.resize(id + 1);
+			systems[id] = std::make_shared<S>();
+			return std::reinterpret_pointer_cast<S>(systems[id]);
+		};
+
+		std::shared_ptr<System> initSystem(std::set<std::pair<uint32, SystemComponentFlag>> types, void(*updateEntity)(Entity* entity, std::shared_ptr<System> self, float dt))
+		{
+			auto system = initSystem<System>(types);
+			system->updateEntity = updateEntity;
+			return system;
+		};
+	};
+};

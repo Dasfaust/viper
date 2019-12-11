@@ -1,78 +1,88 @@
-#include "V3.h"
-#include "pipeline/Pipeline.h"
-#include "view/ViewLayer.h"
-#include "config/ConfigLayer.h"
-#include "world/World.h"
-#include "pipeline/PipelineVk.h"
-#include "world/systems/MovementInputSystem.h"
-#include "world/systems/LocationSystem.h"
-#include "world/systems/RenderSystem.h"
+#include "Client.hpp"
 
-class Game : public V3Application
+void Telemetry::onStart()
 {
-public:
-	World* world;
-	std::vector<ECS::Entity*> entities;
-
-	inline void onStartup() override
-	{
-		//v3->getModule<ViewLayer>()->setApplicationName("A Game of Life");
-		debugf("V3Application: onStartup");
-
-		world = v3->getModule<World>();
-
-		world->createSystem<MovementInputSystem, MovementInputComponent>(0);
-		world->createSystem<LocationSystem, LocationComponent>(1);
-		world->createSystem<RenderSystem, RenderComponent>(2);
-	};
-
-	inline void onTick() override
-	{
-		if (entities.size() == 0)
-		{
-			entities.push_back(world->createEntity<MovementInputComponent, LocationComponent, MeshComponent, CameraComponent>([](uint32 index, ECS::Component* comp)
-			{
-				if (index == 1)
-				{
-					auto loc = reinterpret_cast<LocationComponent*>(comp);
-					//loc->location.y = 3.14f;
-				}
-				else if (index == 2)
-				{
-					auto mesh = reinterpret_cast<MeshComponent*>(comp);
-					// Loses scope without constructor ¯\_(ツ)_/¯
-					mesh->mesh = std::string("cube");
-					mesh->texture = std::string("lewd");
-					mesh->shader = std::string("basic");
-					mesh->textureSlot = 0;
-					mesh->makeHash();
-					debugf("MeshComponent hash: %d", mesh->hash);
-				}
-				else if (index == 3)
-				{
-					auto cam = reinterpret_cast<CameraComponent*>(comp);
-					cam->location = glm::vec3(0.0f, 3.0f, 0.0f);
-				}
-			})->get());
-			debugf("Client: successful entity creation: %d", entities[0]->index);
-		}
-	};
-
-	inline void onShutdown() override
-	{
-		
-	};
+	cl = getParent<Client>();
+	wm = cl->getModule<WindowManager>("wm");
 };
 
-int main()
+void Telemetry::onTick()
 {
-	std::shared_ptr<V3> v3 = std::make_shared<V3>();
-	v3->initModule<ConfigLayer>();
-	//v3->initModule<ViewLayer>();
-	//v3->initModule<PipelineVk>();
-	v3->initModule<World>();
-	v3->initModule<Game>();
-	v3->start();
+	if (cl->isConnected.load())
+	{
+		P2ClientTelemetry packet;
+		packet.mouseX = cl->input->mousePos.x;
+		packet.mouseY = cl->input->mousePos.y;
+		packet.scrollX = cl->input->scrollPos.x;
+		packet.scrollY = cl->input->scrollPos.y;
+		cl->p2Handler->enqueue(UDP, packet);
+	}
+};
 
-    return EXIT_SUCCESS;
-}
+bool Client::enableNetworking = false;
+
+void Client::onStart()
+{
+	auto wm = initModule<WindowManager>("wm");
+	wm->onStart();
+
+	input = initModule<InputManager>("input");
+	input->onStart();
+
+	renderer = initModule<Renderer>("renderer");
+	renderer->onStart();
+
+	if (enableNetworking)
+	{
+		auto nc = initModule<NetClient>("net");
+		nc->onStart();
+
+		p1Handler = nc->registerPacket<P1Nickname>(1);
+		p1Listener = p1Handler->listen(0, [](P1Nickname& packet, std::vector<std::shared_ptr<Module>> mods)
+		{
+			info("Client nickname is %s", packet.name.c_str());
+		}, { });
+
+		auto ccHandler = getParent<Modular>()->getModule<Events>("events")->getModule<EventHandler<ClientConnectedEvent>>("client_clientconnectedevent");
+		clientConnected = ccHandler->listen(0, [](ClientConnectedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
+		{
+			info("Connected to server");
+			auto cl = std::dynamic_pointer_cast<Client>(mods[0]);
+			set_atom(cl->isConnected, true, bool);
+			P1Nickname nick;
+			nick.name = "dasfaust";
+			cl->p1Handler->enqueue(TCP, nick, { });
+		}, { getParent<Modular>()->getModule("client") });
+
+		auto cdHandler = getParent<Modular>()->getModule<Events>("events")->getModule<EventHandler<ClientDisconnectedEvent>>("client_clientdisconnectedevent");
+		clientDisconnected = cdHandler->listen(0, [](ClientDisconnectedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
+		{
+			warn("Disconnected from server: %s", ev.reason.c_str());
+			auto cl = std::dynamic_pointer_cast<Client>(mods[0]);
+			set_atom(cl->isConnected, false, bool);
+		}, { getParent<Modular>()->getModule("client") });
+
+		p2Handler = nc->registerPacket<P2ClientTelemetry>(2);
+		auto tel = initModule<Telemetry>("telemetry", 100.0);
+		tel->onStart();
+	}
+};
+
+void Client::onTick()
+{
+	if (enableNetworking)
+	{
+		clientConnected->poll();
+		clientDisconnected->poll();
+		p1Listener->poll();
+	}
+	tickModules();
+};
+
+void Client::onShutdown()
+{
+	for (auto&& kv : modules)
+	{
+		kv.second->onShutdown();
+	}
+};

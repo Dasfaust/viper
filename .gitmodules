@@ -1,12 +1,18 @@
-[submodule "submodules/imgui"]
-	path = submodules/imgui
-	url = https://github.com/Dasfaust/imgui.git
-[submodule "submodules/gladogl"]
-	path = submodules/gladogl
-	url = https://github.com/Dasfaust/gladogl.git
-[submodule "submodules/MemoryPool"]
-	path = submodules/MemoryPool
-	url = https://github.com/Dasfaust/MemoryPool.git
 [submodule "submodules/concurrentqueue"]
 	path = submodules/concurrentqueue
 	url = https://github.com/Dasfaust/concurrentqueue.git
+[submodule "submodules/cereal"]
+	path = submodules/cereal
+	url = https://github.com/Dasfaust/cereal
+[submodule "submodules/godot-cpp"]
+	path = submodules/godot-cpp
+	url = https://github.com/Dasfaust/godot-cpp
+[submodule "submodules/glfw"]
+	path = submodules/glfw
+	url = https://github.com/Dasfaust/glfw
+[submodule "submodules/gladogl"]
+	path = submodules/gladogl
+	url = https://github.com/Dasfaust/gladogl
+[submodule "submodules/imgui"]
+	path = submodules/imgui
+	url = https://github.com/Dasfaust/imgui
