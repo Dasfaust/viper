@@ -155,7 +155,7 @@ project "Client"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
         disablewarnings { "4996", "4065" }
-        includedirs { "C:/VulkanSDK/1.1.114.0/Include" }
+        includedirs { "C:/VulkanSDK/1.1.126.0/Include" }
 		defines "VIPER_WIN64"
 
     filter "configurations:debug"
@@ -228,7 +228,7 @@ project "Sandbox"
 		flags { "MultiProcessorCompile" }
         disablewarnings { "4996", "4065" }
 		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.114.0/Lib" }
-        includedirs { "C:/VulkanSDK/1.1.114.0/Include" }
+        includedirs { "C:/VulkanSDK/1.1.126.0/Include" }
         links { "vulkan-1", "ws2_32", "lua53", "opengl32" }
 		defines "VIPER_WIN64"
 
