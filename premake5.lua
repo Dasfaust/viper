@@ -227,22 +227,19 @@ project "Sandbox"
         systemversion "latest"
 		flags { "MultiProcessorCompile" }
         disablewarnings { "4996", "4065" }
-		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.114.0/Lib" }
+		libdirs { "vendor/lib/win64", "C:/VulkanSDK/1.1.126.0/Lib" }
         includedirs { "C:/VulkanSDK/1.1.126.0/Include" }
         links { "vulkan-1", "ws2_32", "lua53", "opengl32" }
 		defines "VIPER_WIN64"
 
     filter "configurations:debug"
         defines "VIPER_DEBUG"
-        links { "shaderc_combined_debug" }
         symbols "on"
 
     filter "configurations:release"
         defines "VIPER_RELEASE"
-        links { "shaderc_combined" }
         optimize "on"
 
     filter "configurations:dist"
         defines "VIPER_DIST"
-        links { "shaderc_combined" }
         optimize "on"
