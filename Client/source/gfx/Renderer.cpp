@@ -196,22 +196,15 @@ void Renderer::onStart()
 		1, 2, 3
 	};
 
-	//pipeline->getMemory()->requestBuffer("plane", &vertices, &indices, { {gfx::Float2, "position" } }, { { gfx::Float4x4, "model", false, 1 } });
-	//pipeline->getMemory()->requestBuffer("plane_texture", &verticesTex, &indices, { {gfx::Float2, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
 	pipeline->getMemory()->requestBuffer("cube", &cubeVerts, nullptr, { {gfx::Float3, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
 	pipeline->getMemory()->requestBuffer("cube2", &cubeVerts, nullptr, { {gfx::Float3, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
 
-	//pipeline->loadShader("2d_basic");
-	//pipeline->loadShader("2d_basic_texture");
 	pipeline->loadShader("3d_default");
 	pipeline->loadShader("3d_default2");
 
 	pipeline->loadTexture("checkerboard.png");
 	pipeline->loadTexture("awesomeface.png");
-	//pipeline->loadTexture("logo.png");
-
-	//pipeline->makeMaterial("flat", "2d_basic", { });
-	//pipeline->makeMaterial("basic", "2d_basic_texture", { "checkerboard.png", "logo.png" });
+	
 	pipeline->makeMaterial("3d_default", "3d_default", { "checkerboard.png" });
 	pipeline->makeMaterial("3d_default2", "3d_default2", { "awesomeface.png" });
 };

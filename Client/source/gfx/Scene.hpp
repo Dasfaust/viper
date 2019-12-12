@@ -4,13 +4,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "../input/InputManager.hpp"
 
-struct Transform2D
-{
-	vec2 position = vec2(0.0f);
-	float rotation = 0.0f;
-	float scale = 1.0f;
-};
-
 struct Transform3D
 {
 	vec3 position = vec3(0.0f);
@@ -159,40 +152,18 @@ public:
 		{
 			auto sys = std::reinterpret_pointer_cast<CameraSystem>(self);
 
-			if (entity->components[ecs::ComponentIDs<OrthoCamera>::ID])
+			auto cam = ecs::shift<PerspectiveCamera>(entity);
+			if (cam->dirty)
 			{
-				auto cam = ecs::shift<OrthoCamera>(entity);
-				if (cam->dirty)
+				auto tc = ecs::shift<Transform3D>(entity);
+
+				sys->matrices[entity->id] =
 				{
-					auto tc = ecs::shift<Transform2D>(entity);
+					glm::lookAt(tc->position + cam->offset, tc->position + cam->offset + cam->frontAxis, cam->upAxis),
+					glm::perspective(glm::radians(cam->fov), cam->bounds.x / cam->bounds.y, cam->bounds.z, cam->bounds.w)
+				};
 
-					float aspectRatio = (float)sys->wm->width / (float)sys->wm->height;
-
-					mat4 transform = glm::translate(mat4(1.0f), vec3(tc->position, 0.0f)) * glm::rotate(mat4(1.0f), glm::radians(tc->rotation), vec3(0.0f, 0.0f, 1.0f));
-					sys->matrices[entity->id] =
-					{
-						glm::inverse(transform),
-						glm::ortho(cam->bounds[0] * aspectRatio, cam->bounds[1] * aspectRatio, cam->bounds[2], cam->bounds[3], -1.0f, 1.0f)
-					};
-
-					cam->dirty = false;
-				}
-			}
-			else
-			{
-				auto cam = ecs::shift<PerspectiveCamera>(entity);
-				if (cam->dirty)
-				{
-					auto tc = ecs::shift<Transform3D>(entity);
-
-					sys->matrices[entity->id] =
-					{
-						glm::lookAt(tc->position + cam->offset, tc->position + cam->offset + cam->frontAxis, cam->upAxis),
-						glm::perspective(glm::radians(cam->fov), cam->bounds.x / cam->bounds.y, cam->bounds.z, cam->bounds.w)
-					};
-
-					cam->dirty = false;
-				}
+				cam->dirty = false;
 			}
 		};
 	};
@@ -229,102 +200,66 @@ public:
 		{
 			auto pi = std::reinterpret_pointer_cast<PlayerInputSystem>(self);
 
-			bool is2d = entity->components[ecs::ComponentIDs<Transform2D>::ID];
-
 			bool changed = false;
-			if (is2d)
+			
+			auto trans = ecs::shift<Transform3D>(entity);
+			auto cam = ecs::shift<PerspectiveCamera>(entity);
+
+			if (pi->captured && pi->input->isDown(KEY_ESCAPE))
 			{
-				auto trans = ecs::shift<Transform2D>(entity);
-
-				if (pi->input->isDown(pi->inputBindings2d[UP]))
-				{
-					trans->position.y += pi->speed * dt;
-					changed = true;
-				}
-				if (pi->input->isDown(pi->inputBindings2d[DOWN]))
-				{
-					trans->position.y -= pi->speed * dt;
-					changed = true;
-				}
-				if (pi->input->isDown(pi->inputBindings2d[LEFT]))
-				{
-					trans->position.x -= pi->speed * dt;
-					changed = true;
-				}
-				if (pi->input->isDown(pi->inputBindings2d[RIGHT]))
-				{
-					trans->position.x += pi->speed * dt;
-					changed = true;
-				}
+				pi->captured = false;
+				pi->wm->setShowCursor(true);
 			}
-			else
+
+			if (pi->captured && (fabs(pi->lastMouseX - pi->input->mousePos.x) > 0.01f || fabs(pi->lastMouseY - pi->input->mousePos.y) > 0.01f))
 			{
-				auto trans = ecs::shift<Transform3D>(entity);
-				auto cam = ecs::shift<PerspectiveCamera>(entity);
+				float xOffset = (pi->input->mousePos.x - pi->lastMouseX) * pi->sensitivity;
+				float yOffset = (pi->lastMouseY - pi->input->mousePos.y) * pi->sensitivity;
+				cam->yaw += xOffset;
+				cam->pitch += yOffset;
 
-				if (pi->captured && pi->input->isDown(KEY_ESCAPE))
-				{
-					pi->captured = false;
-					pi->wm->setShowCursor(true);
-				}
+				if (cam->pitch > 89.0f) { cam->pitch = 89.0f; }
+				if (cam->pitch < -89.0f) { cam->pitch = -89.0f; }
 
-				if (pi->captured && (fabs(pi->lastMouseX - pi->input->mousePos.x) > 0.01f || fabs(pi->lastMouseY - pi->input->mousePos.y) > 0.01f))
-				{
-					float xOffset = (pi->input->mousePos.x - pi->lastMouseX) * pi->sensitivity;
-					float yOffset = (pi->lastMouseY - pi->input->mousePos.y) * pi->sensitivity;
-					cam->yaw += xOffset;
-					cam->pitch += yOffset;
+				vec3 direction;
+				direction.x = cos(glm::radians(cam->yaw)) * cos(glm::radians(cam->pitch));
+				direction.y = sin(glm::radians(cam->pitch));
+				direction.z = sin(glm::radians(cam->yaw)) * cos(glm::radians(cam->pitch));
+				direction = glm::normalize(direction);
 
-					if (cam->pitch > 89.0f) { cam->pitch = 89.0f; }
-					if (cam->pitch < -89.0f) { cam->pitch = -89.0f; }
+				cam->frontAxis = direction;
+				pi->lastMouseX = pi->input->mousePos.x;
+				pi->lastMouseY = pi->input->mousePos.y;
 
-					vec3 direction;
-					direction.x = cos(glm::radians(cam->yaw)) * cos(glm::radians(cam->pitch));
-					direction.y = sin(glm::radians(cam->pitch));
-					direction.z = sin(glm::radians(cam->yaw)) * cos(glm::radians(cam->pitch));
-					direction = glm::normalize(direction);
-
-					cam->frontAxis = direction;
-					pi->lastMouseX = pi->input->mousePos.x;
-					pi->lastMouseY = pi->input->mousePos.y;
-
-					changed = true;
-				}
-
-				if (pi->input->isDown(pi->inputBindings2d[UP]))
-				{
-					trans->position += cam->frontAxis * pi->speed * dt;
-					changed = true;
-				}
-				if (pi->input->isDown(pi->inputBindings2d[DOWN]))
-				{
-					trans->position -= cam->frontAxis * pi->speed * dt;
-					changed = true;
-				}
-				if (pi->input->isDown(pi->inputBindings2d[LEFT]))
-				{
-					trans->position += glm::normalize(glm::cross(cam->upAxis, cam->frontAxis)) * pi->speed * dt;
-					changed = true;
-				}
-				if (pi->input->isDown(pi->inputBindings2d[RIGHT]))
-				{
-					trans->position -= glm::normalize(glm::cross(cam->upAxis, cam->frontAxis)) * pi->speed * dt;
-					changed = true;
-				}
-
-				cam->target = trans->position;
+				changed = true;
 			}
+
+			if (pi->input->isDown(pi->inputBindings2d[UP]))
+			{
+				trans->position += cam->frontAxis * pi->speed * dt;
+				changed = true;
+			}
+			if (pi->input->isDown(pi->inputBindings2d[DOWN]))
+			{
+				trans->position -= cam->frontAxis * pi->speed * dt;
+				changed = true;
+			}
+			if (pi->input->isDown(pi->inputBindings2d[LEFT]))
+			{
+				trans->position += glm::normalize(glm::cross(cam->upAxis, cam->frontAxis)) * pi->speed * dt;
+				changed = true;
+			}
+			if (pi->input->isDown(pi->inputBindings2d[RIGHT]))
+			{
+				trans->position -= glm::normalize(glm::cross(cam->upAxis, cam->frontAxis)) * pi->speed * dt;
+				changed = true;
+			}
+
+			cam->target = trans->position;
 
 			if (changed)
 			{
-				if (is2d)
-				{
-					ecs::shift<OrthoCamera>(entity)->dirty = true;
-				}
-				else
-				{
-					ecs::shift<PerspectiveCamera>(entity)->dirty = true;
-				}
+				ecs::shift<PerspectiveCamera>(entity)->dirty = true;
 			}
 		};
 	};
@@ -373,7 +308,6 @@ public:
 		container = initModule<ecs::Container>("container");
 		container->async = true;
 		container->registerComponent<RenderData>();
-		container->registerComponent<Transform2D>();
 		container->registerComponent<Transform3D>();
 		container->registerComponent<OrthoCamera>();
 		container->registerComponent<PerspectiveCamera>();
@@ -414,7 +348,7 @@ public:
 			{
 				for (uint32 y = 0; y < 1; y++)
 				{
-					uint64 ent = makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
+					uint64 ent = container->makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
 					auto rd = container->getComponent<RenderData>(ent);
 					rd->materialId = 0;
 					rd->meshId = 0;
@@ -427,7 +361,7 @@ public:
 			}
 		}
 
-		uint64 ent = makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
+		uint64 ent = container->makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
 		auto rd = container->getComponent<RenderData>(ent);
 		rd->materialId = 1;
 		rd->meshId = 1;
@@ -457,10 +391,6 @@ public:
 			)
 		);
 		auto trans = container->getComponent<Transform3D>(players[0]);
-
-		/*auto cam = container->getComponent<OrthoCamera>(players[0]);
-		cam->bounds = vec4(-1.0f, 1.0f, -1.0f, 1.0f);*/
-
 		auto cam = container->getComponent<PerspectiveCamera>(players[0]);
 		cam->bounds = vec4(wm->width, wm->height, 0.1f, 100.0f);
 		cam->fov = 65.0f;
@@ -473,12 +403,6 @@ public:
 	{
 		if (players.empty()) { throw std::invalid_argument("The default camera has not been initialized"); }
 		return &cameraSystem->matrices[players[0]];
-	};
-
-	uint64 makeEntity(std::set<uint32> comps)
-	{
-		auto ent = container->makeEntity(comps);
-		return ent;
 	};
 
 	void onShutdown() override
