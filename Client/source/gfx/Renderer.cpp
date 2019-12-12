@@ -106,9 +106,9 @@ void Renderer::onStart()
 		ImGui::Checkbox("Vsync", &renderer->wm->vsync);
 		ImGui::Text("FPS: %d", renderer->fps);
 		ImGui::Text("Frametime: %.4fms", renderer->dt);
-		ImGui::Text("Entities: %d", renderer->scene->container->heap.size() / renderer->scene->container->entitySize);
 		ImGui::Text("Scene tick: %.4fms", renderer->scene->updateTimeMs);
 		ImGui::Text("Draws: %d", std::reinterpret_pointer_cast<gfx::PipelineOpenGL>(renderer->pipeline)->drawCalls);
+		ImGui::Text("Entities: %d", renderer->scene->container->heap.size() / renderer->scene->container->entitySize);
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 

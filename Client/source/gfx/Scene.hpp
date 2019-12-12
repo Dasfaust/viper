@@ -83,13 +83,13 @@ public:
 		updateEntity = [](ecs::Entity* entity, std::shared_ptr<System> self, float dt)
 		{
 			auto rs = std::reinterpret_pointer_cast<RenderSystem>(self);
-			auto rd = reinterpret_cast<RenderData*>(entity->componentPointers[ecs::ComponentIDs<RenderData>::ID]);
+			auto rd = ecs::shift<RenderData>(entity);
 
 			if (rd->dirty)
 			{
 				uint64 instanceId = (uint64) rd->materialId << 32 | rd->meshId;
 
-				auto tc = reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]);
+				auto tc = ecs::shift<Transform3D>(entity);
 
 				auto model = mat4(1.0f);
 				model = glm::translate(model, tc->position);
@@ -159,12 +159,12 @@ public:
 		{
 			auto sys = std::reinterpret_pointer_cast<CameraSystem>(self);
 
-			if (entity->componentPointers[ecs::ComponentIDs<OrthoCamera>::ID])
+			if (entity->components[ecs::ComponentIDs<OrthoCamera>::ID])
 			{
-				auto cam = reinterpret_cast<OrthoCamera*>(entity->componentPointers[ecs::ComponentIDs<OrthoCamera>::ID]);
+				auto cam = ecs::shift<OrthoCamera>(entity);
 				if (cam->dirty)
 				{
-					auto tc = reinterpret_cast<Transform2D*>(entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID]);
+					auto tc = ecs::shift<Transform2D>(entity);
 
 					float aspectRatio = (float)sys->wm->width / (float)sys->wm->height;
 
@@ -180,10 +180,10 @@ public:
 			}
 			else
 			{
-				auto cam = reinterpret_cast<PerspectiveCamera*>(entity->componentPointers[ecs::ComponentIDs<PerspectiveCamera>::ID]);
+				auto cam = ecs::shift<PerspectiveCamera>(entity);
 				if (cam->dirty)
 				{
-					auto tc = reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]);
+					auto tc = ecs::shift<Transform3D>(entity);
 
 					sys->matrices[entity->id] =
 					{
@@ -229,12 +229,12 @@ public:
 		{
 			auto pi = std::reinterpret_pointer_cast<PlayerInputSystem>(self);
 
-			bool is2d = entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID] != nullptr;
+			bool is2d = entity->components[ecs::ComponentIDs<Transform2D>::ID];
 
 			bool changed = false;
 			if (is2d)
 			{
-				auto trans = reinterpret_cast<Transform2D*>(entity->componentPointers[ecs::ComponentIDs<Transform2D>::ID]);
+				auto trans = ecs::shift<Transform2D>(entity);
 
 				if (pi->input->isDown(pi->inputBindings2d[UP]))
 				{
@@ -259,8 +259,8 @@ public:
 			}
 			else
 			{
-				auto trans = reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]);
-				auto cam = reinterpret_cast<PerspectiveCamera*>(entity->componentPointers[ecs::ComponentIDs<PerspectiveCamera>::ID]);
+				auto trans = ecs::shift<Transform3D>(entity);
+				auto cam = ecs::shift<PerspectiveCamera>(entity);
 
 				if (pi->captured && pi->input->isDown(KEY_ESCAPE))
 				{
@@ -319,11 +319,11 @@ public:
 			{
 				if (is2d)
 				{
-					reinterpret_cast<OrthoCamera*>(entity->componentPointers[ecs::ComponentIDs<OrthoCamera>::ID])->dirty = true;
+					ecs::shift<OrthoCamera>(entity)->dirty = true;
 				}
 				else
 				{
-					reinterpret_cast<PerspectiveCamera*>(entity->componentPointers[ecs::ComponentIDs<PerspectiveCamera>::ID])->dirty = true;
+					ecs::shift<PerspectiveCamera>(entity)->dirty = true;
 				}
 			}
 		};
@@ -371,6 +371,7 @@ public:
 		input = getParent<Module>()->getParent<Modular>()->getModule<InputManager>("input");
 
 		container = initModule<ecs::Container>("container");
+		container->async = true;
 		container->registerComponent<RenderData>();
 		container->registerComponent<Transform2D>();
 		container->registerComponent<Transform3D>();
@@ -383,35 +384,35 @@ public:
 			kv.second->onStart();
 		}
 
-		renderSystem = container->initSystem<RenderSystem>({ { ecs::ComponentIDs<RenderData>::ID, ecs::NONE_REQUIRED } });
+		renderSystem = container->initSystem<RenderSystem>({ { ecs::ComponentIDs<RenderData>::ID, ecs::ComponentFlags::E_REQUIRED } });
 		renderSystem->container = container;
 
-		cameraSystem = container->initSystem<CameraSystem>({ { ecs::ComponentIDs<OrthoCamera>::ID, ecs::NOT_REQUIRED }, { ecs::ComponentIDs<PerspectiveCamera>::ID, ecs::NOT_REQUIRED } });
+		cameraSystem = container->initSystem<CameraSystem>({ { ecs::ComponentIDs<OrthoCamera>::ID, ecs::ComponentFlags::E_OPTIONAL }, { ecs::ComponentIDs<PerspectiveCamera>::ID, ecs::ComponentFlags::E_OPTIONAL } });
 		cameraSystem->container = container;
 		cameraSystem->wm = wm;
 
-		playerInputSystem = container->initSystem<PlayerInputSystem>({ { ecs::ComponentIDs<PlayerInput>::ID, ecs::NONE_REQUIRED } });
+		playerInputSystem = container->initSystem<PlayerInputSystem>({ { ecs::ComponentIDs<PlayerInput>::ID, ecs::ComponentFlags::E_REQUIRED } });
 		playerInputSystem->container = container;
 		playerInputSystem->wm = wm;
 		playerInputSystem->input = input;
 
-		container->initSystem({ { ecs::ComponentIDs<Transform3D>::ID, ecs::NONE_REQUIRED }, { ecs::ComponentIDs<PlayerInput>::ID, ecs::SKIP } }, [](ecs::Entity* entity, std::shared_ptr<ecs::System> self, float dt)
+		container->initSystem({ { ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentFlags::E_REQUIRED }, { ecs::ComponentIDs<PlayerInput>::ID, ecs::ComponentFlags::E_SKIP } }, [](ecs::Entity* entity, std::shared_ptr<ecs::System> self, float dt)
 		{
-			auto transform = reinterpret_cast<Transform3D*>(entity->componentPointers[ecs::ComponentIDs<Transform3D>::ID]);
+			auto transform = ecs::shift<Transform3D>(entity);
 			float rot = transform->rotation + (10.0f * dt);
 			if (rot >= 180.0f) { rot = -180.0f; }
 			transform->rotation = rot;
-			auto rd = reinterpret_cast<RenderData*>(entity->componentPointers[ecs::ComponentIDs<RenderData>::ID]);
+			auto rd = ecs::shift<RenderData>(entity);
 			rd->dirty = true;
 		});
 
 		initDefaultPlayer();
 
-		for (uint32 x = 0; x < 100; x++)
+		for (uint32 x = 0; x < 1; x++)
 		{
-			for (uint32 z = 0; z < 100; z++)
+			for (uint32 z = 0; z < 1; z++)
 			{
-				for (uint32 y = 0; y < 2; y++)
+				for (uint32 y = 0; y < 1; y++)
 				{
 					uint64 ent = makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
 					auto rd = container->getComponent<RenderData>(ent);

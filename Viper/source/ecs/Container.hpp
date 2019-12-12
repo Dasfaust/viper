@@ -1,19 +1,20 @@
 #pragma once
-#include "Entity.hpp"
 #include "../interface/Modular.hpp"
-#include "../interface/Threadable.hpp"
 #include "System.hpp"
 #include <atomic>
 
 namespace ecs
 {
-	enum SystemComponentFlag
+	namespace ComponentFlags
 	{
-		NONE_REQUIRED = 0,
-		NOT_REQUIRED = 1,
-		SKIP = 2
+		enum ComponentFlag
+		{
+			E_REQUIRED,
+			E_OPTIONAL,
+			E_SKIP
+		};
 	};
-
+	
 	static uint32 componentIndex = 0;
 	
 	template<typename T>
@@ -32,20 +33,20 @@ namespace ecs
 		size_t tSize;
 		void*(*instantiate)(std::vector<uint32>& heap, uint64 index, ComponentMeta& self);
 	};
-
+	
 	class Container : public Module, public Modular
 	{
 	public:
 		uint32 blockSizeMb = 8;
-		bool async = true;
+		bool async = false;
 		uint32 threads = 2;
 
 		uint32 blocksAllocated = 0;
 		size_t entitySize;
 		std::vector<ComponentMeta> componentData;
-		std::vector<std::set<std::pair<uint32, SystemComponentFlag>>> systemTypes;
+		std::vector<std::set<std::pair<uint32, ComponentFlags::ComponentFlag>>> systemTypes;
 		std::vector<std::shared_ptr<System>> systems;
-		std::vector<size_t> offsets;
+		inline static std::vector<size_t> offsets;
 		std::vector<uint32> heap;
 		std::vector<uint64> deletions;
 		bool firstTick = true;
@@ -103,7 +104,7 @@ namespace ecs
 		};
 
 		template<typename S>
-		std::shared_ptr<S> initSystem(std::set<std::pair<uint32, SystemComponentFlag>> types)
+		std::shared_ptr<S> initSystem(std::set<std::pair<uint32, ComponentFlags::ComponentFlag>> types)
 		{
 			auto id = systemTypes.size();
 			systemTypes.push_back(types);
@@ -112,11 +113,23 @@ namespace ecs
 			return std::reinterpret_pointer_cast<S>(systems[id]);
 		};
 
-		std::shared_ptr<System> initSystem(std::set<std::pair<uint32, SystemComponentFlag>> types, void(*updateEntity)(Entity* entity, std::shared_ptr<System> self, float dt))
+		std::shared_ptr<System> initSystem(std::set<std::pair<uint32, ComponentFlags::ComponentFlag>> types, void(*updateEntity)(Entity* entity, std::shared_ptr<System> self, float dt))
 		{
 			auto system = initSystem<System>(types);
 			system->updateEntity = updateEntity;
 			return system;
 		};
+	};
+
+	template<typename T>
+	inline static T* shift(Entity* ent)
+	{
+		return reinterpret_cast<T*>(reinterpret_cast<uint32*>(ent) + Container::offsets[ecs::ComponentIDs<T>::ID]);
+	};
+
+	template<typename T>
+	inline static std::atomic_flag* shiftFlag(Entity* ent)
+	{
+		return reinterpret_cast<T*>(reinterpret_cast<uint32*>(ent) + Container::offsets[ecs::ComponentIDs<T>::ID] + sizeof(T));
 	};
 };

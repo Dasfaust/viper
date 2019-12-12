@@ -16,10 +16,10 @@ void Container::onStart()
 		entitySize += meta.tSize;
 		offset += meta.tSize;
 	}
-	debug("Entity size: %d", entitySize);
+	debug("Entity size: %d (total: %d)", sizeof(Entity), entitySize);
 	for (auto& meta : componentData)
 	{
-		debug("Comp %d: size: %d, tsize: %d offset: %d, moffset: %d", meta.id, meta.size, meta.tSize, offsets[meta.id], offsets[meta.id] + meta.size);
+		debug("Component %d: size: %d, tsize: %d offset: %d, flag offset: %d", meta.id, meta.size, meta.tSize, offsets[meta.id], offsets[meta.id] + meta.size);
 	}
 
 	if (async)
@@ -58,7 +58,7 @@ void Container::allocateNewBlock()
 	heap.reserve(heap.size() + (blockSizeMb * 1024000 / sizeof(uint32)));
 	blocksAllocated++;
 
-	for (uint64 i = 0; i < heap.size(); i += entitySize)
+	/*for (uint64 i = 0; i < heap.size(); i += entitySize)
 	{
 		auto ent = reinterpret_cast<ecs::Entity*>(&heap[i]);
 		for (uint32 j = 0; j < ent->componentPointers.size(); j++)
@@ -69,7 +69,7 @@ void Container::allocateNewBlock()
 				ent->componentPointers[j] = getComponent(ent->id, j);
 			}
 		}
-	}
+	}*/
 }
 
 uint64 Container::getNextEntityId()
@@ -82,13 +82,14 @@ uint64 Container::makeEntity(std::set<uint32> comps)
 	uint64 id = getNextEntityId();
 	if (blocksAllocated * blockSizeMb * 1024000 < heap.size() * sizeof(uint32)) allocateNewBlock();
 	if (id >= heap.size() / entitySize) heap.resize(heap.size() + entitySize);
+	
 	uint64 index = id * (uint64)entitySize;
 	Entity* ent = new(&heap[index]) Entity();
 	ent->id = id;
 
-	for (uint32 i = 0; i < ent->componentPointers.size(); i++)
+	for (uint32 i = 0; i < ent->components.size(); i++)
 	{
-		ent->componentPointers[i] = nullptr;
+		ent->components[i] = false;
 	}
 
 	size_t offset = sizeof(Entity);
@@ -97,7 +98,7 @@ uint64 Container::makeEntity(std::set<uint32> comps)
 		auto ptr = meta.instantiate(heap, (uint64)(index + offset), meta);
 		if (comps.find(meta.id) != comps.end())
 		{
-			ent->componentPointers[meta.id] = ptr;
+			ent->components[meta.id] = true;
 		}
 		offset += meta.tSize;
 	}
@@ -113,8 +114,9 @@ void Container::updateSystemsCache(uint64 id)
 
 	for (uint32 i = 0; i < ent->systems.size(); i++)
 	{
-		ent->systems[i] = -1;
+		ent->systems[i] = false;
 	}
+	
 	for (uint32 i = 0; i < systemTypes.size(); i++)
 	{
 		auto types = systemTypes[i];
@@ -126,9 +128,9 @@ void Container::updateSystemsCache(uint64 id)
 		{
 			index++;
 
-			if (ent->componentPointers[type.first] == nullptr)
+			if (!ent->components[type.first])
 			{
-				if (type.second == NOT_REQUIRED || type.second == SKIP)
+				if (type.second == ecs::ComponentFlags::E_OPTIONAL || type.second == ecs::ComponentFlags::E_SKIP)
 				{
 					if (index == types.size() && !foundAny)
 					{
@@ -142,7 +144,7 @@ void Container::updateSystemsCache(uint64 id)
 				break;
 			}
 
-			if (type.second == SKIP)
+			if (type.second == ecs::ComponentFlags::E_SKIP)
 			{
 				update = false;
 			}
@@ -151,11 +153,10 @@ void Container::updateSystemsCache(uint64 id)
 		}
 		if (update)
 		{
-			ent->systems[i] = i;
+			ent->systems[i] = true;
 		}
 	}
 };
-
 
 Entity* Container::getEntity(uint64 id)
 {
@@ -214,13 +215,17 @@ void Container::onTick()
 			auto ent = reinterpret_cast<Entity*>(&heap[i]);
 
 			if (ent->skip) { continue; }
-
-			for (int sys : ent->systems)
+			
+			uint32 updated = 0;
+			uint32 index = 0;
+			while(updated < ent->systems.count())
 			{
-				if (sys > -1)
+				if (ent->systems[index])
 				{
-					systems[sys]->updateEntity(ent, systems[sys], (float)(dt / 1000.0));
+					systems[index]->updateEntity(ent, systems[index], (float)(dt / 1000.0));
+					updated++;
 				}
+				index++;
 			}
 		}
 	}

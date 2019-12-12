@@ -1,13 +1,14 @@
 #pragma once
 #include "../Defines.hpp"
+#include <bitset>
 
 namespace ecs
 {
 	struct Entity
 	{
 		uint64 id = 0;
-		std::array<void*, 32> componentPointers;
-		std::array<int, 16> systems;
+		std::bitset<64> components;
+		std::bitset<64> systems;
 		bool skip = false;
 	};
 };
