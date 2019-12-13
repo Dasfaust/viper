@@ -2,6 +2,7 @@
 #include "Defines.hpp"
 #include "event/Events.hpp"
 #include <cereal/archives/json.hpp>
+#include <cereal/archives/portable_binary.hpp>
 
 #define make_serializable(...) template<class A> \
 	void serialize(A& ar) \
@@ -48,7 +49,7 @@ public:
 class PacketFactory : public std::enable_shared_from_this<PacketFactory>
 {
 public:
-	flatmap(uint32, std::shared_ptr<PacketHandlerBase>) handlers;
+	umap(uint32, std::shared_ptr<PacketHandlerBase>) handlers;
 
 	template<typename T>
 	std::shared_ptr<PacketHandler<T>> registerPacket(uint32 id)
@@ -116,7 +117,7 @@ public:
 		{
 			if (handlers.count(wrapper.id))
 			{
-				handlers[wrapper.id]->unpack(handlers[wrapper.id], wrapper.packet, wrapper.clients.empty() ? boost::uuids::nil_uuid() : wrapper.clients[0]);
+				handlers[wrapper.id]->unpack(handlers[wrapper.id], wrapper.packet, wrapper.clients.empty() ? "" : wrapper.clients[0]);
 			}
 		}
 	}

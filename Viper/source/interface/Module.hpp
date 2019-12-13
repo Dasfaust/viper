@@ -9,8 +9,8 @@ public:
 	virtual ~Module() = default;
 
 	std::shared_ptr<Modular> parent;
-	time_val modInterval;
-	time_val modAccumulator;
+	float modInterval;
+	int64 modAccumulator;
 	std::string friendlyName;
 
 	template<typename T>

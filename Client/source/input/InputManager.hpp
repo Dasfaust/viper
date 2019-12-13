@@ -5,9 +5,9 @@
 
 struct KeyState
 {
-	time_val when = 0.0;
+	Time::point when;
 	uint32 repeats = 0;
-	time_val elapsed = 0.0;
+	float elapsed = 0.0f;
 };
 
 class InputManager : public Module
@@ -20,7 +20,7 @@ public:
 	std::shared_ptr<Listener<KeyReleasedEvent>> keyReleased;
 	std::shared_ptr<Listener<ScrollEvent>> scroll;
 	std::shared_ptr<Listener<MouseMoveEvent>> move;
-	flatmap(uint32, KeyState) keys;
+	umap(uint32, KeyState) keys;
 	glm::vec2 mousePos;
 	glm::vec2 scrollPos;
 
@@ -37,7 +37,7 @@ public:
 				state = in->keys[ev.button];
 				state.repeats++;
 			}
-			state.when = tnowns();
+			state.when = Time::now();
 			in->keys[ev.button] = state;
 		}, { getParent<Modular>()->getModule("input") });
 
@@ -59,7 +59,7 @@ public:
 				state = in->keys[ev.key];
 				state.repeats++;
 			}
-			state.when = tnowns();
+			state.when = Time::now();
 			in->keys[ev.key] = state;
 		}, { getParent<Modular>()->getModule("input") });
 
@@ -98,7 +98,7 @@ public:
 
 		for (auto&& kv : keys)
 		{
-			kv.second.elapsed = timesince(kv.second.when);
+			kv.second.elapsed = Time::toMilliseconds(Time::since(kv.second.when));
 		}
 	};
 

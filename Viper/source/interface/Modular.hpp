@@ -8,12 +8,22 @@ class Modular : public std::enable_shared_from_this<Modular>
 public:
 	virtual ~Modular() = default;
 
-	time_val dt = 0.0;
-	time_val lastTickNs = 0.0;
-	std::map<std::string, std::shared_ptr<Module>> modules;
+	int64 deltaTime = 0;
+	float deltaTimeMs = 0.0f;
+	float deltaTimeS = 0.0f;
+	float tickTimeMs = 0.0f;
+	Time::point lastTick;
+	
+	umap(std::string, std::shared_ptr<Module>) modules;
 
 	virtual void tickModules()
 	{
+		auto start = Time::now();
+		deltaTime = Time::since(start, lastTick);
+		lastTick = start;
+		deltaTimeMs = Time::toMilliseconds(deltaTime);
+		deltaTimeS = Time::toSeconds(deltaTime);
+		
 		for (auto&& kv : modules)
 		{
 			kv.second->onTickBegin();
@@ -21,16 +31,16 @@ public:
 
 		for (auto&& kv : modules)
 		{
-			if (kv.second->modInterval > 0)
+			if (kv.second->modInterval > 0.0f)
 			{
-				if (kv.second->modAccumulator >= kv.second->modInterval)
+				if (Time::toMilliseconds(kv.second->modAccumulator) >= kv.second->modInterval)
 				{
-					kv.second->modAccumulator = 0.0;
+					kv.second->modAccumulator = 0;
 					kv.second->onTick();
 				}
 				else
 				{
-					kv.second->modAccumulator += dt;
+					kv.second->modAccumulator += deltaTime;
 					kv.second->onTickWait();
 				}
 			}
@@ -45,12 +55,11 @@ public:
 			kv.second->onTickEnd();
 		}
 
-		dt = timesince(lastTickNs);
-		lastTickNs = tnowns();
+		tickTimeMs = Time::toMilliseconds(Time::since(start));
 	};
 
 	template<typename T>
-	inline std::shared_ptr<T> initModule(const std::string& name, double interval = 0.0)
+	inline std::shared_ptr<T> initModule(const std::string& name, float interval = 0.0f)
 	{
 		auto mod = std::make_shared<T>();
 		mod->parent = shared_from_this();

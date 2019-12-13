@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "imgui.h"
 
 void Telemetry::onStart()
 {
@@ -63,8 +64,14 @@ void Client::onStart()
 		}, { getParent<Modular>()->getModule("client") });
 
 		p2Handler = nc->registerPacket<P2ClientTelemetry>(2);
-		auto tel = initModule<Telemetry>("telemetry", 100.0);
+		auto tel = initModule<Telemetry>("telemetry", 100.0f);
 		tel->onStart();
+
+		p3Handler = nc->registerPacket<P3ServerTelemetry>(3);
+		p3Listener = p3Handler->listen(0, [](P3ServerTelemetry& packet, std::vector<std::shared_ptr<Module>> mods)
+		{
+				std::reinterpret_pointer_cast<Client>(mods[0])->serverTelemetry = packet;
+		}, { std::dynamic_pointer_cast<Module>(shared_from_this()) });
 	}
 };
 
@@ -75,6 +82,7 @@ void Client::onTick()
 		clientConnected->poll();
 		clientDisconnected->poll();
 		p1Listener->poll();
+		p3Listener->poll();
 	}
 	tickModules();
 };

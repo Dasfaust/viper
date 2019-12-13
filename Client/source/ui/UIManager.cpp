@@ -56,9 +56,9 @@ void UIManager::onTickBegin()
 void UIManager::onTickEnd()
 {
 	ImGuiIO& io = ImGui::GetIO();
-	time_val delta = (float)getParent<Modular>()->dt;
-	time_val maxDt = 1.0 / 240.0;
-	io.DeltaTime = delta > maxDt ? (float)maxDt : (float)delta;
+	float delta = getParent<Modular>()->deltaTimeMs;
+	float maxDt = 1.0f / 240.0f;
+	io.DeltaTime = delta > maxDt ? maxDt : delta;
 	io.DisplaySize = ImVec2((float)wm->width, (float)wm->height);
 
 	switch (Renderer::API)

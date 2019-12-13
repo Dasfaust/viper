@@ -37,13 +37,15 @@ public:
 
 int main()
 {
-	Logging::async = false;
+	Logging::async = true;
 	WindowManager::vsync = true;
+	Client::enableNetworking = true;
 	auto vi = std::make_shared<Viper>();
 	auto lo = vi->initModule<Logging>("logging");
 	auto th = vi->initModule<Threads>("threads");
 	auto ev = vi->initModule<Events>("events");
-	//auto sr = vi->initModule<Server>("server");
+	auto sr = vi->initModule<Server>("server");
+	sr->async = true;
 	auto cl = vi->initModule<Client>("client");
 	auto ga = vi->initModule<Sandbox>("game");
 	vi->start();

@@ -36,9 +36,9 @@ public:
 	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> outgoing;
 	std::shared_ptr<Viper> viper;
 
-	flatmap(uint32, uid) tokens;
-	boost::container::flat_map<uid, InetAddress> clients;
-	flatmap(std::string, uid) clientHosts;
+	umap(uint32, uid) tokens;
+	umap(uid, InetAddress) clients;
+	umap(std::string, uid) clientHosts;
 
 	std::shared_ptr<PacketHandler<P0Handshake>> p0Handler;
 	std::shared_ptr<EventHandler<ClientConnectedEvent>> connectEvent;

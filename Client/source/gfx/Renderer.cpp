@@ -105,8 +105,8 @@ void Renderer::onStart()
 		ImGui::Text("Connected: %d", renderer->getParent<Client>()->isConnected.load());
 		ImGui::Checkbox("Vsync", &renderer->wm->vsync);
 		ImGui::Text("FPS: %d", renderer->fps);
-		ImGui::Text("Frametime: %.4fms", renderer->dt);
-		ImGui::Text("Scene tick: %.4fms", renderer->scene->updateTimeMs);
+		ImGui::Text("Frametime: %.4fms", renderer->deltaTimeMs);
+		ImGui::Text("Scene tick: %.4fms", renderer->scene->tickTimeMs);
 		ImGui::Text("Draws: %d", std::reinterpret_pointer_cast<gfx::PipelineOpenGL>(renderer->pipeline)->drawCalls);
 		ImGui::Text("Entities: %d", renderer->scene->container->heap.size() / renderer->scene->container->entitySize);
 		ImGui::End();
@@ -116,7 +116,7 @@ void Renderer::onStart()
 	{
 		auto renderer = std::reinterpret_pointer_cast<Renderer>(mods[0]);
 		bool active = true;
-		auto selected = renderer->scene->container->getEntity(1);
+		auto selected = renderer->scene->container->getEntity(0);
 		ImGui::Begin("Selection", &active, ImGuiWindowFlags_AlwaysAutoResize);
 		auto transform = renderer->scene->container->getComponent<Transform3D>(selected->id);
 		auto renderData = renderer->scene->container->getComponent<RenderData>(selected->id);
@@ -174,6 +174,21 @@ void Renderer::onStart()
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
+	ui->addCommand("server_telemetry", [](std::vector<std::shared_ptr<Module>> mods)
+		{
+			auto renderer = std::reinterpret_pointer_cast<Renderer>(mods[0]);
+			auto client = renderer->getParent<Client>();
+			bool active = client->isConnected.load();
+			ImGui::Begin("Server Telemetry", &active, ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Text("Ping: %.2fms", client->serverTelemetry.ping);
+			ImGui::Text("Server delta: %.2fms", client->serverTelemetry.serverDelta);
+			ImGui::Text("Server tick: %.2fms", client->serverTelemetry.serverTick);
+			ImGui::Text("World delta: %.2fms", client->serverTelemetry.worldDelta);
+			ImGui::Text("World tick: %.2fms", client->serverTelemetry.worldTick);
+			ImGui::Text("World TPS: %d", client->serverTelemetry.worldTps);
+			ImGui::End();
+		}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
+
 	std::vector<float> vertices =
 	{
 		 -0.5f, -0.5f,
@@ -200,21 +215,27 @@ void Renderer::onStart()
 	pipeline->getMemory()->requestBuffer("cube2", &cubeVerts, nullptr, { {gfx::Float3, "position" }, { gfx::Float2, "texCoord" } }, { { gfx::Float4x4, "model", false, 1 } });
 
 	pipeline->loadShader("3d_default");
-	pipeline->loadShader("3d_default2");
 
 	pipeline->loadTexture("checkerboard.png");
 	pipeline->loadTexture("awesomeface.png");
 	
 	pipeline->makeMaterial("3d_default", "3d_default", { "checkerboard.png" });
-	pipeline->makeMaterial("3d_default2", "3d_default2", { "awesomeface.png" });
+	pipeline->makeMaterial("3d_default2", "3d_default", { "awesomeface.png" });
 };
 
 void Renderer::onTick()
 {
 	if (!nominal) return;
 
-	sizeChange->poll();
 
+	auto start = Time::now();
+	deltaTime = Time::since(start, lastTick);
+	lastTick = start;
+	deltaTimeMs = Time::toMilliseconds(deltaTime);
+	deltaTimeS = Time::toSeconds(deltaTime);
+
+	sizeChange->poll();
+	
 	for (auto&& kv : modules)
 	{
 		kv.second->onTickBegin();
@@ -222,16 +243,16 @@ void Renderer::onTick()
 
 	for (auto&& kv : modules)
 	{
-		if (kv.second->modInterval > 0)
+		if (kv.second->modInterval > 0.0f)
 		{
-			if (kv.second->modAccumulator >= kv.second->modInterval)
+			if (Time::toMilliseconds(kv.second->modAccumulator) >= kv.second->modInterval)
 			{
-				kv.second->modAccumulator = 0.0;
+				kv.second->modAccumulator = 0;
 				kv.second->onTick();
 			}
 			else
 			{
-				kv.second->modAccumulator += dt;
+				kv.second->modAccumulator += deltaTime;
 				kv.second->onTickWait();
 			}
 		}
@@ -247,14 +268,14 @@ void Renderer::onTick()
 	}
 
 	pipeline->draw();
-
+	
 	for (auto&& kv : modules)
 	{
 		kv.second->onTickEnd();
 	}
 
-	dt = timesince(lastTickNs);
-	lastTickNs = tnowns();
+	tickTimeMs = Time::toMilliseconds(Time::since(start));
+
 	fpsAccumulator++;
 };
 

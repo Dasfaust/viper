@@ -31,3 +31,15 @@ struct P2ClientTelemetry : Packet
 
 	make_serializable(CEREAL_NVP(mouseX), CEREAL_NVP(mouseY), CEREAL_NVP(scrollX), CEREAL_NVP(scrollY));
 };
+
+struct P3ServerTelemetry : Packet
+{
+	float ping;
+	float serverDelta;
+	float serverTick;
+	float worldDelta;
+	float worldTick;
+	int worldTps;
+
+	make_serializable(CEREAL_NVP(ping), CEREAL_NVP(serverDelta), CEREAL_NVP(serverTick), CEREAL_NVP(worldDelta), CEREAL_NVP(worldTick), CEREAL_NVP(worldTps));
+};

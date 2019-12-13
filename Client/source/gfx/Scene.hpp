@@ -1,5 +1,5 @@
 #pragma once
-#include "ecs/ECS.hpp"
+#include "ecs/Container.hpp"
 #include <utility>
 #include <glm/gtc/matrix_transform.hpp>
 #include "../input/InputManager.hpp"
@@ -298,7 +298,6 @@ public:
 	std::shared_ptr<CameraSystem> cameraSystem;
 	std::shared_ptr<PlayerInputSystem> playerInputSystem;
 	bool firstUpdate = true;
-	time_val updateTimeMs;
 
 	void onStart() override
 	{
@@ -330,53 +329,12 @@ public:
 		playerInputSystem->wm = wm;
 		playerInputSystem->input = input;
 
-		container->initSystem({ { ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentFlags::E_REQUIRED }, { ecs::ComponentIDs<PlayerInput>::ID, ecs::ComponentFlags::E_SKIP } }, [](ecs::Entity* entity, std::shared_ptr<ecs::System> self, float dt)
-		{
-			auto transform = ecs::shift<Transform3D>(entity);
-			float rot = transform->rotation + (10.0f * dt);
-			if (rot >= 180.0f) { rot = -180.0f; }
-			transform->rotation = rot;
-			auto rd = ecs::shift<RenderData>(entity);
-			rd->dirty = true;
-		});
-
 		initDefaultPlayer();
-
-		for (uint32 x = 0; x < 1; x++)
-		{
-			for (uint32 z = 0; z < 1; z++)
-			{
-				for (uint32 y = 0; y < 1; y++)
-				{
-					uint64 ent = container->makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
-					auto rd = container->getComponent<RenderData>(ent);
-					rd->materialId = 0;
-					rd->meshId = 0;
-					auto tc = container->getComponent<Transform3D>(ent);
-					tc->position = vec3(x, y, z);
-					tc->rotationAxis = vec3(1.0f, 0.3f, 0.5f);
-					tc->rotation = 0.0f;
-					tc->scale = vec3(0.5f);
-				}
-			}
-		}
-
-		uint64 ent = container->makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
-		auto rd = container->getComponent<RenderData>(ent);
-		rd->materialId = 1;
-		rd->meshId = 1;
-		auto tc = container->getComponent<Transform3D>(ent);
-		tc->position = vec3(-1.0f, 0.0f, -1.0f);
-		tc->rotationAxis = vec3(1.0f, 0.3f, 0.5f);
-		tc->rotation = 0.0f;
-		tc->scale = vec3(0.5f);
 	};
 
 	void onTick() override
 	{
-		auto start = tnowns();
 		tickModules();
-		updateTimeMs = timesince(start);
 	};
 
 	void initDefaultPlayer()

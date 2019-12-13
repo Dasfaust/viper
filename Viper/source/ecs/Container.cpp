@@ -190,23 +190,37 @@ void Container::onTick()
 
 	if (async)
 	{
-		uint32 entsPerWorker = (uint32)(heap.size() / entitySize) / threads;
+		uint32 entities = (uint32)(heap.size() / entitySize);
+		uint32 entsPerWorker = entities / threads;
 		uint32 lastIndex = 0;
 		uint32 threadIndex = 0;
+		
+		std::vector<moodycamel::ConcurrentQueue<Job>*> results;
 		for (auto&& kv : modules)
 		{
+			if (entities <= 1)
+			{
+				auto worker = std::static_pointer_cast<Worker>(kv.second);
+				worker->jobs.enqueue({ lastIndex, 0, true });
+				results.push_back(&worker->completed);
+				break;
+			}
+
 			auto worker = std::static_pointer_cast<Worker>(kv.second);
-			uint64 end = threadIndex + 1 >= threads ? (heap.size() / entitySize) - 1 : lastIndex + entsPerWorker - 1;
+			uint64 end = threadIndex + 1 >= threads ? entities - 1 : lastIndex + entsPerWorker - 1;
 			worker->jobs.enqueue({ lastIndex, end, true });
 			lastIndex += entsPerWorker;
 			threadIndex++;
+
+			results.push_back(&worker->completed);
+			
 		}
-		for (auto&& kv : modules)
+		for (auto queue : results)
 		{
-			auto worker = std::static_pointer_cast<Worker>(kv.second);
 			Job job;
-			while (!worker->completed.try_dequeue(job)) {};
+			while (!queue->try_dequeue(job)) {};
 		}
+		results.clear();
 	}
 	else
 	{
@@ -222,7 +236,7 @@ void Container::onTick()
 			{
 				if (ent->systems[index])
 				{
-					systems[index]->updateEntity(ent, systems[index], (float)(dt / 1000.0));
+					systems[index]->updateEntity(ent, systems[index], (float)(deltaTimeMs / 1000.0f));
 					updated++;
 				}
 				index++;

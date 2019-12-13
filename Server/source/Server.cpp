@@ -1,10 +1,32 @@
 #include "Server.hpp"
 
+void ServerTelemetry::onStart()
+{
+	server = getParent<Server>();
+};
+
+void ServerTelemetry::onTick()
+{
+	for (auto&& kv : server->clients)
+	{
+		P3ServerTelemetry packet;
+		packet.ping = kv.second.ping;
+		packet.serverDelta = server->deltaTimeMs;
+		packet.serverTick = server->tickTimeMs;
+		packet.worldDelta = server->world->deltaTimeMs;
+		packet.worldTick = server->world->tickTimeMs;
+		// todo
+		packet.worldTps = 0;
+		server->p3Handler->enqueue(UDP, packet, { kv.first });
+	}
+};
+
 void Server::onStart()
 {
-	wo = initModule<World>("world");
+	world = initModule<World>("world", (1.0f / 30.0f) * 1000.0f);
 	ns = initModule<NetServer>("net");
-
+	tel = initModule<ServerTelemetry>("telemetry", 100.0f);
+	
 	for (auto&& kv : modules)
 	{
 		kv.second->onStart();
@@ -15,14 +37,14 @@ void Server::onStart()
 	{
 		auto sr = std::dynamic_pointer_cast<Server>(mods[0]);
 		sr->clients[packet.client].nickname = packet.name;
-		info("Changed nickname: %s (%s)", packet.name.c_str(), boost::lexical_cast<std::string>(packet.client).c_str());
+		info("Changed nickname: %s (%s)", packet.name.c_str(), packet.client.c_str());
 		sr->p1Handler->enqueue(TCP, packet, { packet.client });
 	}, { getParent<Modular>()->getModule("server") });
 
 	auto ccHandler = getParent<Modular>()->getModule<Events>("events")->getModule<EventHandler<ClientConnectedEvent>>("server_clientconnectedevent");
 	clientConnected = ccHandler->listen(0, [](ClientConnectedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
 	{
-		info("Client connected: %s", boost::lexical_cast<std::string>(ev.id).c_str());
+		info("Client connected: %s", ev.id.c_str());
 		auto sr = std::dynamic_pointer_cast<Server>(mods[0]);
 		sr->clients[ev.id] = { ev.id, ev.address };
 	}, { getParent<Modular>()->getModule("server") });
@@ -30,7 +52,7 @@ void Server::onStart()
 	auto cdHandler = getParent<Modular>()->getModule<Events>("events")->getModule<EventHandler<ClientDisconnectedEvent>>("server_clientdisconnectedevent");
 	clientDisconnected = cdHandler->listen(0, [](ClientDisconnectedEvent& ev, std::vector<std::shared_ptr<Module>> mods)
 	{
-		info("%s disconnected: %s", boost::lexical_cast<std::string>(ev.id).c_str(), ev.reason.c_str());
+		info("%s disconnected: %s", ev.id.c_str(), ev.reason.c_str());
 		auto sr = std::dynamic_pointer_cast<Server>(mods[0]);
 		sr->clients.erase(ev.id);
 	}, { getParent<Modular>()->getModule("server") });
@@ -43,15 +65,28 @@ void Server::onStart()
 		sr->clients[packet.client].mouseY = packet.mouseY;
 		sr->clients[packet.client].scrollX = packet.scrollX;
 		sr->clients[packet.client].scrollY = packet.scrollY;
+		auto now = Time::now();
+		sr->clients[packet.client].ping = Time::toMilliseconds(Time::since(now, sr->clients[packet.client].lastUpdate)) - 100.0f;
+		sr->clients[packet.client].lastUpdate = now;
 	}, { getParent<Modular>()->getModule("server") });
+
+	p3Handler = ns->registerPacket<P3ServerTelemetry>(3);
+
+	if (async)
+	{
+		getParent<Modular>()->getModule<Threads>("threads")->watch(std::dynamic_pointer_cast<Threadable>(shared_from_this()));
+		sleep = false;
+		start();
+	}
 };
 
-void Server::onTick()
-{
+void Server::onTickAsync()
+{	
 	clientConnected->poll();
 	clientDisconnected->poll();
 	p1Listener->poll();
 	p2Listener->poll();
+
 	tickModules();
 };
 

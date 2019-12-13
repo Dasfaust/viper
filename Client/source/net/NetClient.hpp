@@ -16,6 +16,7 @@ public:
 
 #ifdef VIPER_WIN64
 		ip = std::make_shared<IPClientWin>();
+		ip->sleep = false;
 #endif
 		ip->viper = getParent<Module>()->getParent<Viper>();
 		ip->factory = shared_from_this();

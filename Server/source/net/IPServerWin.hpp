@@ -2,6 +2,10 @@
 #include "../interface/IPHandler.hpp"
 #include <winsock2.h>
 #include <Ws2tcpip.h>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/lexical_cast.hpp>
 
 class IPServerWin : public IPHandler
 {
@@ -169,7 +173,7 @@ public:
 
 				FD_SET(client, &set);
 
-				uid id = boost::uuids::random_generator()();
+				uid id = boost::lexical_cast<std::string>(boost::uuids::random_generator()());
 				tokens[(uint32)client] = id;
 				clients[id] = { "", 0, 0, (uint32)client };
 				P0Handshake shake;

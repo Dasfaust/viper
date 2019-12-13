@@ -5,7 +5,7 @@
 class Threads : public Module
 {
 public:
-	flatmap(uint8, std::shared_ptr<Threadable>) threads;
+	umap(uint8, std::shared_ptr<Threadable>) threads;
 
 	template<typename T>
 	std::shared_ptr<T> spawn()
