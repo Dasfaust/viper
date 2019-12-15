@@ -15,15 +15,13 @@ namespace ecs
 		};
 	};
 	
-	static uint32 componentIndex = 0;
+	static thread_local uint32 componentIndex = 0;
 	
 	template<typename T>
 	struct ComponentIDs
 	{
-		static uint32 ID;
+		inline static uint32 ID = 0;
 	};
-	template<typename T>
-	uint32 ComponentIDs<T>::ID = componentIndex++;
 
 	struct ComponentMeta
 	{
@@ -46,7 +44,7 @@ namespace ecs
 		std::vector<ComponentMeta> componentData;
 		std::vector<std::set<std::pair<uint32, ComponentFlags::ComponentFlag>>> systemTypes;
 		std::vector<std::shared_ptr<System>> systems;
-		inline static std::vector<size_t> offsets;
+		inline static thread_local std::vector<size_t> offsets;
 		std::vector<uint32> heap;
 		std::vector<uint64> deletions;
 		bool firstTick = true;
@@ -65,7 +63,8 @@ namespace ecs
 		template<typename T>
 		void registerComponent()
 		{
-			uint32 id = ComponentIDs<T>::ID;
+			uint32 id = componentIndex++;
+			ComponentIDs<T>::ID = id;
 			if (componentData.size() < id + 1) componentData.resize(id + 1);
 			componentData[id] = {
 				id,

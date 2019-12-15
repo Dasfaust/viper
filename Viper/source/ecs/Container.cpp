@@ -57,19 +57,6 @@ void Container::allocateNewBlock()
 	info("Reallocating ECS heap");
 	heap.reserve(heap.size() + (blockSizeMb * 1024000 / sizeof(uint32)));
 	blocksAllocated++;
-
-	/*for (uint64 i = 0; i < heap.size(); i += entitySize)
-	{
-		auto ent = reinterpret_cast<ecs::Entity*>(&heap[i]);
-		for (uint32 j = 0; j < ent->componentPointers.size(); j++)
-		{
-			auto ptr = ent->componentPointers[j];
-			if (ptr != nullptr)
-			{
-				ent->componentPointers[j] = getComponent(ent->id, j);
-			}
-		}
-	}*/
 }
 
 uint64 Container::getNextEntityId()
@@ -236,7 +223,7 @@ void Container::onTick()
 			{
 				if (ent->systems[index])
 				{
-					systems[index]->updateEntity(ent, systems[index], (float)(deltaTimeMs / 1000.0f));
+					systems[index]->updateEntity(ent, systems[index], Time::toSeconds(deltaTime));
 					updated++;
 				}
 				index++;

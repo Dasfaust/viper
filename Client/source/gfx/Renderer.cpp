@@ -101,7 +101,8 @@ void Renderer::onStart()
 		auto pos = ImGui::GetMainViewport()->Pos;
 		ImGui::SetNextWindowPos(ImVec2(pos.x, pos.y));
 		ImGui::SetNextWindowViewport(ImGui::FindViewportByPlatformHandle(renderer->wm->context->handle)->ID);
-		ImGui::Begin("Telemetry", &active, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("Telemetry", &active, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::CollapsingHeader("Client");
 		ImGui::Text("Connected: %d", renderer->getParent<Client>()->isConnected.load());
 		ImGui::Checkbox("Vsync", &renderer->wm->vsync);
 		ImGui::Text("FPS: %d", renderer->fps);
@@ -109,6 +110,30 @@ void Renderer::onStart()
 		ImGui::Text("Scene tick: %.4fms", renderer->scene->tickTimeMs);
 		ImGui::Text("Draws: %d", std::reinterpret_pointer_cast<gfx::PipelineOpenGL>(renderer->pipeline)->drawCalls);
 		ImGui::Text("Entities: %d", renderer->scene->container->heap.size() / renderer->scene->container->entitySize);
+		auto client = renderer->getParent<Client>();
+		if (client->enableNetworking)
+		{
+			ImGui::CollapsingHeader("Server");
+			ImGui::Text("Server delta: %.2fms", client->serverTelemetry.serverDelta);
+			ImGui::Text("Server tick: %.2fms", client->serverTelemetry.serverTick);
+			ImGui::Text("World delta: %.2fms", client->serverTelemetry.worldDelta);
+			ImGui::Text("World tick: %.2fms", client->serverTelemetry.worldTick);
+			ImGui::Text("World TPS: %d", client->serverTelemetry.worldTps);
+			ImGui::CollapsingHeader("Network");
+			ImGui::Text("Ping: %.2fms", client->serverTelemetry.ping);
+			auto net = client->getModule<NetClient>("net");
+			ImGui::Text("Client thread delta: %.2fms", Time::toMilliseconds(net->ip->deltaTime));
+			ImGui::Text("Client thread tick: %.2fms", Time::toMilliseconds(net->ip->tickTime));
+			ImGui::Text("Client thread incoming: %.2fms", Time::toMilliseconds(net->ip->incomingTime));
+			ImGui::Text("Client thread outgoing: %.2fms", Time::toMilliseconds(net->ip->outgoingTime));
+			ImGui::Text("Client processing: %.2fms", net->tickTimeMs);
+			ImGui::Text("Server thread delta: %.2fms", client->serverTelemetry.serverIpDelta);
+			ImGui::Text("Server thread tick: %.2fms", client->serverTelemetry.serverIpTick);
+			ImGui::Text("Server thread incoming: %.2fms", client->serverTelemetry.serverIpIncoming);
+			ImGui::Text("Server thread outgoing: %.2fms", client->serverTelemetry.serverIpOutgoing);
+			ImGui::Text("Server processing: %.2fms", client->serverTelemetry.serverNsTick);
+			ImGui::Text("Total processing: %.2fms", Time::toMilliseconds(net->ip->tickTime) + net->tickTimeMs + client->serverTelemetry.serverIpTick + client->serverTelemetry.serverNsTick);
+		}
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
@@ -173,21 +198,6 @@ void Renderer::onStart()
 		ImGui::Text("Zoom: %.2f", cam->zoom);
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
-
-	ui->addCommand("server_telemetry", [](std::vector<std::shared_ptr<Module>> mods)
-		{
-			auto renderer = std::reinterpret_pointer_cast<Renderer>(mods[0]);
-			auto client = renderer->getParent<Client>();
-			bool active = client->isConnected.load();
-			ImGui::Begin("Server Telemetry", &active, ImGuiWindowFlags_AlwaysAutoResize);
-			ImGui::Text("Ping: %.2fms", client->serverTelemetry.ping);
-			ImGui::Text("Server delta: %.2fms", client->serverTelemetry.serverDelta);
-			ImGui::Text("Server tick: %.2fms", client->serverTelemetry.serverTick);
-			ImGui::Text("World delta: %.2fms", client->serverTelemetry.worldDelta);
-			ImGui::Text("World tick: %.2fms", client->serverTelemetry.worldTick);
-			ImGui::Text("World TPS: %d", client->serverTelemetry.worldTps);
-			ImGui::End();
-		}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
 
 	std::vector<float> vertices =
 	{

@@ -13,6 +13,11 @@ void ServerTelemetry::onTick()
 		packet.ping = kv.second.ping;
 		packet.serverDelta = server->deltaTimeMs;
 		packet.serverTick = server->tickTimeMs;
+		packet.serverIpDelta = Time::toMilliseconds(server->ns->ip->deltaTime);
+		packet.serverIpTick = Time::toMilliseconds(server->ns->ip->tickTime);
+		packet.serverIpIncoming = Time::toMilliseconds(server->ns->ip->incomingTime);
+		packet.serverIpOutgoing = Time::toMilliseconds(server->ns->ip->outgoingTime);
+		packet.serverNsTick = server->ns->tickTimeMs;
 		packet.worldDelta = server->world->deltaTimeMs;
 		packet.worldTick = server->world->tickTimeMs;
 		// todo
@@ -23,8 +28,8 @@ void ServerTelemetry::onTick()
 
 void Server::onStart()
 {
-	world = initModule<World>("world", (1.0f / 30.0f) * 1000.0f);
 	ns = initModule<NetServer>("net");
+	world = initModule<World>("world", (1.0f / 30.0f) * 1000.0f);
 	tel = initModule<ServerTelemetry>("telemetry", 100.0f);
 	
 	for (auto&& kv : modules)
@@ -81,7 +86,7 @@ void Server::onStart()
 };
 
 void Server::onTickAsync()
-{	
+{		
 	clientConnected->poll();
 	clientDisconnected->poll();
 	p1Listener->poll();

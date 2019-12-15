@@ -98,6 +98,5 @@ void UIManager::onShutdown()
 	{
 	default:
 		ImGui_ImplOpenGL3_Shutdown();
-		ImGui_ImplGlfw_Shutdown();
 	}
 };

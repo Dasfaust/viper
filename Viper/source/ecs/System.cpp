@@ -21,7 +21,7 @@ void Worker::onTickAsync()
 			{
 				if (ent->systems[index])
 				{
-					container->systems[index]->updateEntity(ent, container->systems[index], (float)(container->deltaTimeMs / 1000.0f));
+					container->systems[index]->updateEntity(ent, container->systems[index], Time::toSeconds(container->deltaTime));
 					updated++;
 				}
 				index++;

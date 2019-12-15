@@ -14,6 +14,7 @@ public:
 	SOCKET tcp;
 	fd_set set;
 	char buffer[4096];
+	Time::point lastTick;
 
 	void onStart() override
 	{
@@ -84,11 +85,16 @@ public:
 
 	void onTickAsync() override
 	{
+		auto start = Time::now();
+		deltaTime = Time::since(start, lastTick);
+		lastTick = start;
+		
 		if (!viper->isInitialized.load() || !viper->running.load())
 		{
 			return;
 		}
 
+		auto incomingStart = Time::now();
 		ZeroMemory(&buffer, 4096);
 
 		sockaddr_in clientAddr;
@@ -159,9 +165,10 @@ public:
 			}
 		}
 
+		
 		ZeroMemory(&buffer, 4096);
 		fd_set copy = set;
-		TIMEVAL timeout = { 0, 500 };
+		TIMEVAL timeout = { 0, 1 };
 		int sockets = select(0, &copy, nullptr, nullptr, &timeout);
 		for (int i = 0; i < sockets; i++)
 		{
@@ -214,6 +221,10 @@ public:
 			}
 		}
 
+		incomingTime = Time::since(incomingStart);
+
+		auto outgoingStart = Time::now();
+		
 		PacketWrapper<std::string> wrapper;
 		while (outgoing.try_dequeue(wrapper))
 		{
@@ -287,6 +298,9 @@ public:
 				}
 			}
 		}
+
+		outgoingTime = Time::since(outgoingStart);
+		tickTime = Time::since(start);
 	};
 
 	void onStopAsync() override

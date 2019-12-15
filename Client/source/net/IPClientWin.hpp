@@ -14,6 +14,7 @@ public:
 	sockaddr_in tcpAddr;
 	std::atomic_bool connected = false;
 	std::shared_ptr<Listener<P0Handshake>> p0Listener;
+	Time::point lastTick;
 
 	void onStart() override
 	{
@@ -78,6 +79,10 @@ public:
 
 	void onTickAsync() override
 	{
+		auto start = Time::now();
+		deltaTime = Time::since(start, lastTick);
+		lastTick = start;
+		
 		if (!viper->isInitialized.load() || !viper->running.load())
 		{
 			return;
@@ -109,6 +114,7 @@ public:
 
 		p0Listener->poll();
 
+		auto outgoingStart = Time::now();
 		PacketWrapper<std::string> wrapper;
 		while (outgoing.try_dequeue(wrapper))
 		{
@@ -127,7 +133,9 @@ public:
 		}
 
 		ZeroMemory(&buffer, 4096);
+		outgoingTime = Time::since(outgoingStart);
 
+		auto incomingStart = Time::now();
 		sockaddr_in clientAddr;
 		int clientSize = (int)sizeof(clientAddr);
 		ZeroMemory(&clientAddr, clientSize);
@@ -147,7 +155,7 @@ public:
 		}
 
 		ZeroMemory(&buffer, 4096);
-		TIMEVAL timeout = { 0, 1000 };
+		TIMEVAL timeout = { 0, 1 };
 		int sockets = select(0, &set, nullptr, nullptr, &timeout);
 		for (int i = 0; i < sockets; i++)
 		{
@@ -180,6 +188,10 @@ public:
 
 		FD_SET(tcp, &set); // THIS IS DUMB
 		//debug("Client WSA: %d, sockets: %d", WSAGetLastError(), sockets);
+
+		incomingTime = Time::since(incomingStart);
+
+		tickTime = Time::since(start);
 	};
 
 	void onStopAsync() override

@@ -305,7 +305,7 @@ public:
 		input = getParent<Module>()->getParent<Modular>()->getModule<InputManager>("input");
 
 		container = initModule<ecs::Container>("container");
-		container->async = true;
+		container->async = false;
 		container->registerComponent<RenderData>();
 		container->registerComponent<Transform3D>();
 		container->registerComponent<OrthoCamera>();

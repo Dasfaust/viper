@@ -10,7 +10,8 @@ class NetClient : public Module, public PacketFactory
 {
 public:
 	std::shared_ptr<IPHandler> ip;
-
+	float tickTimeMs;
+	
 	void onStart() override
 	{
 
@@ -28,7 +29,9 @@ public:
 
 	void onTick() override
 	{
+		auto start = Time::now();
 		packAll(ip->outgoing);
 		unpackAll(ip->incoming);
+		tickTimeMs = Time::toMilliseconds(Time::since(start));
 	};
 };

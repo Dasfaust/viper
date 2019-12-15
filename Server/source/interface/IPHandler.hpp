@@ -30,6 +30,11 @@ struct ClientDisconnectedEvent : Event
 class IPHandler : public Module, public Threadable
 {
 public:
+	std::atomic_int64_t deltaTime;
+	std::atomic_int64_t tickTime;
+	std::atomic_int64_t incomingTime;
+	std::atomic_int64_t outgoingTime;
+	
 	InetAddress address;
 	std::shared_ptr<PacketFactory> factory;
 	moodycamel::ConcurrentQueue<PacketWrapper<std::string>> incoming;

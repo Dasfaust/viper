@@ -37,9 +37,14 @@ struct P3ServerTelemetry : Packet
 	float ping;
 	float serverDelta;
 	float serverTick;
+	float serverIpDelta;
+	float serverIpTick;
+	float serverIpIncoming;
+	float serverIpOutgoing;
+	float serverNsTick;
 	float worldDelta;
 	float worldTick;
 	int worldTps;
 
-	make_serializable(CEREAL_NVP(ping), CEREAL_NVP(serverDelta), CEREAL_NVP(serverTick), CEREAL_NVP(worldDelta), CEREAL_NVP(worldTick), CEREAL_NVP(worldTps));
+	make_serializable(CEREAL_NVP(ping), CEREAL_NVP(serverDelta), CEREAL_NVP(serverTick), CEREAL_NVP(serverIpDelta), CEREAL_NVP(serverIpTick), CEREAL_NVP(serverIpIncoming), CEREAL_NVP(serverIpOutgoing), CEREAL_NVP(serverNsTick), CEREAL_NVP(worldDelta), CEREAL_NVP(worldTick), CEREAL_NVP(worldTps));
 };
