@@ -11,6 +11,7 @@ struct Transform3D
 	float rotation = 0.0f;
 	vec3 scale = vec3(1.0f);
 	bool isStatic = false;
+	bool dirty = true;
 };
 
 struct Camera
@@ -145,6 +146,8 @@ public:
 	umap(uint64, ViewProjectionMatrix) matrices;
 	std::shared_ptr<ecs::Container> container;
 	std::shared_ptr<WindowManager> wm;
+	umap(uint64, vec3) cursorToWorld;
+	std::shared_ptr<InputManager> input;
 
 	CameraSystem()
 	{
@@ -164,6 +167,11 @@ public:
 				};
 
 				cam->dirty = false;
+			}
+
+			if (entity->components[ecs::ComponentIDs<PlayerInput>::ID])
+			{
+				//cursorToWorld[entity->id] = glm::unProject(vec3(sys->input->mousePos.x, sys->input->mousePos.y, 0.0f), sys->matrices[entity->id].model * sys->matrices[entity->id].view, vec4(0.0f, 0.0f, sys->wm->width, sys->wm->height));
 			}
 		};
 	};
@@ -287,6 +295,90 @@ public:
 	};
 };
 
+struct ChunkCellPair
+{
+	int64 chunk;
+	std::vector<uint32> cells;
+};
+
+struct CellUpdate
+{
+	uint64 entity;
+	std::vector<ChunkCellPair> chunks;
+};
+
+class TransformSystem : public ecs::System
+{
+public:
+	uint32 chunkSize = 16;
+	// chunk id, [cell id][ [entity] ]
+	umap(int64, std::vector<std::set<uint64>>) chunks;
+	moodycamel::ConcurrentQueue<CellUpdate> updates;
+
+	TransformSystem()
+	{
+		updateEntity = [](ecs::Entity* entity, std::shared_ptr<System> self, float dt)
+		{
+			auto ts = std::static_pointer_cast<TransformSystem>(self);
+			auto transform = ecs::shift<Transform3D>(entity);
+			if (transform->dirty)
+			{
+				CellUpdate update;
+				update.entity = entity->id;
+				
+				int xFloor = (int)floor(fabs(transform->position.x));
+				int zFloor = (int)floor(fabs(transform->position.z));
+				
+				int cellX = xFloor & 15;
+				int cellZ = zFloor & 15;
+				uint32 cellId = cellZ * ts->chunkSize + cellX;
+
+				int chunkX = (int)(xFloor / ts->chunkSize) * transform->position.x > 0 ? 1 : -1;
+				int chunkZ = (int)(zFloor / ts->chunkSize) * transform->position.z > 0 ? 1 : -1;
+				int64 chunkId = (int64)chunkZ << 32 | chunkX;
+
+				debug("Entity %llu: XYZ: (%.2f, %.2f, %.2f) Chunk: %lld (%d, %d), Cell: %d (%d, %d)", entity->id, transform->position.x, transform->position.y, transform->position.z, chunkId, chunkX, chunkZ, cellId, cellX, cellZ);
+
+				update.chunks.push_back({ chunkId, { cellId } });
+				ts->updates.enqueue(update);
+				
+				transform->dirty = false;
+			}
+		};
+	};
+
+	void onTickEnd() override
+	{
+		CellUpdate update;
+		while(updates.try_dequeue(update))
+		{
+			for (auto pair : update.chunks)
+			{
+				if (!chunks.count(pair.chunk))
+				{
+					chunks[pair.chunk] = {};
+					chunks[pair.chunk].resize((int)pow(chunkSize, 2));
+				}
+				auto chunk = &chunks[pair.chunk];
+				for (auto cell : pair.cells)
+				{
+					(*chunk)[cell].insert(update.entity);
+				}
+			}
+		}
+
+		/*for (auto&& chunk : chunks)
+		{
+			uint32 count = 0;
+			for (auto set : chunk.second)
+			{
+				count += set.size();
+			}
+			debug("Chunk %lld has %d entities", chunk.first, count);
+		}*/
+	};
+};
+
 class Scene : public Module, public Modular
 {
 public:
@@ -297,6 +389,7 @@ public:
 	std::shared_ptr<RenderSystem> renderSystem;
 	std::shared_ptr<CameraSystem> cameraSystem;
 	std::shared_ptr<PlayerInputSystem> playerInputSystem;
+	std::shared_ptr<TransformSystem> transforms;
 	bool firstUpdate = true;
 
 	void onStart() override
@@ -305,12 +398,13 @@ public:
 		input = getParent<Module>()->getParent<Modular>()->getModule<InputManager>("input");
 
 		container = initModule<ecs::Container>("container");
-		container->async = false;
+		container->async = true;
+		
 		container->registerComponent<RenderData>();
-		container->registerComponent<Transform3D>();
 		container->registerComponent<OrthoCamera>();
 		container->registerComponent<PerspectiveCamera>();
 		container->registerComponent<PlayerInput>();
+		container->registerComponent<Transform3D>();
 
 		for (auto&& kv : modules)
 		{
@@ -329,7 +423,64 @@ public:
 		playerInputSystem->wm = wm;
 		playerInputSystem->input = input;
 
+		 container->initSystem({ { ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentFlags::E_REQUIRED }, { ecs::ComponentIDs<PlayerInput>::ID, ecs::ComponentFlags::E_SKIP } }, [](ecs::Entity* entity, std::shared_ptr<ecs::System> self, float dt)
+		{
+			auto transform = ecs::shift<Transform3D>(entity);
+			float rot = transform->rotation + (10.0f * dt);
+			if (rot >= 180.0f) { rot = -180.0f; }
+			transform->rotation = rot;
+			auto rd = ecs::shift<RenderData>(entity);
+			rd->dirty = true;
+		});
+
+		transforms = container->initSystem<TransformSystem>({ { ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentFlags::E_REQUIRED } });
+		
 		initDefaultPlayer();
+
+		auto genChunk = [&](int chunkX, int chunkY, uint32 size)
+		{
+			for (uint32 x = 0; x < size; x++)
+			{
+				for (uint32 y = 0; y < size; y++)
+				{
+					int worldX = chunkX * size + x;
+					int worldY = chunkY * size + y;
+
+					uint64 ent = container->makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
+					auto rd = container->getComponent<RenderData>(ent);
+					rd->materialId = 0;
+					rd->meshId = 0;
+					auto tc = container->getComponent<Transform3D>(ent);
+					tc->position = vec3(worldX, 0, worldY);
+					tc->rotationAxis = vec3(1.0f, 0.3f, 0.5f);
+					tc->rotation = 0.0f;
+					tc->scale = vec3(0.5f);
+				}
+			}
+		};
+
+		for (uint32 x = 0; x < 100; x++)
+		{
+			for (uint32 z = 0; z < 100; z++)
+			{
+				for (uint32 y = 0; y < 10; y++)
+				{
+					uint64 ent = container->makeEntity({ ecs::ComponentIDs<Transform3D>::ID, ecs::ComponentIDs<RenderData>::ID });
+					auto rd = container->getComponent<RenderData>(ent);
+					rd->materialId = 0;
+					rd->meshId = 0;
+					auto tc = container->getComponent<Transform3D>(ent);
+					tc->position = vec3(x, y, z);
+					tc->rotationAxis = vec3(1.0f, 0.3f, 0.5f);
+					tc->rotation = 0.0f;
+					tc->scale = vec3(0.5f);
+				}
+			}
+		}
+
+		//genChunk(1, 1, 16);
+		//genChunk(1, 1, 16);
+		//genChunk(-1, -1, 16);
 	};
 
 	void onTick() override

@@ -58,7 +58,7 @@ void WindowManager::onStart()
 		WindowManager* man = (WindowManager*)glfwGetWindowUserPointer(win);
 		man->width = width;
 		man->height = height;
-		WindowSizeChangedEvent ev;
+		WindowSizeChangedEvent ev {  };
 		ev.width = width;
 		ev.height = height;
 		man->sizeEvent->fire(ev);

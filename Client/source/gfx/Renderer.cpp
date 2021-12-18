@@ -80,7 +80,7 @@ void Renderer::onStart()
 	pipeline->setClearColor({ 0.2f, 0.2f, 0.2f, 1.0f });
 	pipeline->setViewport({ wm->width, wm->height });
 
-	initModule<FPSModule>("fps", 1000.0);
+	initModule<FPSModule>("fps", 1000.0f);
 	ui = initModule<UIManager>("ui");
 	scene = initModule<Scene>("scene");
 
@@ -198,7 +198,7 @@ void Renderer::onStart()
 		ImGui::Text("Zoom: %.2f", cam->zoom);
 		ImGui::End();
 	}, { std::reinterpret_pointer_cast<Module>(shared_from_this()) });
-
+	
 	std::vector<float> vertices =
 	{
 		 -0.5f, -0.5f,

@@ -23,6 +23,7 @@ class Server : public Module, public Modular, public Threadable
 {
 public:
 	bool async = true;
+	bool firstTick = true;
 	std::shared_ptr<World> world;
 	std::shared_ptr<NetServer> ns;
 	std::shared_ptr<Listener<ClientConnectedEvent>> clientConnected;
@@ -39,13 +40,7 @@ public:
 
 	void onTickAsync() override;
 
-	void onTick() override
-	{
-		if (!async)
-		{
-			onTickAsync();
-		}
-	};
+	void onTick() override;
 
 	void onShutdown() override;
 };

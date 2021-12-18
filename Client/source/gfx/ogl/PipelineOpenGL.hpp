@@ -130,7 +130,7 @@ namespace gfx
 			map.changed = false;
 
 			glBindBuffer(GL_ARRAY_BUFFER, buffer->instanceBuffer);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(mat4) * map.instances.size(), &map.instances[0], GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(mat4) * map.instances.size(), &map.instances[0], GL_DYNAMIC_DRAW);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		};
 

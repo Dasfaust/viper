@@ -16,3 +16,6 @@
 [submodule "submodules/imgui"]
 	path = submodules/imgui
 	url = https://github.com/Dasfaust/imgui
+[submodule "submodules/bullet3"]
+	path = submodules/bullet3
+	url = https://github.com/bulletphysics/bullet3

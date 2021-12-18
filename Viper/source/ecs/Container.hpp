@@ -14,8 +14,10 @@ namespace ecs
 			E_SKIP
 		};
 	};
-	
-	static thread_local uint32 componentIndex = 0;
+
+	// SO, APPARENTLY this variable is 'internally linked' during compile time (due to static libraries) and each project
+	// gets its own instance. So, uh, that kinda works. Might need to watch this behavior in the future
+	inline static uint32 componentIndex = 0;
 	
 	template<typename T>
 	struct ComponentIDs
@@ -37,14 +39,14 @@ namespace ecs
 	public:
 		uint32 blockSizeMb = 8;
 		bool async = false;
-		uint32 threads = 2;
+		uint32 threads = 4;
 
 		uint32 blocksAllocated = 0;
 		size_t entitySize;
 		std::vector<ComponentMeta> componentData;
 		std::vector<std::set<std::pair<uint32, ComponentFlags::ComponentFlag>>> systemTypes;
 		std::vector<std::shared_ptr<System>> systems;
-		inline static thread_local std::vector<size_t> offsets;
+		inline static std::vector<size_t> offsets;
 		std::vector<uint32> heap;
 		std::vector<uint64> deletions;
 		bool firstTick = true;

@@ -76,12 +76,25 @@ void Server::onStart()
 	}, { getParent<Modular>()->getModule("server") });
 
 	p3Handler = ns->registerPacket<P3ServerTelemetry>(3);
+};
 
-	if (async)
+void Server::onTick()
+{
+	if (firstTick)
 	{
-		getParent<Modular>()->getModule<Threads>("threads")->watch(std::dynamic_pointer_cast<Threadable>(shared_from_this()));
-		sleep = false;
-		start();
+		if (async)
+		{
+			getParent<Modular>()->getModule<Threads>("threads")->watch(std::dynamic_pointer_cast<Threadable>(shared_from_this()));
+			sleep = false;
+			start();
+		}
+
+		firstTick = false;
+	}
+
+	if (!async)
+	{
+		onTickAsync();
 	}
 };
 

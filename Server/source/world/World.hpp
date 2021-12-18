@@ -2,23 +2,18 @@
 #include "ecs/Container.hpp"
 #include "interface/IPHandler.hpp"
 
-struct Location
-{
-	vec3 position;
-};
-
 class World : public Module, public Modular
 {
 public:
 	std::shared_ptr<ecs::Container> container;
 	std::shared_ptr<Listener<ClientConnectedEvent>> clientConnected;
 	bool firstTick = true;
+	umap(uid, std::set<uint64>) dirtyObjects;
 	
 	void onStart() override
 	{
 		container = initModule<ecs::Container>("container");
-		container->registerComponent<Location>();
-
+		
 		container->onStart();
 	};
 	
@@ -37,5 +32,10 @@ public:
 		
 		clientConnected->poll();
 		tickModules();
+	};
+
+	void onTickEnd() override
+	{
+
 	};
 };

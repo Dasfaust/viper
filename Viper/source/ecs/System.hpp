@@ -28,11 +28,6 @@ namespace ecs
 		Job currentJob = { };
 
 		void onTickAsync() override;
-
-		void onTick() override
-		{
-			onTickAsync();
-		}
 	};
 };
 
